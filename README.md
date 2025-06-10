@@ -2,7 +2,7 @@
 
 An MCP server for Claude Code that automates your Git workflow, from local commits to GitHub pull requests.
 
-[![npm version](https://badge.fury.io/js/claude-code-github.svg)](https://badge.fury.io/js/claude-code-github)
+[![npm version](https://badge.fury.io/js/@jdrhyne%2Fclaude-code-github.svg)](https://badge.fury.io/js/@jdrhyne%2Fclaude-code-github)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## What is this?
@@ -47,7 +47,7 @@ The server monitors your project files in the background and provides Claude wit
 No installation required! The server runs on-demand:
 
 ```bash
-npx claude-code-github
+npx @jdrhyne/claude-code-github@latest
 ```
 
 ### Global Installation
@@ -55,7 +55,7 @@ npx claude-code-github
 For permanent installation:
 
 ```bash
-npm install -g claude-code-github
+npm install -g @jdrhyne/claude-code-github
 ```
 
 ## Quick Start
@@ -63,7 +63,7 @@ npm install -g claude-code-github
 ### 1. Run the Server
 
 ```bash
-npx claude-code-github
+npx @jdrhyne/claude-code-github@latest
 ```
 
 On first run, the server will:
@@ -118,9 +118,14 @@ Add the server to your Claude Code configuration:
 
 ```json
 {
-  "mcp_server": {
-    "command": ["npx", "claude-code-github"],
-    "name": "claude-code-github"
+  "mcpServers": {
+    "claude-code-github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jdrhyne/claude-code-github@latest"
+      ]
+    }
   }
 }
 ```
@@ -250,7 +255,7 @@ node --version  # Should be 16+
 git --version
 
 # Run with debug output
-DEBUG=* npx claude-code-github
+DEBUG=* npx @jdrhyne/claude-code-github@latest
 ```
 
 ### Configuration Issues
@@ -260,7 +265,7 @@ DEBUG=* npx claude-code-github
 ls -la ~/.config/claude-code-github/
 
 # Validate configuration
-npx claude-code-github --validate-config
+npx @jdrhyne/claude-code-github@latest --validate-config
 ```
 
 ### GitHub Authentication
@@ -270,7 +275,7 @@ npx claude-code-github --validate-config
 curl -H "Authorization: token YOUR_TOKEN" https://api.github.com/user
 
 # Clear stored token (to re-enter)
-npx claude-code-github --reset-token
+npx @jdrhyne/claude-code-github@latest --reset-token
 ```
 
 ### Git Repository Issues

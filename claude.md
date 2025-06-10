@@ -24,7 +24,7 @@ The recommended way to run the server is with `npx`, which ensures you are alway
 If you prefer, you can install the package globally using npm:
 
 ```bash
-npm install -g claude-code-github
+npm install -g @jdrhyne/claude-code-github
 ```
 
 This will make the `claude-code-github` command directly available in your shell.
@@ -38,7 +38,7 @@ There are two parts to configure: telling Claude Code how to find the server, an
 First, run the `claude-code-github` server in your terminal to initiate the setup.
 
 ```bash
-npx claude-code-github
+npx @jdrhyne/claude-code-github@latest
 ```
 
 The server communicates over `stdin`/`stdout` using the **JSON-RPC 2.0** protocol.
@@ -47,14 +47,19 @@ Next, edit the Claude Code configuration file (e.g., `~/.claude/config.json`) to
 
 ```json
 {
-  "mcp_server": {
-    "command": ["npx", "claude-code-github"],
-    "name": "claude-code-github"
+  "mcpServers": {
+    "claude-code-github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@jdrhyne/claude-code-github@latest"
+      ]
+    }
   }
 }
 ```
 
-*(Note: If you chose the global installation method, you could use `["claude-code-github"]` as the command.)*
+*(Note: If you chose the global installation method, you could use `"claude-code-github"` as the command with no args.)*
 
 ### Step 2: Configure the `claude-code-github` Server
 
