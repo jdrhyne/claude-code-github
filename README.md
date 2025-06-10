@@ -9,6 +9,7 @@ An MCP server for Claude Code that automates your Git workflow, from local commi
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/node/v/@jdrhyne/claude-code-github.svg)](https://nodejs.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
+[![Changelog](https://img.shields.io/badge/changelog-Keep%20a%20Changelog-orange)](CHANGELOG.md)
 
 ## 🚀 Quick Start
 
@@ -73,6 +74,7 @@ The server monitors your project files in the background and provides Claude wit
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
 - [Contributing](#contributing)
+- [Changelog](CHANGELOG.md)
 
 ## Key Features
 
