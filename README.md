@@ -1,6 +1,6 @@
 # claude-code-github
 
-![Claude Code GitHub Hero](https://github.com/jdrhyne/claude-code-github/assets/hero-image.png)
+![Claude Code GitHub Hero](docs/images/claude-code-github-hero.png)
 
 An MCP server for Claude Code that automates your Git workflow, from local commits to GitHub pull requests.
 
