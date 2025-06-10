@@ -7,15 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-06-10
+
 ### Added
+- **🧠 Intelligent Workflow Assistant**: Revolutionary suggestion engine that analyzes development patterns
+  - Pattern recognition for optimal commit strategies
+  - Time tracking with configurable reminders (1hr reminder, 2hr warning)
+  - Change analysis for atomic commits and mixed change detection
+  - Workflow guidance for branching, committing, and PR creation
+- **🛡️ Smart Safety Features**: 
+  - Protected branch warnings when working directly on main/develop
+  - Large changeset suggestions (configurable threshold, default 5 files)
+  - Work loss prevention with time-based reminders
+  - PR readiness detection for clean working directories
+- **⚙️ Comprehensive Configuration System**:
+  - Master switch to enable/disable all suggestions
+  - Granular controls for each suggestion type
+  - Per-project configuration overrides
+  - Customizable thresholds for time and file count limits
+- **📊 Enhanced Status Reporting**: 
+  - Intelligent suggestions included in dev_status output
+  - Contextual hints based on work patterns
+  - Priority-based suggestion sorting (high/medium/low)
+
+### Enhanced
+- `dev_status` tool now includes intelligent suggestions and contextual hints
+- Configuration system expanded with detailed suggestion controls
+- Package description updated to reflect intelligent workflow capabilities
+- README completely redesigned to highlight intelligent workflow assistant features
+
+### Documentation  
+- Added comprehensive intelligent suggestions configuration guide
+- Updated README with new key features highlighting AI capabilities
+- Added examples for per-project suggestion overrides
 - Proper gitignore support for file watching and status reporting
 - README table of contents for improved navigation
 
 ### Fixed
 - Updated npm package badges to use shields.io format for better reliability
-
-### Documentation
-- Simplified and relocated table of contents in README
 
 ## [1.0.2] - 2025-06-10
 

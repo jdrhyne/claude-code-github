@@ -2,7 +2,7 @@
 
 ![Claude Code GitHub Hero](docs/images/claude-code-github-hero.png)
 
-An MCP server for Claude Code that automates your Git workflow, from local commits to GitHub pull requests.
+An **intelligent MCP server** for Claude Code that monitors your development patterns and automates Git workflows with smart suggestions.
 
 [![npm version](https://img.shields.io/npm/v/@jdrhyne/claude-code-github.svg)](https://www.npmjs.com/package/@jdrhyne/claude-code-github)
 [![npm downloads](https://img.shields.io/npm/dm/@jdrhyne/claude-code-github.svg)](https://www.npmjs.com/package/@jdrhyne/claude-code-github)
@@ -23,15 +23,18 @@ npx @jdrhyne/claude-code-github@latest
 npm install -g @jdrhyne/claude-code-github
 ```
 
-Let Claude handle your Git workflow with natural language commands:
-- 🗣️ "Claude, create a feature branch and commit my changes"
-- 📝 "Claude, open a draft pull request for my current work"
-- 🔍 "Claude, what's the status of my current project?"
+Let Claude handle your Git workflow with **intelligent automation**:
+- 🧠 **Smart Suggestions**: "You've been working for 2 hours - consider committing your progress"
+- 🛡️ **Safety Warnings**: "You're working on main branch - create a feature branch?"  
+- 🗣️ **Natural Commands**: "Claude, create a feature branch and commit my changes"
+- 📝 **Workflow Automation**: "Claude, open a draft pull request for my current work"
+- 🔍 **Intelligent Status**: "Claude, what's the status of my current project?"
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Configuration](#configuration)
+  - [Intelligent Suggestions](#intelligent-suggestions)
 - [Usage Examples](#usage-examples)
 - [Available Tools](#available-tools)
 - [Troubleshooting](#troubleshooting)
@@ -39,12 +42,28 @@ Let Claude handle your Git workflow with natural language commands:
 
 ## Key Features
 
-- 🔄 **Intelligent Git Workflow** - Claude understands your repository state and suggests appropriate actions
-- 🛡️ **Protected Branch Safety** - Prevents accidental commits to main/develop branches
-- 🚀 **Automated PR Creation** - One command creates and pushes branches, then opens GitHub PRs
-- 📊 **Real-time Status** - Background file monitoring provides Claude with current diff and change summaries
-- 🔐 **Secure Token Management** - GitHub tokens stored safely in your system keychain
-- ⚙️ **Configurable Workflows** - Customize branch prefixes, protected branches, and reviewers per project
+### 🧠 **Intelligent Workflow Assistant**
+- **Pattern Recognition** - Analyzes your work patterns and provides contextual suggestions
+- **Time Tracking** - Reminds you to commit after extended work sessions (configurable thresholds)
+- **Change Analysis** - Suggests optimal commit strategies based on file types and changes
+- **Workflow Guidance** - Recommends when to branch, commit, or create pull requests
+
+### 🛡️ **Smart Safety & Best Practices**
+- **Protected Branch Safety** - Warns when working directly on main/develop branches
+- **Atomic Commit Suggestions** - Identifies large changesets and mixed change types
+- **PR Readiness Detection** - Suggests creating pull requests when branches are ready
+- **Work Loss Prevention** - Time-based reminders to avoid losing uncommitted work
+
+### 🔧 **Powerful Automation**
+- **Natural Language Control** - Claude understands repository state and suggests appropriate actions
+- **Automated PR Creation** - One command creates branches, commits, pushes, and opens GitHub PRs
+- **Real-time Monitoring** - Background file watching provides intelligent context
+- **Configurable Intelligence** - Customize suggestion types, thresholds, and behavior per project
+
+### 🔐 **Enterprise Ready**
+- **Secure Token Management** - GitHub tokens stored safely in your system keychain
+- **Multi-Project Support** - Different configurations for different workflow styles
+- **Cross-Platform** - Works on macOS, Windows, and Linux with native integrations
 
 ## Prerequisites
 
@@ -90,11 +109,59 @@ projects:
     reviewers: ["teammate1", "teammate2"]
 ```
 
-### 2. GitHub Token
+### 2. Intelligent Suggestions
+
+Configure the intelligent workflow assistant to match your preferences:
+
+```yaml
+# Intelligent suggestion system configuration
+suggestions:
+  enabled: true                 # Master switch for all suggestions
+  
+  # Warn when working directly on protected branches
+  protected_branch_warnings: true
+  
+  # Time-based reminders for uncommitted work
+  time_reminders:
+    enabled: true
+    warning_threshold_minutes: 120    # High priority warning after 2 hours
+    reminder_threshold_minutes: 60    # Medium priority reminder after 1 hour
+  
+  # Large changeset suggestions
+  large_changeset:
+    enabled: true
+    threshold: 5                # Suggest commit when this many files are changed
+  
+  # Pattern recognition for optimal workflows
+  pattern_recognition: true     # Recognize tests + implementation patterns
+  pr_suggestions: true          # Suggest PR creation when branches are ready
+  change_pattern_suggestions: true  # Suggestions for doc + code patterns
+  branch_suggestions: true      # Suggest feature branches for new work
+```
+
+**Per-Project Overrides**: Add `suggestions:` block to any project to override global settings:
+
+```yaml
+projects:
+  - path: "/Users/yourname/Projects/prototype"
+    github_repo: "yourname/prototype"
+    suggestions:
+      enabled: false           # Disable suggestions for prototyping
+  
+  - path: "/Users/yourname/Projects/production-app"
+    github_repo: "yourname/production-app"
+    suggestions:
+      time_reminders:
+        warning_threshold_minutes: 30  # Faster pace for production work
+      large_changeset:
+        threshold: 3           # Smaller commits for production
+```
+
+### 3. GitHub Token
 
 Create a token at [GitHub Settings → Tokens](https://github.com/settings/tokens/new) with `repo` and `workflow` scopes. The server will prompt for it on first use and store it securely in your system keychain.
 
-### 3. Configure Claude Code
+### 4. Configure Claude Code
 
 ```bash
 # Add the MCP server
