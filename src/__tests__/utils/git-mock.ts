@@ -54,9 +54,9 @@ export class GitMock {
         push: vi.fn().mockResolvedValue(undefined),
         getRemotes: vi.fn().mockImplementation((verbose) => {
           if (verbose) {
-            return Promise.resolve(self.mockRemotes);
+            return Promise.resolve(this.mockRemotes);
           }
-          return Promise.resolve(self.mockRemotes.map(r => ({ name: r.name })));
+          return Promise.resolve(this.mockRemotes.map(r => ({ name: r.name })));
         }),
         log: vi.fn().mockResolvedValue({ all: [], latest: null }),
         branch: vi.fn().mockResolvedValue({ all: ['main', 'feature/test'], current: 'main' })
