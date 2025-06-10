@@ -2,12 +2,25 @@
 
 An MCP server for Claude Code that automates your Git workflow, from local commits to GitHub pull requests.
 
-[![npm version](https://badge.fury.io/js/@jdrhyne%2Fclaude-code-github.svg)](https://badge.fury.io/js/@jdrhyne%2Fclaude-code-github)
+[![npm version](https://badge.fury.io/js/@jdrhyne%2Fclaude-code-github.svg)](https://www.npmjs.com/package/@jdrhyne/claude-code-github)
+[![npm](https://img.shields.io/npm/dt/@jdrhyne/claude-code-github.svg)](https://www.npmjs.com/package/@jdrhyne/claude-code-github)
 [![CI](https://github.com/jdrhyne/claude-code-github/actions/workflows/ci.yml/badge.svg)](https://github.com/jdrhyne/claude-code-github/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/jdrhyne/claude-code-github/actions/workflows/codeql.yml/badge.svg)](https://github.com/jdrhyne/claude-code-github/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/node/v/@jdrhyne/claude-code-github.svg)](https://nodejs.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
+
+## 🚀 Quick Start
+
+```bash
+# Install and run with npx (recommended)
+npx @jdrhyne/claude-code-github@latest
+
+# Or install globally
+npm install -g @jdrhyne/claude-code-github
+```
+
+📦 **[View on npm](https://www.npmjs.com/package/@jdrhyne/claude-code-github)** • 📚 **[Full Installation Guide](#installation)**
 
 ## What is this?
 
