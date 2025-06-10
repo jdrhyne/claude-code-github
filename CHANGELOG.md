@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2025-01-06
+
+### Fixed
+- Resolved all ESLint errors (34 → 0) to restore CI functionality
+- Fixed git mock reference errors in test files
+- Added cross-platform environment variable support for Windows CI
+- Improved type safety in test files with proper type annotations
+
+### Changed
+- Enhanced README with better npm package discoverability
+- Updated keywords for improved search results
+
 ### Added
 - MIT License file
 - CONTRIBUTING.md with contribution guidelines
@@ -64,6 +76,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript implementation
 - Comprehensive test suite
 
-[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jdrhyne/claude-code-github/releases/tag/v1.0.0
