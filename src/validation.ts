@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import { Config, Project } from './types.js';
 import { GitManager } from './git.js';
 import { GitHubManager } from './github.js';

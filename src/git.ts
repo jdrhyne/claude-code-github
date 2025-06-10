@@ -1,4 +1,4 @@
-import { simpleGit, SimpleGit, StatusResult } from 'simple-git';
+import { simpleGit, SimpleGit } from 'simple-git';
 import * as path from 'path';
 import * as fs from 'fs/promises';
 import { FileChange, UncommittedChanges, DeploymentInfo } from './types.js';
@@ -247,7 +247,7 @@ export class GitManager {
     try {
       const packagePath = path.join(projectPath, 'package.json');
       const packageContent = await fs.readFile(packagePath, 'utf-8');
-      const packageJson = JSON.parse(packageContent);
+      JSON.parse(packageContent);
       
       // Check if package.json was modified in the last commit
       const git = this.getGit(projectPath);

@@ -55,7 +55,7 @@ export class ConfigManager {
 
   private writeDefaultConfig() {
     const defaultConfig = this.createDefaultConfig();
-    const yamlContent = yaml.dump(defaultConfig, {
+    yaml.dump(defaultConfig, {
       indent: 2,
       quotingType: '"',
       forceQuotes: false
@@ -163,7 +163,7 @@ projects: []
   }
 
   // Keep simple validation for backward compatibility
-  private validateConfig(config: Config) {
+  private validateConfig(_config: Config) {
     // Basic structural validation is now handled by ConfigValidator
     // This method is kept for backward compatibility but actual validation
     // is done by the ConfigValidator class in loadConfig()

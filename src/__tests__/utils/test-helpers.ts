@@ -1,5 +1,3 @@
-import * as path from 'path';
-import * as os from 'os';
 import { getFileSystemMock, getGitMock, getGitHubMock } from './persistent-mock.js';
 
 export function createTestProjectPath(): string {

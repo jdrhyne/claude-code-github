@@ -59,7 +59,7 @@ projects:
         return this.mockFiles.has(filePath) || this.mockDirectories.has(filePath);
       }),
       
-      readFileSync: vi.fn().mockImplementation((filePath: string, encoding?: string) => {
+      readFileSync: vi.fn().mockImplementation((filePath: string, _encoding?: string) => {
         const content = this.mockFiles.get(filePath);
         if (!content) {
           throw new Error(`ENOENT: no such file or directory, open '${filePath}'`);
@@ -71,7 +71,7 @@ projects:
         this.addFile(filePath, content);
       }),
       
-      mkdirSync: vi.fn().mockImplementation((dirPath: string, options?: any) => {
+      mkdirSync: vi.fn().mockImplementation((dirPath: string, _options?: any) => {
         this.addDirectory(dirPath);
       }),
       

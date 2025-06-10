@@ -1,4 +1,4 @@
-import { JsonRpcRequest, JsonRpcResponse, JsonRpcError, McpTool } from './types.js';
+import { JsonRpcRequest, JsonRpcResponse, McpTool } from './types.js';
 import { formatJsonRpcError } from './errors.js';
 
 export class McpServer {
@@ -10,7 +10,7 @@ export class McpServer {
   }
 
   private setupStandardHandlers() {
-    this.handlers.set('initialize', async (params) => {
+    this.handlers.set('initialize', async (_params) => {
       return {
         protocolVersion: '2024-11-05',
         capabilities: {

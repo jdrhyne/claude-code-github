@@ -1,5 +1,4 @@
 import { vi } from 'vitest';
-import { StatusResult } from 'simple-git';
 
 export interface MockGitStatus {
   current: string;
@@ -45,10 +44,9 @@ export class GitMock {
   }
 
   createMockGit() {
-    const self = this;
     if (!this.mockGitInstance) {
       this.mockGitInstance = {
-        status: vi.fn(() => Promise.resolve(self.mockStatus)),
+        status: vi.fn(() => Promise.resolve(this.mockStatus)),
         diff: vi.fn().mockResolvedValue('mock diff content'),
         checkoutLocalBranch: vi.fn().mockResolvedValue(undefined),
         add: vi.fn().mockResolvedValue(undefined),

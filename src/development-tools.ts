@@ -9,7 +9,6 @@ import {
   CheckpointParams,
   ProjectConfig,
   PushResult,
-  DeploymentInfo,
   UpdatePullRequestParams,
   PullRequestStatus,
   GeneratePRDescriptionParams,
@@ -28,7 +27,6 @@ import * as fs from 'fs/promises';
 import { 
   ProjectError, 
   GitError, 
-  GitHubError,
   createNoProjectError,
   createProtectedBranchError,
   createNoChangesError,
@@ -501,7 +499,7 @@ export class DevelopmentTools {
       const config = await this.configManager.loadConfig();
       
       switch (action) {
-        case 'wip':
+        case 'wip': {
           // Quick work-in-progress commit and push
           progress.start('Creating WIP commit');
           const uncommittedChanges = await this.gitManager.getUncommittedChanges(project.path);
@@ -524,8 +522,9 @@ export class DevelopmentTools {
             progress.succeed('WIP commit created');
             return `✅ Created WIP commit (not pushed - protected branch)`;
           }
+        }
           
-        case 'fix':
+        case 'fix': {
           // Amend last commit
           progress.start('Amending last commit');
           const git = this.gitManager['getGit'](project.path);
@@ -533,8 +532,9 @@ export class DevelopmentTools {
           await git.commit([], ['--amend', '--no-edit']);
           progress.succeed('Last commit amended');
           return '✅ Last commit amended with current changes';
+        }
           
-        case 'done':
+        case 'done': {
           // Finalize branch - push and create PR
           progress.start('Finalizing branch');
           const branch = await this.gitManager.getCurrentBranch(project.path);
@@ -571,8 +571,9 @@ export class DevelopmentTools {
           
           progress.succeed('Branch finalized');
           return `✅ Branch finalized! Pull request created: ${pr.html_url}`;
+        }
           
-        case 'sync':
+        case 'sync': {
           // Pull and rebase current branch
           progress.start('Syncing with remote');
           const syncBranch = await this.gitManager.getCurrentBranch(project.path);
@@ -588,13 +589,13 @@ export class DevelopmentTools {
           
           progress.succeed('Synced with remote');
           return `✅ Synced ${syncBranch} with remote`;
+        }
           
-        case 'update':
+        case 'update': {
           // Update dependencies and commit
           progress.start('Updating dependencies');
           
           // Check for package.json
-          const packagePath = path.join(project.path, 'package.json');
           if (!await this.gitManager['getGit'](project.path).checkIsRepo()) {
             progress.fail();
             return '❌ No package.json found';
@@ -616,6 +617,7 @@ export class DevelopmentTools {
             progress.succeed('No updates needed');
             return '✅ All dependencies are up to date';
           }
+        }
           
         default:
           return `❌ Unknown quick action: ${action}. Available: wip, fix, done, sync, update`;
@@ -725,8 +727,6 @@ export class DevelopmentTools {
       await this.gitManager.createBranch(project.path, branchName);
       
       // Add issue reference to first commit message
-      const commitMessage = `${branchType}: start work on #${issue.number} - ${issue.title}`;
-      
       progress.succeed(`Created branch ${branchName} from issue #${issue.number}`);
       return { branch_name: branchName, issue };
     } catch (error) {

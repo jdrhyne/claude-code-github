@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { PushResult, DeploymentInfo } from './types.js';
+import { PushResult } from './types.js';
 
 export class StatusDisplay {
   static showPushResult(result: PushResult): string {
