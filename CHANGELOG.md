@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2025-06-10
+
+### Fixed
+- CLI argument handling for --version and --help flags
+- Prevent CLI from hanging when run directly without arguments
+- Improved user experience for direct CLI usage
+
 ## [1.1.0] - 2025-06-10
 
 ### Added

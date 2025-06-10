@@ -10,7 +10,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 // Read version from package.json at build/compile time
-let version = '1.1.0'; // fallback
+let version = '1.1.1'; // fallback
 try {
   const packagePath = join(process.cwd(), 'package.json');
   const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
