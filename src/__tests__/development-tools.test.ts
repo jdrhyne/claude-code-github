@@ -24,6 +24,9 @@ describe('DevelopmentTools', () => {
     githubMock = getGitHubMock();
     fsMock = getFileSystemMock();
     
+    // Reset mocks to default state
+    gitMock.resetToDefaults();
+    
     fsMock.mockConfigExists(true);
     setupTestProject(testProjectPath);
     
@@ -212,12 +215,13 @@ describe('DevelopmentTools', () => {
       const mockGit = gitMock.createMockGit();
       
       const result = await developmentTools.checkpoint({
-        message: 'WIP: working on user profile'
+        message: 'WIP: working on user profile',
+        push: false
       });
       
       expect(mockGit.add).toHaveBeenCalledWith('.');
       expect(mockGit.commit).toHaveBeenCalledWith('WIP: working on user profile');
-      expect(result).toContain('Committed changes');
+      expect(result).toContain('Created checkpoint');
       expect(result).toContain('WIP: working on user profile');
     });
 

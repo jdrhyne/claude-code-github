@@ -45,15 +45,21 @@ export class GitMock {
   }
 
   createMockGit() {
+    const self = this;
     if (!this.mockGitInstance) {
       this.mockGitInstance = {
-        status: vi.fn(() => Promise.resolve(this.mockStatus)),
+        status: vi.fn(() => Promise.resolve(self.mockStatus)),
         diff: vi.fn().mockResolvedValue('mock diff content'),
         checkoutLocalBranch: vi.fn().mockResolvedValue(undefined),
         add: vi.fn().mockResolvedValue(undefined),
         commit: vi.fn().mockResolvedValue(undefined),
         push: vi.fn().mockResolvedValue(undefined),
-        getRemotes: vi.fn(() => Promise.resolve(this.mockRemotes)),
+        getRemotes: vi.fn().mockImplementation((verbose) => {
+          if (verbose) {
+            return Promise.resolve(self.mockRemotes);
+          }
+          return Promise.resolve(self.mockRemotes.map(r => ({ name: r.name })));
+        }),
         log: vi.fn().mockResolvedValue({ all: [], latest: null }),
         branch: vi.fn().mockResolvedValue({ all: ['main', 'feature/test'], current: 'main' })
       };
@@ -97,5 +103,31 @@ export class GitMock {
 
   clearMockInstance() {
     this.mockGitInstance = null;
+  }
+  
+  resetToDefaults() {
+    this.mockStatus = {
+      current: 'main',
+      isClean: () => true,
+      modified: [],
+      created: [],
+      deleted: [],
+      renamed: [],
+      staged: [],
+      not_added: []
+    };
+    
+    this.mockRemotes = [
+      {
+        name: 'origin',
+        refs: {
+          fetch: 'https://github.com/test-user/test-repo.git',
+          push: 'https://github.com/test-user/test-repo.git'
+        }
+      }
+    ];
+    
+    // Clear instance to force recreation with new values
+    this.clearMockInstance();
   }
 }
