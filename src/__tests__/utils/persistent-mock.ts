@@ -11,41 +11,42 @@ interface SharedMock {
 
 let sharedMock: SharedMock | null = null;
 
+// Create instances at module level to ensure they exist when mocks are hoisted
+const gitMockInstance = new GitMock();
+const githubMockInstance = new GitHubMock();
+const fsMockInstance = new FileSystemMock();
+
+// These will be hoisted to the top of the file
+vi.mock('simple-git', () => ({
+  simpleGit: vi.fn(() => gitMockInstance.createMockGit())
+}));
+
+vi.mock('octokit', () => ({
+  Octokit: vi.fn(() => githubMockInstance.createMockOctokit())
+}));
+
+// More mocks that need to be hoisted
+vi.mock('keytar', () => githubMockInstance.createMockKeytar());
+vi.mock('node:fs', () => fsMockInstance.createMockFS());
+vi.mock('fs', () => fsMockInstance.createMockFS());
+vi.mock('chokidar', () => ({
+  watch: vi.fn(() => ({
+    on: vi.fn().mockReturnThis(),
+    close: vi.fn()
+  }))
+}));
+
 export async function getSharedMock(): Promise<SharedMock> {
   if (sharedMock) {
     return sharedMock;
   }
 
-  const gitMock = new GitMock();
-  const githubMock = new GitHubMock();
-  const fsMock = new FileSystemMock();
-
-  vi.mock('simple-git', () => ({
-    simpleGit: vi.fn(() => gitMock.createMockGit())
-  }));
-
-  vi.mock('octokit', () => ({
-    Octokit: vi.fn(() => githubMock.createMockOctokit())
-  }));
-
-  vi.mock('keytar', () => githubMock.createMockKeytar());
-
-  vi.mock('node:fs', () => fsMock.createMockFS());
-  vi.mock('fs', () => fsMock.createMockFS());
-
-  vi.mock('chokidar', () => ({
-    watch: vi.fn(() => ({
-      on: vi.fn().mockReturnThis(),
-      close: vi.fn()
-    }))
-  }));
-
-  fsMock.mockProjectDirectory('/tmp/test-project');
+  fsMockInstance.mockProjectDirectory('/tmp/test-project');
 
   sharedMock = {
-    gitMock,
-    githubMock,
-    fsMock
+    gitMock: gitMockInstance,
+    githubMock: githubMockInstance,
+    fsMock: fsMockInstance
   };
 
   return sharedMock;
