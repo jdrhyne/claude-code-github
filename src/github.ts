@@ -1,6 +1,8 @@
 import { Octokit } from 'octokit';
 import * as keytar from 'keytar';
 import * as readline from 'readline';
+import { GitHubError } from './errors.js';
+import chalk from 'chalk';
 
 export class GitHubManager {
   private octokit: Octokit | null = null;
@@ -29,9 +31,12 @@ export class GitHubManager {
   }
 
   private async promptForToken(): Promise<string> {
-    console.error('\nGitHub Personal Access Token required.');
-    console.error('Please create a token at: https://github.com/settings/tokens/new');
-    console.error('Required scopes: repo, workflow');
+    console.error(chalk.yellow('\n⚠️  GitHub Personal Access Token required'));
+    console.error(chalk.gray('Please create a token with the following scopes:'));
+    console.error(chalk.cyan('  • repo') + chalk.gray(' (Full control of private repositories)'));
+    console.error(chalk.cyan('  • workflow') + chalk.gray(' (Update GitHub Action workflows)'));
+    console.error('');
+    console.error(chalk.gray('Create your token at: ') + chalk.cyan('https://github.com/settings/tokens/new'));
     console.error('');
 
     const rl = readline.createInterface({
@@ -101,7 +106,10 @@ export class GitHubManager {
   parseRepoUrl(githubRepo: string): { owner: string; repo: string } {
     const parts = githubRepo.split('/');
     if (parts.length !== 2) {
-      throw new Error(`Invalid GitHub repository format: ${githubRepo}. Expected format: owner/repo`);
+      throw new GitHubError(
+        `Invalid GitHub repository format: ${githubRepo}`,
+        'Use format "owner/repo", e.g., "facebook/react"'
+      );
     }
     
     return {

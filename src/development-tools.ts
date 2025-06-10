@@ -10,6 +10,18 @@ import {
   ProjectConfig 
 } from './types.js';
 import * as path from 'path';
+import { 
+  ProjectError, 
+  GitError, 
+  GitHubError,
+  createNoProjectError,
+  createProtectedBranchError,
+  createNoChangesError,
+  createGitHubTokenError,
+  createInvalidBranchTypeError,
+  createGitRemoteMismatchError
+} from './errors.js';
+import { ProgressIndicator, StatusDisplay } from './progress.js';
 
 export class DevelopmentTools {
   private configManager: ConfigManager;
@@ -26,17 +38,30 @@ export class DevelopmentTools {
   }
 
   async initialize() {
-    const config = this.configManager.loadConfig();
+    const progress = new ProgressIndicator();
     
-    for (const project of config.projects) {
-      this.fileWatcher.addProject(project);
-    }
+    try {
+      progress.start('Loading configuration');
+      const config = await this.configManager.loadConfig();
+      progress.succeed('Configuration loaded');
+      
+      if (config.projects.length > 0) {
+        progress.start(`Setting up ${config.projects.length} project${config.projects.length > 1 ? 's' : ''}`);
+        for (const project of config.projects) {
+          this.fileWatcher.addProject(project);
+        }
+        progress.succeed(`${config.projects.length} project${config.projects.length > 1 ? 's' : ''} configured`);
+      }
 
-    this.setCurrentProject();
+      await this.setCurrentProject();
+    } catch (error) {
+      progress.fail('Initialization failed');
+      throw error;
+    }
   }
 
-  private setCurrentProject() {
-    const config = this.configManager.loadConfig();
+  private async setCurrentProject() {
+    const config = await this.configManager.loadConfig();
     const cwd = process.cwd();
     
     for (const project of config.projects) {
@@ -51,27 +76,33 @@ export class DevelopmentTools {
     }
   }
 
-  private getCurrentProject(): ProjectConfig {
+  private async getCurrentProject(): Promise<ProjectConfig> {
     if (!this.currentProjectPath) {
-      throw new Error('No current project set. Please configure projects in config.yml');
+      throw createNoProjectError();
     }
 
-    const config = this.configManager.loadConfig();
+    const config = await this.configManager.loadConfig();
     const project = config.projects.find(p => p.path === this.currentProjectPath);
     
     if (!project) {
-      throw new Error(`Current project path ${this.currentProjectPath} not found in configuration`);
+      throw new ProjectError(
+        `Current project path ${this.currentProjectPath} not found in configuration`,
+        'Check your config.yml file and ensure the project path is correct'
+      );
     }
 
     return project;
   }
 
   async getStatus(): Promise<DevelopmentStatus> {
-    const project = this.getCurrentProject();
-    const config = this.configManager.loadConfig();
+    const project = await this.getCurrentProject();
+    const config = await this.configManager.loadConfig();
     
     if (!await this.gitManager.isGitRepository(project.path)) {
-      throw new Error(`Project at ${project.path} is not a Git repository`);
+      throw new GitError(
+        `Project at ${project.path} is not a Git repository`,
+        'Initialize with "git init" or clone an existing repository'
+      );
     }
 
     const branch = await this.gitManager.getCurrentBranch(project.path);
@@ -86,96 +117,159 @@ export class DevelopmentTools {
   }
 
   async createBranch(params: CreateBranchParams): Promise<string> {
-    const project = this.getCurrentProject();
-    const config = this.configManager.loadConfig();
+    const progress = new ProgressIndicator();
+    
+    try {
+      progress.start('Validating project');
+      const project = await this.getCurrentProject();
+      const config = await this.configManager.loadConfig();
 
-    if (!await this.gitManager.isGitRepository(project.path)) {
-      throw new Error(`Project at ${project.path} is not a Git repository`);
+      if (!await this.gitManager.isGitRepository(project.path)) {
+        progress.fail();
+        throw new GitError(
+          `Project at ${project.path} is not a Git repository`,
+          'Initialize with "git init" or clone an existing repository'
+        );
+      }
+
+      const currentBranch = await this.gitManager.getCurrentBranch(project.path);
+      if (config.git_workflow.protected_branches.includes(currentBranch)) {
+        progress.fail();
+        throw createProtectedBranchError(currentBranch);
+      }
+
+      const branchPrefix = config.git_workflow.branch_prefixes[params.type as keyof typeof config.git_workflow.branch_prefixes];
+      if (!branchPrefix) {
+        progress.fail();
+        throw createInvalidBranchTypeError(params.type, Object.keys(config.git_workflow.branch_prefixes));
+      }
+
+      const fullBranchName = `${branchPrefix}${params.name}`;
+
+      progress.update('Checking for changes');
+      const uncommittedChanges = await this.gitManager.getUncommittedChanges(project.path);
+      if (!uncommittedChanges) {
+        progress.fail();
+        throw createNoChangesError();
+      }
+
+      progress.update(`Creating branch ${fullBranchName}`);
+      await this.gitManager.createBranch(project.path, fullBranchName);
+      
+      progress.update('Committing changes');
+      await this.gitManager.commitChanges(project.path, params.message);
+      
+      progress.succeed(`Created branch ${fullBranchName}`);
+
+      return StatusDisplay.showBranchCreated(fullBranchName, params.message);
+    } catch (error) {
+      progress.fail();
+      throw error;
     }
-
-    const currentBranch = await this.gitManager.getCurrentBranch(project.path);
-    if (config.git_workflow.protected_branches.includes(currentBranch)) {
-      throw new Error(`Cannot create branch from protected branch: ${currentBranch}`);
-    }
-
-    const branchPrefix = config.git_workflow.branch_prefixes[params.type as keyof typeof config.git_workflow.branch_prefixes];
-    if (!branchPrefix) {
-      throw new Error(`Invalid branch type: ${params.type}. Valid types: ${Object.keys(config.git_workflow.branch_prefixes).join(', ')}`);
-    }
-
-    const fullBranchName = `${branchPrefix}${params.name}`;
-
-    const uncommittedChanges = await this.gitManager.getUncommittedChanges(project.path);
-    if (!uncommittedChanges) {
-      throw new Error('No uncommitted changes to commit to the new branch');
-    }
-
-    await this.gitManager.createBranch(project.path, fullBranchName);
-    await this.gitManager.commitChanges(project.path, params.message);
-
-    return `Created branch ${fullBranchName} and committed changes`;
   }
 
   async createPullRequest(params: CreatePullRequestParams): Promise<string> {
-    const project = this.getCurrentProject();
-    const config = this.configManager.loadConfig();
+    const progress = new ProgressIndicator();
+    
+    try {
+      progress.start('Validating project');
+      const project = await this.getCurrentProject();
+      const config = await this.configManager.loadConfig();
 
-    if (!await this.gitManager.isGitRepository(project.path)) {
-      throw new Error(`Project at ${project.path} is not a Git repository`);
+      if (!await this.gitManager.isGitRepository(project.path)) {
+        progress.fail();
+        throw new GitError(
+          `Project at ${project.path} is not a Git repository`,
+          'Initialize with "git init" or clone an existing repository'
+        );
+      }
+
+      progress.update('Validating GitHub authentication');
+      if (!await this.githubManager.validateToken()) {
+        progress.fail();
+        throw createGitHubTokenError();
+      }
+
+      progress.update('Validating git remote');
+      if (!await this.gitManager.validateRemoteMatchesConfig(project.path, project.github_repo)) {
+        const remoteUrl = await this.gitManager.getRemoteUrl(project.path);
+        const parsed = remoteUrl ? this.gitManager.parseGitHubUrl(remoteUrl) : null;
+        const actual = parsed ? `${parsed.owner}/${parsed.repo}` : 'unknown';
+        progress.fail();
+        throw createGitRemoteMismatchError(project.github_repo, actual);
+      }
+
+      const currentBranch = await this.gitManager.getCurrentBranch(project.path);
+      if (config.git_workflow.protected_branches.includes(currentBranch)) {
+        progress.fail();
+        throw createProtectedBranchError(currentBranch);
+      }
+
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+
+      progress.update(`Pushing branch ${currentBranch} to remote`);
+      await this.gitManager.pushBranch(project.path, currentBranch);
+
+      progress.update('Creating pull request');
+      const pr = await this.githubManager.createPullRequest(
+        owner,
+        repo,
+        params.title,
+        params.body,
+        currentBranch,
+        config.git_workflow.main_branch,
+        params.is_draft ?? true,
+        project.reviewers
+      );
+      
+      progress.succeed('Pull request created');
+
+      return StatusDisplay.showPullRequestCreated(pr.number, pr.html_url);
+    } catch (error) {
+      progress.fail();
+      throw error;
     }
-
-    if (!await this.githubManager.validateToken()) {
-      throw new Error('GitHub token validation failed. Please check your token.');
-    }
-
-    if (!await this.gitManager.validateRemoteMatchesConfig(project.path, project.github_repo)) {
-      throw new Error(`Git remote does not match configured repository: ${project.github_repo}`);
-    }
-
-    const currentBranch = await this.gitManager.getCurrentBranch(project.path);
-    if (config.git_workflow.protected_branches.includes(currentBranch)) {
-      throw new Error(`Cannot create pull request from protected branch: ${currentBranch}`);
-    }
-
-    const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
-
-    await this.gitManager.pushBranch(project.path, currentBranch);
-
-    const pr = await this.githubManager.createPullRequest(
-      owner,
-      repo,
-      params.title,
-      params.body,
-      currentBranch,
-      config.git_workflow.main_branch,
-      params.is_draft ?? true,
-      project.reviewers
-    );
-
-    return `Created pull request #${pr.number}: ${pr.html_url}`;
   }
 
   async checkpoint(params: CheckpointParams): Promise<string> {
-    const project = this.getCurrentProject();
-    const config = this.configManager.loadConfig();
+    const progress = new ProgressIndicator();
+    
+    try {
+      progress.start('Validating project');
+      const project = await this.getCurrentProject();
+      const config = await this.configManager.loadConfig();
 
-    if (!await this.gitManager.isGitRepository(project.path)) {
-      throw new Error(`Project at ${project.path} is not a Git repository`);
+      if (!await this.gitManager.isGitRepository(project.path)) {
+        progress.fail();
+        throw new GitError(
+          `Project at ${project.path} is not a Git repository`,
+          'Initialize with "git init" or clone an existing repository'
+        );
+      }
+
+      const currentBranch = await this.gitManager.getCurrentBranch(project.path);
+      if (config.git_workflow.protected_branches.includes(currentBranch)) {
+        progress.fail();
+        throw createProtectedBranchError(currentBranch);
+      }
+
+      progress.update('Checking for changes');
+      const uncommittedChanges = await this.gitManager.getUncommittedChanges(project.path);
+      if (!uncommittedChanges) {
+        progress.fail();
+        throw createNoChangesError();
+      }
+
+      progress.update('Committing changes');
+      await this.gitManager.commitChanges(project.path, params.message);
+      
+      progress.succeed('Changes committed');
+
+      return StatusDisplay.showCheckpointCreated(params.message);
+    } catch (error) {
+      progress.fail();
+      throw error;
     }
-
-    const currentBranch = await this.gitManager.getCurrentBranch(project.path);
-    if (config.git_workflow.protected_branches.includes(currentBranch)) {
-      throw new Error(`Cannot commit to protected branch: ${currentBranch}`);
-    }
-
-    const uncommittedChanges = await this.gitManager.getUncommittedChanges(project.path);
-    if (!uncommittedChanges) {
-      throw new Error('No changes to commit');
-    }
-
-    await this.gitManager.commitChanges(project.path, params.message);
-
-    return `Committed changes with message: ${params.message}`;
   }
 
   close() {

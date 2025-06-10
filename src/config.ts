@@ -3,15 +3,19 @@ import * as path from 'path';
 import * as os from 'os';
 import * as yaml from 'js-yaml';
 import { Config } from './types.js';
+import { ConfigValidator } from './validation.js';
+import chalk from 'chalk';
 
 export class ConfigManager {
   private configPath: string;
   private config: Config | null = null;
+  private validator: ConfigValidator;
 
   constructor() {
     const configDir = path.join(os.homedir(), '.config', 'claude-code-github');
     this.configPath = path.join(configDir, 'config.yml');
     this.ensureConfigDir();
+    this.validator = new ConfigValidator();
   }
 
   private ensureConfigDir() {
@@ -73,16 +77,18 @@ projects: []
     fs.writeFileSync(this.configPath, configWithComments, 'utf8');
   }
 
-  loadConfig(): Config {
+  async loadConfig(): Promise<Config> {
     if (this.config) {
       return this.config;
     }
 
     if (!fs.existsSync(this.configPath)) {
-      console.error(`Configuration file not found at ${this.configPath}`);
-      console.error('Creating default configuration file...');
+      console.error(chalk.yellow(`\n⚠️  Configuration file not found at ${this.configPath}`));
+      console.error(chalk.gray('Creating default configuration file...'));
       this.writeDefaultConfig();
-      console.error(`Please edit ${this.configPath} to configure your projects.`);
+      console.error(chalk.cyan(`\n✨ Created default configuration at ${this.configPath}`));
+      console.error(chalk.gray('Please edit this file to configure your projects.'));
+      console.error(chalk.gray('\nTip: Run with --setup flag for an interactive setup wizard.'));
       process.exit(1);
     }
 
@@ -90,51 +96,54 @@ projects: []
       const configContent = fs.readFileSync(this.configPath, 'utf8');
       this.config = yaml.load(configContent) as Config;
       
-      this.validateConfig(this.config);
+      // Run comprehensive validation
+      console.error(chalk.gray('Validating configuration...'));
+      const validationResult = await this.validator.validateConfig(this.config);
+      
+      if (!validationResult.valid) {
+        console.error(this.validator.formatValidationResults(validationResult));
+        console.error(chalk.red('\n❌ Configuration validation failed!'));
+        console.error(chalk.gray(`Please fix the errors in ${this.configPath}`));
+        process.exit(1);
+      }
+      
+      if (validationResult.warnings.length > 0) {
+        console.error(this.validator.formatValidationResults(validationResult));
+      }
+      
+      // Validate GitHub token
+      const tokenResult = await this.validator.validateGitHubToken();
+      if (!tokenResult.valid) {
+        console.error(this.validator.formatValidationResults(tokenResult));
+        console.error(chalk.yellow('\n⚠️  GitHub authentication required'));
+        console.error(chalk.gray('You will be prompted for a token when needed.'));
+      }
+      
       return this.config;
     } catch (error) {
-      console.error(`Failed to load configuration: ${error instanceof Error ? error.message : String(error)}`);
+      if (error instanceof yaml.YAMLException) {
+        console.error(chalk.red(`\n❌ Invalid YAML in configuration file:`));
+        console.error(chalk.gray(error.message));
+        console.error(chalk.gray(`\nPlease check the syntax in ${this.configPath}`));
+      } else {
+        console.error(chalk.red(`\n❌ Failed to load configuration: ${error instanceof Error ? error.message : String(error)}`));
+      }
       process.exit(1);
     }
   }
 
+  // Keep simple validation for backward compatibility
   private validateConfig(config: Config) {
-    if (!config.git_workflow) {
-      throw new Error('Missing git_workflow configuration');
-    }
-
-    if (!config.git_workflow.main_branch) {
-      throw new Error('Missing git_workflow.main_branch');
-    }
-
-    if (!Array.isArray(config.git_workflow.protected_branches)) {
-      throw new Error('git_workflow.protected_branches must be an array');
-    }
-
-    if (!config.git_workflow.branch_prefixes) {
-      throw new Error('Missing git_workflow.branch_prefixes');
-    }
-
-    if (!Array.isArray(config.projects)) {
-      throw new Error('projects must be an array');
-    }
-
-    for (const project of config.projects) {
-      if (!project.path || !project.github_repo) {
-        throw new Error('Each project must have path and github_repo');
-      }
-
-      if (!fs.existsSync(project.path)) {
-        throw new Error(`Project path does not exist: ${project.path}`);
-      }
-    }
+    // Basic structural validation is now handled by ConfigValidator
+    // This method is kept for backward compatibility but actual validation
+    // is done by the ConfigValidator class in loadConfig()
   }
 
   getConfigPath(): string {
     return this.configPath;
   }
 
-  reloadConfig(): Config {
+  async reloadConfig(): Promise<Config> {
     this.config = null;
     return this.loadConfig();
   }

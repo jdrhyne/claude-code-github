@@ -1,4 +1,5 @@
 import { JsonRpcRequest, JsonRpcResponse, JsonRpcError, McpTool } from './types.js';
+import { formatJsonRpcError } from './errors.js';
 
 export class McpServer {
   private tools: Map<string, McpTool> = new Map();
@@ -74,11 +75,7 @@ export class McpServer {
         id: id ?? null
       };
     } catch (error) {
-      const errorResponse: JsonRpcError = {
-        code: -32603,
-        message: error instanceof Error ? error.message : 'Internal error',
-        data: error instanceof Error ? error.stack : undefined
-      };
+      const errorResponse = formatJsonRpcError(error instanceof Error ? error : new Error(String(error)));
 
       return {
         jsonrpc: '2.0',

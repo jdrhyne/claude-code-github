@@ -34,6 +34,8 @@ export interface ProjectConfig {
   reviewers?: string[];
 }
 
+export type Project = ProjectConfig;
+
 export interface GitWorkflowConfig {
   main_branch: string;
   protected_branches: string[];

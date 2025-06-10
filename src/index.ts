@@ -3,15 +3,25 @@
 import { McpServer } from './mcp-server.js';
 import { DevelopmentTools } from './development-tools.js';
 import { McpTool } from './types.js';
+import { formatError } from './errors.js';
+import { SetupWizard } from './setup-wizard.js';
 
 async function main() {
+  // Check for setup flag
+  const args = process.argv.slice(2);
+  if (args.includes('--setup') || args.includes('-s')) {
+    const wizard = new SetupWizard();
+    await wizard.run();
+    process.exit(0);
+  }
+
   const server = new McpServer();
   const devTools = new DevelopmentTools();
 
   try {
     await devTools.initialize();
   } catch (error) {
-    console.error(`Failed to initialize: ${error instanceof Error ? error.message : String(error)}`);
+    console.error(formatError(error instanceof Error ? error : new Error(String(error))));
     process.exit(1);
   }
 
@@ -122,6 +132,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error('Fatal error:', error);
+  console.error(formatError(error instanceof Error ? error : new Error(String(error))));
   process.exit(1);
 });
