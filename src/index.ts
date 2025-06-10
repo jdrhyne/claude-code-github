@@ -16,7 +16,7 @@ async function main() {
   }
 
   const statusTool: McpTool = {
-    name: 'development_status',
+    name: 'dev_status',
     description: 'Get the current development status of the active project',
     inputSchema: {
       type: 'object',
@@ -26,7 +26,7 @@ async function main() {
   };
 
   const createBranchTool: McpTool = {
-    name: 'development_create_branch',
+    name: 'dev_create_branch',
     description: 'Create a new branch with appropriate prefix and commit current changes',
     inputSchema: {
       type: 'object',
@@ -50,7 +50,7 @@ async function main() {
   };
 
   const createPullRequestTool: McpTool = {
-    name: 'development_create_pull_request',
+    name: 'dev_create_pull_request',
     description: 'Push current branch and create a pull request on GitHub',
     inputSchema: {
       type: 'object',
@@ -74,7 +74,7 @@ async function main() {
   };
 
   const checkpointTool: McpTool = {
-    name: 'development_checkpoint',
+    name: 'dev_checkpoint',
     description: 'Create a commit with current changes',
     inputSchema: {
       type: 'object',
