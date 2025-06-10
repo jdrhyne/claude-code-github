@@ -11,7 +11,7 @@ An **intelligent MCP server** for Claude Code that monitors your development pat
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/node/v/@jdrhyne/claude-code-github.svg)](https://nodejs.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
-[![Changelog](https://img.shields.io/badge/changelog-Read%20a%20it-orange)](CHANGELOG.md)
+[![Changelog](https://img.shields.io/badge/changelog-Read%20it-orange)](CHANGELOG.md)
 
 ## 🚀 Quick Start
 
