@@ -100,10 +100,15 @@ npm install -g @jdrhyne/claude-code-github
 npx @jdrhyne/claude-code-github@latest
 ```
 
-On first run, the server will:
-- Create a configuration file at `~/.config/claude-code-github/config.yml`
-- Prompt you to create a GitHub Personal Access Token
-- Exit with instructions to configure your projects
+**First run behavior**:
+- Creates a configuration file at `~/.config/claude-code-github/config.yml`
+- Displays instructions to configure your projects
+- Exits so you can edit the config
+
+**Subsequent runs**:
+- Starts silently and waits for JSON-RPC communication
+- No console output = server is working correctly
+- Press Ctrl+C to stop the server when testing
 
 ### 2. Configure Your Projects
 
@@ -169,17 +174,29 @@ Add the server to your Claude Code configuration:
 Verify everything is working correctly:
 
 ```bash
-# Test the server starts correctly
-npx @jdrhyne/claude-code-github@latest --help
-
 # Verify Node.js version
 node --version  # Should be 16+
 
 # Verify Git is available
 git --version
 
-# Check Claude Code can communicate
-# (Run this in a Git repository)
+# Test the server starts (should run silently and wait for input)
+npx @jdrhyne/claude-code-github@latest
+# Press Ctrl+C to exit after a few seconds - this means it's working!
+
+# Test server responds to JSON-RPC (optional verification)
+echo '{"jsonrpc":"2.0","method":"initialize","params":{},"id":1}' | npx @jdrhyne/claude-code-github@latest
+# Should output a JSON response, then Ctrl+C to exit
+```
+
+**Important**: The MCP server runs **silently** when working correctly. If you see no output and the process keeps running, that's perfect! The server communicates via JSON-RPC protocol, not console messages.
+
+### 6. Test with Claude Code
+
+Once Claude Code is configured, test the integration:
+
+```bash
+# Check Claude Code can communicate (run this in a configured Git repository)
 claude-code "What's the status of my current project?"
 ```
 
@@ -473,6 +490,41 @@ Tokens are never stored in configuration files or logs.
 Before pushing to GitHub, the server validates that your local Git remote matches the configured repository, preventing accidental pushes to wrong repositories.
 
 ## Troubleshooting
+
+### Common Questions
+
+#### "The server doesn't show any output - is it working?"
+
+**This is normal!** MCP servers run silently when working correctly. You should see:
+
+✅ **Expected**: No console output, process keeps running  
+✅ **Expected**: Process responds to Ctrl+C to terminate  
+❌ **Problem**: Error messages or immediate exit  
+
+```bash
+# Test if it's working - run this and wait a few seconds:
+npx @jdrhyne/claude-code-github@latest
+# If no errors appear and it keeps running, it's working perfectly!
+# Press Ctrl+C to exit
+```
+
+#### "Server starts but Claude Code can't find my project"
+
+Make sure your project is configured in `~/.config/claude-code-github/config.yml`:
+
+```yaml
+projects:
+  - path: "/full/absolute/path/to/your/project"  # Must be absolute!
+    github_repo: "username/repository-name"
+```
+
+The server automatically detects which project you're in based on your current directory.
+
+**Project Detection Rules**:
+- Server matches your current directory against configured project paths
+- If you're in `/Users/you/code/myapp`, it looks for a project with path `/Users/you/code/myapp`
+- If no exact match, it falls back to the first project in your config
+- The server works from any directory, but tools work best when run from a configured project
 
 ### Installation & Startup Issues
 
