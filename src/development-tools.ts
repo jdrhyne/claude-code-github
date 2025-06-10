@@ -36,12 +36,14 @@ import {
 } from './errors.js';
 import { ProgressIndicator } from './progress.js';
 import { StatusDisplay } from './status-display.js';
+import { SuggestionEngine } from './suggestion-engine.js';
 
 export class DevelopmentTools {
   private configManager: ConfigManager;
   private gitManager: GitManager;
   private githubManager: GitHubManager;
   private fileWatcher: FileWatcher;
+  private suggestionEngine!: SuggestionEngine;
   private currentProjectPath: string | null = null;
 
   constructor() {
@@ -49,6 +51,7 @@ export class DevelopmentTools {
     this.gitManager = new GitManager();
     this.githubManager = new GitHubManager();
     this.fileWatcher = new FileWatcher();
+    // SuggestionEngine will be initialized after config is loaded
   }
 
   async initialize() {
@@ -58,6 +61,9 @@ export class DevelopmentTools {
       progress.start('Loading configuration');
       const config = await this.configManager.loadConfig();
       progress.succeed('Configuration loaded');
+      
+      // Initialize suggestion engine with config
+      this.suggestionEngine = new SuggestionEngine(config);
       
       if (config.projects.length > 0) {
         progress.start(`Setting up ${config.projects.length} project${config.projects.length > 1 ? 's' : ''}`);
@@ -123,11 +129,28 @@ export class DevelopmentTools {
     const isProtected = config.git_workflow.protected_branches.includes(branch);
     const uncommittedChanges = await this.gitManager.getUncommittedChanges(project.path);
 
-    return {
+    // Build basic status
+    const status: DevelopmentStatus = {
       branch,
       is_protected: isProtected,
       uncommitted_changes: uncommittedChanges || undefined
     };
+
+    // Get intelligent suggestions if suggestion engine is initialized
+    if (this.suggestionEngine) {
+      const suggestions = this.suggestionEngine.analyzeSituation(project.path, status);
+      const hints = this.suggestionEngine.getContextualHints(project.path);
+      
+      if (suggestions.length > 0) {
+        status.suggestions = suggestions;
+      }
+      
+      if (hints.length > 0) {
+        status.hints = hints;
+      }
+    }
+
+    return status;
   }
 
   async getEnhancedStatus(): Promise<any> {

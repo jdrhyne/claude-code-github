@@ -71,6 +71,14 @@ export interface DevelopmentStatus {
   branch: string;
   is_protected: boolean;
   uncommitted_changes?: UncommittedChanges;
+  suggestions?: Array<{
+    type: string;
+    priority: string;
+    message: string;
+    action?: string;
+    reason?: string;
+  }>;
+  hints?: string[];
 }
 
 export interface CreateBranchParams {
