@@ -117,4 +117,31 @@ export class GitHubManager {
       repo: parts[1]
     };
   }
+
+  async getLatestWorkflowRuns(
+    owner: string,
+    repo: string,
+    branch: string,
+    limit: number = 5
+  ): Promise<Array<{ name: string; url: string; status?: string }>> {
+    const octokit = await this.getOctokit();
+    
+    try {
+      const response = await octokit.rest.actions.listWorkflowRunsForRepo({
+        owner,
+        repo,
+        branch,
+        per_page: limit
+      });
+
+      return response.data.workflow_runs.map(run => ({
+        name: run.name || 'Unknown Workflow',
+        url: run.html_url,
+        status: run.status || undefined
+      }));
+    } catch (error) {
+      // Non-critical - return empty array if we can't get workflow runs
+      return [];
+    }
+  }
 }

@@ -44,6 +44,11 @@ export interface GitWorkflowConfig {
     bugfix: string;
     refactor: string;
   };
+  auto_push?: {
+    feature_branches?: boolean;
+    main_branch?: boolean;
+    confirm_before_push?: boolean;
+  };
 }
 
 export interface Config {
@@ -82,4 +87,27 @@ export interface CreatePullRequestParams {
 
 export interface CheckpointParams {
   message: string;
+  push?: boolean;
+}
+
+export interface DeploymentInfo {
+  should_deploy: boolean;
+  reason?: string;
+  version_bump?: {
+    from: string;
+    to: string;
+  };
+  workflows?: string[];
+}
+
+export interface PushResult {
+  pushed: boolean;
+  branch: string;
+  remote_url?: string;
+  deployment_info?: DeploymentInfo;
+  workflow_runs?: {
+    name: string;
+    url: string;
+    status?: string;
+  }[];
 }

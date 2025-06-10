@@ -7,7 +7,9 @@ import {
   CreateBranchParams, 
   CreatePullRequestParams, 
   CheckpointParams,
-  ProjectConfig 
+  ProjectConfig,
+  PushResult,
+  DeploymentInfo 
 } from './types.js';
 import * as path from 'path';
 import { 
@@ -21,7 +23,8 @@ import {
   createInvalidBranchTypeError,
   createGitRemoteMismatchError
 } from './errors.js';
-import { ProgressIndicator, StatusDisplay } from './progress.js';
+import { ProgressIndicator } from './progress.js';
+import { StatusDisplay } from './status-display.js';
 
 export class DevelopmentTools {
   private configManager: ConfigManager;
@@ -224,7 +227,7 @@ export class DevelopmentTools {
       
       progress.succeed('Pull request created');
 
-      return StatusDisplay.showPullRequestCreated(pr.number, pr.html_url);
+      return StatusDisplay.showPullRequestCreated(pr.html_url, params.is_draft ?? true);
     } catch (error) {
       progress.fail();
       throw error;
@@ -265,11 +268,133 @@ export class DevelopmentTools {
       
       progress.succeed('Changes committed');
 
-      return StatusDisplay.showCheckpointCreated(params.message);
+      // Check if we should auto-push
+      const shouldAutoPush = this.shouldAutoPush(config, currentBranch, params.push);
+      let pushResult: PushResult | null = null;
+
+      if (shouldAutoPush) {
+        pushResult = await this.performAutoPush(project, config, currentBranch, params.message, progress);
+      }
+
+      // Display results
+      const lines: string[] = [StatusDisplay.showCheckpointCreated(params.message)];
+      
+      if (pushResult && pushResult.pushed) {
+        lines.push('');
+        lines.push(StatusDisplay.showPushResult(pushResult));
+      }
+
+      return lines.join('\n');
     } catch (error) {
       progress.fail();
       throw error;
     }
+  }
+
+  private shouldAutoPush(config: any, currentBranch: string, explicitPush?: boolean): boolean {
+    // Explicit push parameter overrides everything
+    if (explicitPush !== undefined) {
+      return explicitPush;
+    }
+
+    // Check auto-push configuration
+    const autoPushConfig = config.git_workflow.auto_push;
+    if (!autoPushConfig) {
+      return false;
+    }
+
+    const isMainBranch = currentBranch === config.git_workflow.main_branch;
+    
+    if (isMainBranch && autoPushConfig.main_branch) {
+      return true;
+    }
+
+    if (!isMainBranch && autoPushConfig.feature_branches) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private async performAutoPush(
+    project: ProjectConfig, 
+    config: any, 
+    currentBranch: string, 
+    commitMessage: string,
+    progress: ProgressIndicator
+  ): Promise<PushResult> {
+    const result: PushResult = {
+      pushed: false,
+      branch: currentBranch
+    };
+
+    try {
+      // Safety checks
+      progress.update('Performing safety checks');
+      
+      // Verify remote matches configuration
+      if (!await this.gitManager.validateRemoteMatchesConfig(project.path, project.github_repo)) {
+        const remoteUrl = await this.gitManager.getRemoteUrl(project.path);
+        const parsed = remoteUrl ? this.gitManager.parseGitHubUrl(remoteUrl) : null;
+        const actual = parsed ? `${parsed.owner}/${parsed.repo}` : 'unknown';
+        throw createGitRemoteMismatchError(project.github_repo, actual);
+      }
+
+      // Check for unpushed commits
+      const hasUnpushedCommits = await this.gitManager.hasUnpushedCommits(project.path, currentBranch);
+      if (!hasUnpushedCommits) {
+        result.pushed = false;
+        return result;
+      }
+
+      // Check if confirmation is required
+      if (config.git_workflow.auto_push?.confirm_before_push) {
+        // In MCP mode, we can't ask for confirmation, so we skip the push
+        // This could be enhanced later to return a confirmation requirement
+        result.pushed = false;
+        return result;
+      }
+
+      progress.update(`Pushing ${currentBranch} to remote`);
+      
+      // Perform the push
+      await this.gitManager.pushBranch(project.path, currentBranch);
+      result.pushed = true;
+      result.remote_url = await this.gitManager.getRemoteUrl(project.path) || undefined;
+
+      // Detect deployment information
+      progress.update('Analyzing deployment triggers');
+      result.deployment_info = await this.gitManager.detectDeployment(
+        project.path, 
+        commitMessage, 
+        currentBranch, 
+        config.git_workflow.main_branch
+      );
+
+      // Get workflow run information if available
+      if (result.deployment_info?.should_deploy && result.deployment_info.workflows) {
+        result.workflow_runs = await this.getWorkflowRunUrls(project, result.deployment_info.workflows);
+      }
+
+      progress.succeed('Push completed');
+      return result;
+
+    } catch (error) {
+      progress.fail('Push failed');
+      throw error;
+    }
+  }
+
+  private async getWorkflowRunUrls(project: ProjectConfig, workflows: string[]): Promise<{ name: string; url: string }[]> {
+    const results: { name: string; url: string }[] = [];
+    
+    for (const workflow of workflows) {
+      const workflowName = workflow.replace(/\.(yml|yaml)$/, '');
+      const url = `https://github.com/${project.github_repo}/actions/workflows/${workflow}`;
+      results.push({ name: workflowName, url });
+    }
+
+    return results;
   }
 
   close() {

@@ -34,6 +34,11 @@ export class ConfigManager {
           feature: 'feature/',
           bugfix: 'bugfix/',
           refactor: 'refactor/'
+        },
+        auto_push: {
+          feature_branches: true,
+          main_branch: false,
+          confirm_before_push: false
         }
       },
       projects: []
@@ -61,6 +66,12 @@ git_workflow:
     feature: feature/
     bugfix: bugfix/
     refactor: refactor/
+  
+  # Auto-push configuration
+  auto_push:
+    feature_branches: true      # Automatically push feature branches after commits
+    main_branch: false          # Automatically push main branch (use with caution)
+    confirm_before_push: false  # Ask for confirmation before pushing
 
 # A list of projects for the server to monitor.
 # Use absolute paths.

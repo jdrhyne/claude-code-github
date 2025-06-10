@@ -1,6 +1,7 @@
 import { simpleGit, SimpleGit, StatusResult } from 'simple-git';
 import * as path from 'path';
-import { FileChange, UncommittedChanges } from './types.js';
+import * as fs from 'fs/promises';
+import { FileChange, UncommittedChanges, DeploymentInfo } from './types.js';
 
 export class GitManager {
   private gitInstances: Map<string, SimpleGit> = new Map();
@@ -154,5 +155,101 @@ export class GitManager {
 
     const actualRepo = `${parsed.owner}/${parsed.repo}`;
     return actualRepo === expectedRepo;
+  }
+
+  async hasUpstreamBranch(projectPath: string, branchName: string): Promise<boolean> {
+    const git = this.getGit(projectPath);
+    try {
+      const remotes = await git.branch(['-r']);
+      return remotes.all.includes(`origin/${branchName}`);
+    } catch (error) {
+      return false;
+    }
+  }
+
+  async hasUnpushedCommits(projectPath: string, branchName: string): Promise<boolean> {
+    const git = this.getGit(projectPath);
+    try {
+      const log = await git.log([`origin/${branchName}..${branchName}`]);
+      return log.total > 0;
+    } catch (error) {
+      // If we can't compare with origin, assume we have unpushed commits
+      return true;
+    }
+  }
+
+  async detectGitHubWorkflows(projectPath: string): Promise<string[]> {
+    const workflowsPath = path.join(projectPath, '.github', 'workflows');
+    try {
+      const files = await fs.readdir(workflowsPath);
+      return files.filter(f => f.endsWith('.yml') || f.endsWith('.yaml'));
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async detectDeployment(projectPath: string, commitMessage: string, branch: string, mainBranch: string): Promise<DeploymentInfo> {
+    const deployment: DeploymentInfo = {
+      should_deploy: false
+    };
+
+    // Check if we're on main/master branch
+    if (branch === mainBranch) {
+      deployment.should_deploy = true;
+      deployment.reason = 'Commit on main branch';
+    }
+
+    // Check for version bump in package.json
+    try {
+      const packagePath = path.join(projectPath, 'package.json');
+      const packageContent = await fs.readFile(packagePath, 'utf-8');
+      const packageJson = JSON.parse(packageContent);
+      
+      // Check if package.json was modified in the last commit
+      const git = this.getGit(projectPath);
+      const diff = await git.diff(['HEAD~1', 'HEAD', '--', 'package.json']);
+      
+      if (diff) {
+        const versionMatch = diff.match(/-\s*"version":\s*"([^"]+)"\s*\+\s*"version":\s*"([^"]+)"/);
+        if (versionMatch) {
+          deployment.version_bump = {
+            from: versionMatch[1],
+            to: versionMatch[2]
+          };
+          deployment.should_deploy = true;
+          deployment.reason = `Version bump from ${versionMatch[1]} to ${versionMatch[2]}`;
+        }
+      }
+    } catch (error) {
+      // Ignore if package.json doesn't exist or can't be parsed
+    }
+
+    // Check for deployment-triggering commit patterns
+    const deploymentPatterns = [
+      /^(feat|fix|perf)(\(.+\))?:/,  // Conventional commits that typically trigger releases
+      /^release:/,                     // Explicit release commits
+      /^v\d+\.\d+\.\d+/,              // Version tag commits
+      /\[deploy\]/,                    // Explicit deploy markers
+      /\[release\]/                    // Explicit release markers
+    ];
+
+    for (const pattern of deploymentPatterns) {
+      if (pattern.test(commitMessage)) {
+        deployment.should_deploy = true;
+        deployment.reason = deployment.reason || `Deployment-triggering commit pattern: ${pattern}`;
+        break;
+      }
+    }
+
+    // Detect available workflows
+    deployment.workflows = await this.detectGitHubWorkflows(projectPath);
+
+    return deployment;
+  }
+
+  async getLastCommitMessage(projectPath: string): Promise<string> {
+    const git = this.getGit(projectPath);
+    const log = await git.log(['-1']);
+    return log.latest?.message || '';
   }
 }

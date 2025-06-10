@@ -85,13 +85,18 @@ async function main() {
 
   const checkpointTool: McpTool = {
     name: 'dev_checkpoint',
-    description: 'Create a commit with current changes',
+    description: 'Create a commit with current changes and optionally push to remote',
     inputSchema: {
       type: 'object',
       properties: {
         message: {
           type: 'string',
           description: 'The commit message'
+        },
+        push: {
+          type: 'boolean',
+          description: 'Whether to push to remote after committing (overrides auto-push config)',
+          default: undefined
         }
       },
       required: ['message']
