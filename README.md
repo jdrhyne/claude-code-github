@@ -271,6 +271,48 @@ Claude will:
 
 Claude will commit your current changes without switching branches.
 
+### Working with Issues
+
+> **You**: "Show me my open issues"
+
+Claude will list all open issues assigned to you.
+
+> **You**: "Create a branch from issue #42"
+
+Claude will create a branch like `feature/42-implement-user-auth` based on the issue title.
+
+> **You**: "Update issue #42 with a comment about my progress"
+
+Claude will add a comment to the issue, automatically noting which branch you're working on.
+
+### Managing Pull Requests
+
+> **You**: "What's the status of PR #55?"
+
+Claude will show detailed PR status including review status, CI checks, and mergeable state.
+
+> **You**: "Update PR #55 to remove draft status and add reviewers alice and bob"
+
+Claude will update the PR accordingly.
+
+> **You**: "Generate a PR description based on my commits"
+
+Claude will analyze your commits and create a well-formatted PR description.
+
+### Release Management
+
+> **You**: "Bump the version to 2.0.0"
+
+Claude will update package.json and stage the changes.
+
+> **You**: "Generate a changelog since the last release"
+
+Claude will create a changelog grouped by features, fixes, and breaking changes.
+
+> **You**: "Create a new release v2.0.0"
+
+Claude will create a tag, generate release notes, and publish a GitHub release.
+
 ### Complete Development Workflow
 
 Here's a full example workflow from start to finish:
@@ -309,10 +351,15 @@ Here's a full example workflow from start to finish:
 
 The server provides these tools to Claude:
 
-### `development_status()`
+### Core Development Tools
+
+#### `dev_status()`
 Returns comprehensive project status including branch info, protected branch warnings, and detailed change summaries.
 
-### `development_create_branch(name, type, message)`
+#### `dev_status_enhanced()`
+Get comprehensive project status including PRs, issues, CI/CD status, and more.
+
+#### `dev_create_branch(name, type, message)`
 Creates a new branch with appropriate prefix and commits current changes.
 
 **Parameters**:
@@ -320,7 +367,7 @@ Creates a new branch with appropriate prefix and commits current changes.
 - `type`: Branch type (`feature`, `bugfix`, `refactor`)  
 - `message`: Commit message
 
-### `development_create_pull_request(title, body, is_draft)`
+#### `dev_create_pull_request(title, body, is_draft)`
 Pushes current branch and creates a GitHub pull request.
 
 **Parameters**:
@@ -328,11 +375,97 @@ Pushes current branch and creates a GitHub pull request.
 - `body`: PR description
 - `is_draft`: Whether to create as draft (default: true)
 
-### `development_checkpoint(message)`
+#### `dev_checkpoint(message, push?)`
 Commits current changes with the provided message.
 
 **Parameters**:
 - `message`: Commit message
+- `push`: Whether to push to remote (optional)
+
+#### `dev_quick(action)`
+Perform common workflow actions quickly.
+
+**Parameters**:
+- `action`: One of `wip`, `fix`, `done`, `sync`, `update`
+
+### Enhanced PR Management Tools
+
+#### `dev_pr_update(pr_number, ...)`
+Update an existing pull request.
+
+**Parameters**:
+- `pr_number`: The PR number to update
+- `title`: New title (optional)
+- `body`: New description (optional)
+- `draft`: Draft status (optional)
+- `reviewers`: Array of reviewers (optional)
+- `labels`: Array of labels (optional)
+
+#### `dev_pr_status(pr_number)`
+Get detailed status of a pull request including reviews, checks, and mergeable state.
+
+#### `dev_pr_generate_description(template?)`
+Generate a pull request description based on commits.
+
+### Issue Integration Tools
+
+#### `dev_issue_branch(issue_number, branch_type?)`
+Create a new branch from a GitHub issue.
+
+**Parameters**:
+- `issue_number`: The issue number
+- `branch_type`: Type of branch (default: `feature`)
+
+#### `dev_issue_list(state?, labels?, ...)`
+List GitHub issues with filtering options.
+
+**Parameters**:
+- `state`: `open`, `closed`, or `all`
+- `labels`: Array of label names
+- `assignee`: Filter by assignee
+- `sort`: Sort by `created`, `updated`, or `comments`
+- `limit`: Maximum results
+
+#### `dev_issue_update(issue_number, ...)`
+Update a GitHub issue.
+
+**Parameters**:
+- `issue_number`: The issue number
+- `comment`: Add a comment
+- `state`: Change state to `open` or `closed`
+- `labels`: Update labels
+
+### Release Management Tools
+
+#### `dev_version_bump(type, custom_version?)`
+Bump the project version.
+
+**Parameters**:
+- `type`: `major`, `minor`, `patch`, or `custom`
+- `custom_version`: Version string (when type is `custom`)
+
+#### `dev_changelog(from?, to?)`
+Generate a changelog based on commits.
+
+**Parameters**:
+- `from`: Starting Git ref (tag, commit, branch)
+- `to`: Ending Git ref (default: HEAD)
+
+#### `dev_release(tag_name, ...)`
+Create a GitHub release with automatic changelog generation.
+
+**Parameters**:
+- `tag_name`: The tag name (e.g., v1.2.3)
+- `name`: Release name (optional)
+- `body`: Release notes (auto-generated if not provided)
+- `draft`: Whether to create as draft
+- `prerelease`: Whether this is a pre-release
+
+#### `dev_release_latest()`
+Get information about the latest release.
+
+#### `dev_release_list(limit?)`
+List recent releases.
 
 ## Configuration Reference
 

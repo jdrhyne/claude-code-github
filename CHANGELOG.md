@@ -15,6 +15,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub Actions CI/CD workflow
 - Improved package.json metadata
 - Project badges in README
+- **Enhanced PR Management Tools** (Phase 1)
+  - `dev_pr_update` - Update existing pull requests (title, body, reviewers, labels, draft status)
+  - `dev_pr_status` - Get detailed PR status including reviews, checks, and mergeable state
+  - `dev_pr_generate_description` - Generate PR descriptions from commits with conventional commit parsing
+- **Issue Integration Tools** (Phase 1)
+  - `dev_issue_branch` - Create branches from GitHub issues with automatic naming
+  - `dev_issue_list` - List and filter project issues with advanced options
+  - `dev_issue_update` - Update issue status and add comments with branch context
+- **Release Management Tools** (Phase 1)
+  - `dev_version_bump` - Bump project version (major/minor/patch/custom)
+  - `dev_changelog` - Generate changelogs from commits with conventional commit support
+  - `dev_release` - Create GitHub releases with automatic changelog generation
+  - `dev_release_latest` - Get information about the latest release
+  - `dev_release_list` - List recent releases
+- Enhanced GitHub API integration with comprehensive error handling
+- Support for conventional commits in changelog generation
+- Automatic issue linking in commits and PR descriptions
 
 ## [1.0.1] - 2025-01-06
 

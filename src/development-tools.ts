@@ -9,9 +9,22 @@ import {
   CheckpointParams,
   ProjectConfig,
   PushResult,
-  DeploymentInfo 
+  DeploymentInfo,
+  UpdatePullRequestParams,
+  PullRequestStatus,
+  GeneratePRDescriptionParams,
+  CreateBranchFromIssueParams,
+  IssueDetails,
+  ListIssuesParams,
+  UpdateIssueParams,
+  VersionBumpParams,
+  GenerateChangelogParams,
+  CreateReleaseParams,
+  ReleaseInfo,
+  ChangelogEntry
 } from './types.js';
 import * as path from 'path';
+import * as fs from 'fs/promises';
 import { 
   ProjectError, 
   GitError, 
@@ -615,5 +628,451 @@ export class DevelopmentTools {
 
   close() {
     this.fileWatcher.close();
+  }
+
+  // Enhanced PR Management Methods
+  async updatePullRequest(params: UpdatePullRequestParams): Promise<void> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start('Updating pull request');
+      
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      await this.githubManager.updatePullRequest(owner, repo, params);
+      
+      progress.succeed(`Pull request #${params.pr_number} updated`);
+    } catch (error) {
+      progress.fail('Failed to update pull request');
+      throw error;
+    }
+  }
+
+  async getPullRequestStatus(pr_number: number): Promise<PullRequestStatus> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start('Getting pull request status');
+      
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      const status = await this.githubManager.getPullRequestStatus(owner, repo, pr_number);
+      
+      progress.succeed('Pull request status retrieved');
+      return status;
+    } catch (error) {
+      progress.fail('Failed to get pull request status');
+      throw error;
+    }
+  }
+
+  async generatePRDescription(params: GeneratePRDescriptionParams = {}): Promise<string> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      const config = await this.configManager.loadConfig();
+      progress.start('Generating pull request description');
+      
+      const currentBranch = await this.gitManager.getCurrentBranch(project.path);
+      const baseBranch = config.git_workflow.main_branch;
+      
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      const description = await this.githubManager.generatePRDescription(
+        owner, 
+        repo, 
+        baseBranch, 
+        currentBranch,
+        params.template
+      );
+      
+      progress.succeed('Pull request description generated');
+      return description;
+    } catch (error) {
+      progress.fail('Failed to generate pull request description');
+      throw error;
+    }
+  }
+
+  // Issue Integration Methods
+  async createBranchFromIssue(params: CreateBranchFromIssueParams): Promise<{
+    branch_name: string;
+    issue: IssueDetails;
+  }> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      const config = await this.configManager.loadConfig();
+      progress.start(`Creating branch from issue #${params.issue_number}`);
+      
+      // Get issue details
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      const issue = await this.githubManager.getIssue(owner, repo, params.issue_number);
+      
+      // Generate branch name from issue title
+      const branchType = params.branch_type || 'feature';
+      const prefix = config.git_workflow.branch_prefixes[branchType];
+      const safeName = issue.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 50);
+      const branchName = `${prefix}${issue.number}-${safeName}`;
+      
+      // Create and checkout branch
+      progress.update(`Creating branch ${branchName}`);
+      await this.gitManager.createBranch(project.path, branchName);
+      
+      // Add issue reference to first commit message
+      const commitMessage = `${branchType}: start work on #${issue.number} - ${issue.title}`;
+      
+      progress.succeed(`Created branch ${branchName} from issue #${issue.number}`);
+      return { branch_name: branchName, issue };
+    } catch (error) {
+      progress.fail('Failed to create branch from issue');
+      throw error;
+    }
+  }
+
+  async listIssues(params: ListIssuesParams = {}): Promise<IssueDetails[]> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start('Fetching issues');
+      
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      const issues = await this.githubManager.listIssues(owner, repo, params);
+      
+      progress.succeed(`Found ${issues.length} issues`);
+      return issues;
+    } catch (error) {
+      progress.fail('Failed to list issues');
+      throw error;
+    }
+  }
+
+  async updateIssue(params: UpdateIssueParams): Promise<void> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start(`Updating issue #${params.issue_number}`);
+      
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      
+      // Add auto-comment for linked commits if updating from a branch
+      if (params.comment) {
+        const currentBranch = await this.gitManager.getCurrentBranch(project.path);
+        if (currentBranch.includes(`${params.issue_number}-`)) {
+          params.comment += `\n\n_Updated from branch: ${currentBranch}_`;
+        }
+      }
+      
+      await this.githubManager.updateIssue(owner, repo, params.issue_number, {
+        comment: params.comment,
+        state: params.state,
+        labels: params.labels
+      });
+      
+      progress.succeed(`Issue #${params.issue_number} updated`);
+    } catch (error) {
+      progress.fail('Failed to update issue');
+      throw error;
+    }
+  }
+
+  // Release Management Methods
+  async versionBump(params: VersionBumpParams): Promise<{
+    old_version: string;
+    new_version: string;
+    files_updated: string[];
+  }> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start('Bumping version');
+      
+      // Get current version
+      const currentVersion = await this.gitManager.getCurrentVersion(project.path);
+      if (!currentVersion) {
+        throw new ProjectError('No version found in package.json');
+      }
+      
+      // Calculate new version
+      let newVersion: string;
+      if (params.type === 'custom' && params.custom_version) {
+        newVersion = params.custom_version;
+      } else {
+        const [major, minor, patch] = currentVersion.split('.').map(Number);
+        switch (params.type) {
+          case 'major':
+            newVersion = `${major + 1}.0.0`;
+            break;
+          case 'minor':
+            newVersion = `${major}.${minor + 1}.0`;
+            break;
+          case 'patch':
+            newVersion = `${major}.${minor}.${patch + 1}`;
+            break;
+          default:
+            throw new Error(`Invalid version bump type: ${params.type}`);
+        }
+      }
+      
+      // Update package.json
+      progress.update(`Updating version from ${currentVersion} to ${newVersion}`);
+      await this.gitManager.updateVersion(project.path, newVersion);
+      
+      const filesUpdated = ['package.json'];
+      
+      // Also update package-lock.json if it exists
+      try {
+        const lockPath = path.join(project.path, 'package-lock.json');
+        await fs.access(lockPath);
+        const { execSync } = await import('child_process');
+        execSync('npm install --package-lock-only', { cwd: project.path, stdio: 'ignore' });
+        filesUpdated.push('package-lock.json');
+      } catch (error) {
+        // package-lock.json doesn't exist or npm failed, continue
+      }
+      
+      if (params.update_files !== false) {
+        // Stage the updated files
+        await this.gitManager.stageFiles(project.path, filesUpdated);
+      }
+      
+      progress.succeed(`Version bumped from ${currentVersion} to ${newVersion}`);
+      return {
+        old_version: currentVersion,
+        new_version: newVersion,
+        files_updated: filesUpdated
+      };
+    } catch (error) {
+      progress.fail('Failed to bump version');
+      throw error;
+    }
+  }
+
+  async generateChangelog(params: GenerateChangelogParams = {}): Promise<ChangelogEntry> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start('Generating changelog');
+      
+      // Determine range
+      const to = params.to || 'HEAD';
+      const from = params.from || await this.gitManager.getLatestTag(project.path) || 'HEAD~10';
+      
+      // Get commits
+      const commits = await this.gitManager.getCommitsBetween(project.path, from, to);
+      
+      // Parse commits using conventional commit format
+      const changelogEntry: ChangelogEntry = {
+        date: new Date().toISOString().split('T')[0],
+        commits: [],
+        breaking_changes: [],
+        features: [],
+        fixes: [],
+        other: []
+      };
+      
+      for (const commit of commits) {
+        const parsed = this.parseConventionalCommit(commit.message);
+        
+        changelogEntry.commits.push({
+          hash: commit.hash.substring(0, 7),
+          type: parsed.type,
+          scope: parsed.scope,
+          subject: parsed.subject,
+          body: parsed.body,
+          breaking: parsed.breaking,
+          issues: parsed.issues
+        });
+        
+        if (parsed.breaking) {
+          changelogEntry.breaking_changes.push(`${parsed.subject}${parsed.body ? '\n' + parsed.body : ''}`);
+        }
+        
+        if (parsed.type === 'feat') {
+          changelogEntry.features.push(parsed.scope ? `**${parsed.scope}**: ${parsed.subject}` : parsed.subject);
+        } else if (parsed.type === 'fix') {
+          changelogEntry.fixes.push(parsed.scope ? `**${parsed.scope}**: ${parsed.subject}` : parsed.subject);
+        } else {
+          changelogEntry.other.push(`${parsed.type}: ${parsed.subject}`);
+        }
+      }
+      
+      // Add version if this is a tag
+      if (params.from && params.from.match(/^v?\d+\.\d+\.\d+/)) {
+        changelogEntry.version = params.from.replace(/^v/, '');
+      }
+      
+      progress.succeed('Changelog generated');
+      return changelogEntry;
+    } catch (error) {
+      progress.fail('Failed to generate changelog');
+      throw error;
+    }
+  }
+
+  private parseConventionalCommit(message: string): {
+    type?: string;
+    scope?: string;
+    subject: string;
+    body?: string;
+    breaking: boolean;
+    issues: string[];
+  } {
+    const lines = message.split('\n');
+    const header = lines[0];
+    
+    // Parse header: type(scope): subject
+    const match = header.match(/^(\w+)(?:\(([^)]+)\))?:\s*(.+)$/);
+    
+    const result = {
+      type: match?.[1],
+      scope: match?.[2],
+      subject: match?.[3] || header,
+      body: lines.slice(1).join('\n').trim() || undefined,
+      breaking: false,
+      issues: [] as string[]
+    };
+    
+    // Check for breaking changes
+    if (header.includes('!:') || message.includes('BREAKING CHANGE:')) {
+      result.breaking = true;
+    }
+    
+    // Extract issue references
+    const issueMatches = message.matchAll(/#(\d+)/g);
+    for (const match of issueMatches) {
+      result.issues.push(match[1]);
+    }
+    
+    return result;
+  }
+
+  async createRelease(params: CreateReleaseParams): Promise<ReleaseInfo> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start('Creating release');
+      
+      // Ensure we have the tag locally
+      const tags = await this.gitManager.getTags(project.path);
+      if (!tags.includes(params.tag_name)) {
+        progress.update(`Creating tag ${params.tag_name}`);
+        await this.gitManager.createTag(project.path, params.tag_name, params.name);
+        await this.gitManager.pushTags(project.path);
+      }
+      
+      // Generate release notes if not provided
+      let body = params.body;
+      if (!body && params.generate_release_notes !== false) {
+        progress.update('Generating release notes');
+        const previousTag = await this.gitManager.getLatestTag(project.path);
+        const changelog = await this.generateChangelog({
+          from: previousTag || undefined,
+          to: params.tag_name
+        });
+        
+        body = this.formatChangelogAsMarkdown(changelog);
+      }
+      
+      // Create GitHub release
+      progress.update('Creating GitHub release');
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      const release = await this.githubManager.createRelease(owner, repo, {
+        ...params,
+        body
+      });
+      
+      progress.succeed(`Release ${params.tag_name} created`);
+      return release;
+    } catch (error) {
+      progress.fail('Failed to create release');
+      throw error;
+    }
+  }
+
+  formatChangelogAsMarkdown(changelog: ChangelogEntry): string {
+    let markdown = '';
+    
+    if (changelog.breaking_changes.length > 0) {
+      markdown += '## ⚠️ Breaking Changes\n\n';
+      changelog.breaking_changes.forEach(change => {
+        markdown += `- ${change}\n`;
+      });
+      markdown += '\n';
+    }
+    
+    if (changelog.features.length > 0) {
+      markdown += '## ✨ Features\n\n';
+      changelog.features.forEach(feature => {
+        markdown += `- ${feature}\n`;
+      });
+      markdown += '\n';
+    }
+    
+    if (changelog.fixes.length > 0) {
+      markdown += '## 🐛 Bug Fixes\n\n';
+      changelog.fixes.forEach(fix => {
+        markdown += `- ${fix}\n`;
+      });
+      markdown += '\n';
+    }
+    
+    if (changelog.other.length > 0) {
+      markdown += '## 📝 Other Changes\n\n';
+      changelog.other.forEach(other => {
+        markdown += `- ${other}\n`;
+      });
+      markdown += '\n';
+    }
+    
+    markdown += `\n**Full Changelog**: ${changelog.commits.length} commits`;
+    
+    return markdown;
+  }
+
+  async getLatestRelease(): Promise<ReleaseInfo | null> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start('Getting latest release');
+      
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      const release = await this.githubManager.getLatestRelease(owner, repo);
+      
+      progress.succeed(release ? `Latest release: ${release.tag_name}` : 'No releases found');
+      return release;
+    } catch (error) {
+      progress.fail('Failed to get latest release');
+      throw error;
+    }
+  }
+
+  async listReleases(limit: number = 10): Promise<ReleaseInfo[]> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      progress.start('Listing releases');
+      
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      const releases = await this.githubManager.listReleases(owner, repo, limit);
+      
+      progress.succeed(`Found ${releases.length} releases`);
+      return releases;
+    } catch (error) {
+      progress.fail('Failed to list releases');
+      throw error;
+    }
   }
 }

@@ -130,6 +130,288 @@ async function main() {
     }
   };
 
+  // Enhanced PR Management Tools
+  const updatePRTool: McpTool = {
+    name: 'dev_pr_update',
+    description: 'Update an existing pull request (title, body, reviewers, labels, draft status)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pr_number: {
+          type: 'number',
+          description: 'The pull request number to update'
+        },
+        title: {
+          type: 'string',
+          description: 'New title for the pull request'
+        },
+        body: {
+          type: 'string',
+          description: 'New body/description for the pull request'
+        },
+        draft: {
+          type: 'boolean',
+          description: 'Whether the PR should be a draft'
+        },
+        reviewers: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of GitHub usernames to request reviews from'
+        },
+        labels: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'List of labels to apply to the PR'
+        }
+      },
+      required: ['pr_number']
+    }
+  };
+
+  const getPRStatusTool: McpTool = {
+    name: 'dev_pr_status',
+    description: 'Get detailed status of a pull request including reviews, checks, and mergeable state',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pr_number: {
+          type: 'number',
+          description: 'The pull request number'
+        }
+      },
+      required: ['pr_number']
+    }
+  };
+
+  const generatePRDescriptionTool: McpTool = {
+    name: 'dev_pr_generate_description',
+    description: 'Generate a pull request description based on commits',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        template: {
+          type: 'string',
+          description: 'Optional template to use for the description'
+        }
+      },
+      required: []
+    }
+  };
+
+  // Issue Integration Tools
+  const createBranchFromIssueTool: McpTool = {
+    name: 'dev_issue_branch',
+    description: 'Create a new branch from a GitHub issue',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        issue_number: {
+          type: 'number',
+          description: 'The issue number to create a branch from'
+        },
+        branch_type: {
+          type: 'string',
+          enum: ['feature', 'bugfix', 'refactor'],
+          description: 'The type of branch to create',
+          default: 'feature'
+        }
+      },
+      required: ['issue_number']
+    }
+  };
+
+  const listIssuesTool: McpTool = {
+    name: 'dev_issue_list',
+    description: 'List GitHub issues with filtering options',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        state: {
+          type: 'string',
+          enum: ['open', 'closed', 'all'],
+          description: 'Filter by issue state',
+          default: 'open'
+        },
+        labels: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Filter by labels'
+        },
+        assignee: {
+          type: 'string',
+          description: 'Filter by assignee username'
+        },
+        milestone: {
+          type: 'string',
+          description: 'Filter by milestone'
+        },
+        sort: {
+          type: 'string',
+          enum: ['created', 'updated', 'comments'],
+          description: 'Sort order',
+          default: 'created'
+        },
+        direction: {
+          type: 'string',
+          enum: ['asc', 'desc'],
+          description: 'Sort direction',
+          default: 'desc'
+        },
+        limit: {
+          type: 'number',
+          description: 'Maximum number of issues to return',
+          default: 30
+        }
+      },
+      required: []
+    }
+  };
+
+  const updateIssueTool: McpTool = {
+    name: 'dev_issue_update',
+    description: 'Update a GitHub issue (comment, state, labels)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        issue_number: {
+          type: 'number',
+          description: 'The issue number to update'
+        },
+        comment: {
+          type: 'string',
+          description: 'Comment to add to the issue'
+        },
+        state: {
+          type: 'string',
+          enum: ['open', 'closed'],
+          description: 'New state for the issue'
+        },
+        labels: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Labels to set on the issue'
+        }
+      },
+      required: ['issue_number']
+    }
+  };
+
+  // Release Management Tools
+  const versionBumpTool: McpTool = {
+    name: 'dev_version_bump',
+    description: 'Bump the project version (major, minor, patch)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        type: {
+          type: 'string',
+          enum: ['major', 'minor', 'patch', 'custom'],
+          description: 'Type of version bump'
+        },
+        custom_version: {
+          type: 'string',
+          description: 'Custom version string (only used when type is "custom")'
+        },
+        update_files: {
+          type: 'boolean',
+          description: 'Whether to stage the updated files',
+          default: true
+        }
+      },
+      required: ['type']
+    }
+  };
+
+  const generateChangelogTool: McpTool = {
+    name: 'dev_changelog',
+    description: 'Generate a changelog based on commits',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        from: {
+          type: 'string',
+          description: 'Starting Git ref (tag, commit, branch)'
+        },
+        to: {
+          type: 'string',
+          description: 'Ending Git ref (tag, commit, branch)',
+          default: 'HEAD'
+        },
+        format: {
+          type: 'string',
+          enum: ['markdown', 'json', 'conventional'],
+          description: 'Output format',
+          default: 'markdown'
+        }
+      },
+      required: []
+    }
+  };
+
+  const createReleaseTool: McpTool = {
+    name: 'dev_release',
+    description: 'Create a GitHub release with automatic changelog generation',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        tag_name: {
+          type: 'string',
+          description: 'The name of the tag (e.g., v1.2.3)'
+        },
+        name: {
+          type: 'string',
+          description: 'The name of the release'
+        },
+        body: {
+          type: 'string',
+          description: 'The release notes (auto-generated if not provided)'
+        },
+        draft: {
+          type: 'boolean',
+          description: 'Whether to create as a draft release',
+          default: false
+        },
+        prerelease: {
+          type: 'boolean',
+          description: 'Whether this is a pre-release',
+          default: false
+        },
+        generate_release_notes: {
+          type: 'boolean',
+          description: 'Whether to auto-generate release notes',
+          default: true
+        }
+      },
+      required: ['tag_name']
+    }
+  };
+
+  const getLatestReleaseTool: McpTool = {
+    name: 'dev_release_latest',
+    description: 'Get information about the latest release',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  };
+
+  const listReleasesTool: McpTool = {
+    name: 'dev_release_list',
+    description: 'List recent releases',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Maximum number of releases to return',
+          default: 10
+        }
+      },
+      required: []
+    }
+  };
+
   server.registerTool(statusTool, async () => {
     return await devTools.getStatus();
   });
@@ -157,6 +439,60 @@ async function main() {
 
   server.registerTool(quickActionTool, async (params) => {
     return await devTools.quickAction(params.action);
+  });
+
+  // Register Enhanced PR Management Tools
+  server.registerTool(updatePRTool, async (params) => {
+    await devTools.updatePullRequest(params);
+    return { success: true, message: `Pull request #${params.pr_number} updated` };
+  });
+
+  server.registerTool(getPRStatusTool, async (params) => {
+    return await devTools.getPullRequestStatus(params.pr_number);
+  });
+
+  server.registerTool(generatePRDescriptionTool, async (params) => {
+    return await devTools.generatePRDescription(params);
+  });
+
+  // Register Issue Integration Tools
+  server.registerTool(createBranchFromIssueTool, async (params) => {
+    return await devTools.createBranchFromIssue(params);
+  });
+
+  server.registerTool(listIssuesTool, async (params) => {
+    return await devTools.listIssues(params);
+  });
+
+  server.registerTool(updateIssueTool, async (params) => {
+    await devTools.updateIssue(params);
+    return { success: true, message: `Issue #${params.issue_number} updated` };
+  });
+
+  // Register Release Management Tools
+  server.registerTool(versionBumpTool, async (params) => {
+    return await devTools.versionBump(params);
+  });
+
+  server.registerTool(generateChangelogTool, async (params) => {
+    const changelog = await devTools.generateChangelog(params);
+    if (params.format === 'json') {
+      return changelog;
+    }
+    // Convert to markdown by default
+    return devTools['formatChangelogAsMarkdown'](changelog);
+  });
+
+  server.registerTool(createReleaseTool, async (params) => {
+    return await devTools.createRelease(params);
+  });
+
+  server.registerTool(getLatestReleaseTool, async () => {
+    return await devTools.getLatestRelease();
+  });
+
+  server.registerTool(listReleasesTool, async (params) => {
+    return await devTools.listReleases(params.limit);
   });
 
   process.on('SIGINT', () => {

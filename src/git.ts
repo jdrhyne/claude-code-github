@@ -296,4 +296,87 @@ export class GitManager {
     const log = await git.log(['-1']);
     return log.latest?.message || '';
   }
+
+  // Release Management Methods
+  async getTags(projectPath: string): Promise<string[]> {
+    const git = this.getGit(projectPath);
+    try {
+      const tags = await git.tags();
+      return tags.all;
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getLatestTag(projectPath: string): Promise<string | null> {
+    const git = this.getGit(projectPath);
+    try {
+      const tags = await git.tags(['--sort=-v:refname']);
+      return tags.latest || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async createTag(projectPath: string, tagName: string, message?: string): Promise<void> {
+    const git = this.getGit(projectPath);
+    if (message) {
+      await git.tag(['-a', tagName, '-m', message]);
+    } else {
+      await git.tag([tagName]);
+    }
+  }
+
+  async pushTags(projectPath: string): Promise<void> {
+    const git = this.getGit(projectPath);
+    await git.pushTags('origin');
+  }
+
+  async getCommitsBetween(projectPath: string, from: string, to: string = 'HEAD'): Promise<Array<{
+    hash: string;
+    message: string;
+    author: string;
+    date: string;
+  }>> {
+    const git = this.getGit(projectPath);
+    try {
+      const log = await git.log({ from, to });
+      return log.all.map(commit => ({
+        hash: commit.hash,
+        message: commit.message,
+        author: commit.author_name,
+        date: commit.date
+      }));
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getCurrentVersion(projectPath: string): Promise<string | null> {
+    try {
+      const packagePath = path.join(projectPath, 'package.json');
+      const packageContent = await fs.readFile(packagePath, 'utf-8');
+      const packageJson = JSON.parse(packageContent);
+      return packageJson.version || null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async updateVersion(projectPath: string, newVersion: string): Promise<void> {
+    try {
+      const packagePath = path.join(projectPath, 'package.json');
+      const packageContent = await fs.readFile(packagePath, 'utf-8');
+      const packageJson = JSON.parse(packageContent);
+      packageJson.version = newVersion;
+      await fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2) + '\n');
+    } catch (error) {
+      throw new Error(`Failed to update version: ${error}`);
+    }
+  }
+
+  async stageFiles(projectPath: string, files: string[]): Promise<void> {
+    const git = this.getGit(projectPath);
+    await git.add(files);
+  }
 }
