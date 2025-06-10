@@ -1,6 +1,6 @@
 {
   "name": "@jdrhyne/claude-code-github",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An MCP server for Claude Code that automates your Git workflow, from local commits to GitHub pull requests",
   "main": "dist/index.js",
   "bin": {
