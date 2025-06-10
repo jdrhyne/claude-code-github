@@ -41,6 +41,8 @@ export async function getSharedMock(): Promise<SharedMock> {
     return sharedMock;
   }
 
+  // Ensure config file exists before any tests run
+  fsMockInstance.mockConfigExists(true);
   fsMockInstance.mockProjectDirectory('/tmp/test-project');
 
   sharedMock = {

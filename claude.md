@@ -104,13 +104,13 @@ The `claude-code-github` server runs continuously in the background.
 
 1.  **File Watcher:** It monitors the file systems of the projects you listed in `config.yml` using efficient OS-native events.
 2.  **Change Analysis:** When it detects changes, it prepares a detailed summary, including a file list, status (modified, added, etc.), and a text `diff` of the code changes.
-3.  **Passive Information Provider:** The server is passive. It does not trigger any actions on its own. It provides its analysis to Claude through the `development.status` tool. All actions, such as creating a commit or a new branch, are initiated explicitly by the LLM agent using the provided tools.
+3.  **Passive Information Provider:** The server is passive. It does not trigger any actions on its own. It provides its analysis to Claude through the `dev_status` tool. All actions, such as creating a commit or a new branch, are initiated explicitly by the LLM agent using the provided tools.
 
 ## Tools Exposed to Claude
 
 The server provides the following tools for Claude to use:
 
-  * **`development.status()`**
+  * **`dev_status`**
     Provides a JSON object summarizing the current state of the active project. This is the primary tool for Claude to assess the situation and decide what to do next.
 
     *Claude, what's the status of my current project?*
@@ -132,17 +132,17 @@ The server provides the following tools for Claude to use:
     }
     ```
 
-  * **`development.create_branch(name: string, type: string, message: string)`**
+  * **`dev_create_branch(name: string, type: string, message: string)`**
     Creates and checks out a new branch with the appropriate prefix (`feature/`, `bugfix/`, etc.) and commits the current outstanding changes to this new branch using a message supplied by Claude.
 
     *Claude, create a new feature branch called `user-profile-page` with the commit message "feat: Add initial structure for profile page".*
 
-  * **`development.create_pull_request(title: string, body: string, is_draft: bool = true)`**
+  * **`dev_create_pull_request(title: string, body: string, is_draft: bool = true)`**
     Pushes the current branch to GitHub and creates a pull request.
 
     *Claude, open a draft pull request for my current branch.*
 
-  * **`development.checkpoint(message: string)`**
+  * **`dev_checkpoint(message: string)`**
     Manually triggers a commit of all current changes with a specific message provided by Claude.
 
     *Claude, make a checkpoint with the message "WIP: setting up the database models".*

@@ -238,7 +238,7 @@ Works well with automated deployment pipelines:
 
 > **You**: "Claude, what's the status of my current project?"
 
-Claude will use the `development_status()` tool to show:
+Claude will use the `dev_status` tool to show:
 - Current branch name
 - Whether you're on a protected branch
 - List of modified, added, and deleted files
@@ -319,19 +319,19 @@ Here's a full example workflow from start to finish:
 
 > **You**: "Claude, I'm starting work on a new user authentication feature. What's my current status?"
 
-> **Claude**: *Uses development_status()* - "You're on branch 'main' with 3 uncommitted files. I can see changes to login.js, auth.js, and tests. Since you're on a protected branch, let me create a feature branch for you."
+> **Claude**: *Uses dev_status* - "You're on branch 'main' with 3 uncommitted files. I can see changes to login.js, auth.js, and tests. Since you're on a protected branch, let me create a feature branch for you."
 
 > **You**: "Perfect! Create a feature branch called 'auth-system' and commit these changes."
 
-> **Claude**: *Uses development_create_branch()* - "Created branch 'feature/auth-system' and committed your changes with message 'feat: add authentication system foundation'. You now have a clean working directory on your feature branch."
+> **Claude**: *Uses dev_create_branch* - "Created branch 'feature/auth-system' and committed your changes with message 'feat: add authentication system foundation'. You now have a clean working directory on your feature branch."
 
 > **You**: "I've made more changes. Can you check my progress and create a pull request when ready?"
 
-> **Claude**: *Uses development_status()* - "You have 2 new files and 1 modification. The changes look substantial - implementing login validation and user sessions. This looks ready for review. Shall I create a draft pull request?"
+> **Claude**: *Uses dev_status* - "You have 2 new files and 1 modification. The changes look substantial - implementing login validation and user sessions. This looks ready for review. Shall I create a draft pull request?"
 
 > **You**: "Yes, create a draft PR with title 'Add User Authentication System'"
 
-> **Claude**: *Uses development_create_pull_request()* - "Created draft pull request #42: 'Add User Authentication System' at https://github.com/yourname/project/pull/42. I've assigned your configured reviewers and marked it as draft so you can review before marking ready."
+> **Claude**: *Uses dev_create_pull_request* - "Created draft pull request #42: 'Add User Authentication System' at https://github.com/yourname/project/pull/42. I've assigned your configured reviewers and marked it as draft so you can review before marking ready."
 
 ### Error Handling Examples
 
