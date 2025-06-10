@@ -131,11 +131,26 @@ jobs:
     - name: Build
       run: npm run build
 
-    - name: Check if version changed
+    - name: Check if version exists in GitHub Packages
       id: version
       run: |
         PACKAGE_VERSION=$(node -p "require('./package.json').version")
         echo "version=$PACKAGE_VERSION" >> $GITHUB_OUTPUT
+        
+        # Configure npm for GitHub Packages auth
+        echo "@jdrhyne:registry=https://npm.pkg.github.com" > .npmrc
+        echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+        
+        # Check if version already exists in GitHub Packages
+        if npm view @jdrhyne/claude-code-github@$PACKAGE_VERSION version --registry=https://npm.pkg.github.com 2>/dev/null; then
+          echo "Version $PACKAGE_VERSION already exists in GitHub Packages"
+          echo "exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "Version $PACKAGE_VERSION does not exist in GitHub Packages"
+          echo "exists=false" >> $GITHUB_OUTPUT
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Configure npm for GitHub Packages
       run: |
@@ -145,7 +160,7 @@ jobs:
         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Publish to GitHub Packages
-      if: steps.version.outputs.version != ''
+      if: steps.version.outputs.exists == 'false'
       run: npm publish
       env:
         NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
