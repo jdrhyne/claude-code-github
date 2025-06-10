@@ -47,7 +47,7 @@
     "url": "https://github.com/jdrhyne/claude-code-github/issues"
   },
   "dependencies": {
-    "chalk": "^4.1.2",
+    "chalk": "^5.4.1",
     "chokidar": "^3.5.3",
     "js-yaml": "^4.1.0",
     "keytar": "^7.9.0",
