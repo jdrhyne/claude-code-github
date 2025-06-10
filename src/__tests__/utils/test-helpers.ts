@@ -1,4 +1,5 @@
 import { getFileSystemMock, getGitMock, getGitHubMock } from './persistent-mock.js';
+import { DevelopmentStatus, FileChange } from '../../types.js';
 
 export function createTestProjectPath(): string {
   return '/tmp/test-project';
@@ -76,7 +77,7 @@ export function mockSuccessfulGitHubOperations() {
   return githubMock.createMockOctokit();
 }
 
-export function expectValidDevelopmentStatus(result: any) {
+export function expectValidDevelopmentStatus(result: DevelopmentStatus) {
   expect(result).toHaveProperty('branch');
   expect(result).toHaveProperty('is_protected');
   expect(typeof result.branch).toBe('string');
@@ -90,7 +91,7 @@ export function expectValidDevelopmentStatus(result: any) {
   }
 }
 
-export function expectValidFileChange(fileChange: any) {
+export function expectValidFileChange(fileChange: FileChange) {
   expect(fileChange).toHaveProperty('file');
   expect(fileChange).toHaveProperty('status');
   expect(typeof fileChange.file).toBe('string');

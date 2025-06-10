@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GitManager } from '../git.js';
 import { getGitMock, getFileSystemMock } from './utils/persistent-mock.js';
+import { GitMock } from './utils/git-mock.js';
+import { FileSystemMock } from './utils/fs-mock.js';
 
 describe('GitManager', () => {
   let gitManager: GitManager;
-  let gitMock: any;
-  let fsMock: any;
+  let gitMock: GitMock;
+  let fsMock: FileSystemMock;
   const testProjectPath = '/tmp/test-project';
 
   beforeEach(() => {

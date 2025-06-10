@@ -12,13 +12,17 @@ import {
   expectValidDevelopmentStatus,
   createMockEnvironment 
 } from './utils/test-helpers.js';
+import { GitMock } from './utils/git-mock.js';
+import { GitHubMock } from './utils/github-mock.js';
+import { FileSystemMock } from './utils/fs-mock.js';
+import { McpTool } from '../types.js';
 
 describe('E2E MCP Server Tests', () => {
   let client: McpTestClient;
-  let gitMock: any;
-  let githubMock: any;
-  let fsMock: any;
-  let envMock: any;
+  let gitMock: GitMock;
+  let githubMock: GitHubMock;
+  let fsMock: FileSystemMock;
+  let envMock: { restore: () => void };
   const testProjectPath = createTestProjectPath();
 
   beforeEach(async () => {
@@ -61,7 +65,7 @@ describe('E2E MCP Server Tests', () => {
       expect(result).toHaveProperty('tools');
       expect(Array.isArray(result.tools)).toBe(true);
       
-      const toolNames = result.tools.map((tool: any) => tool.name);
+      const toolNames = result.tools.map((tool: McpTool) => tool.name);
       expect(toolNames).toContain('development.status');
       expect(toolNames).toContain('development.create_branch');
       expect(toolNames).toContain('development.create_pull_request');

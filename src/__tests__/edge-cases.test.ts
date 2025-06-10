@@ -11,13 +11,16 @@ import {
   setupTestProject, 
   createMockEnvironment 
 } from './utils/test-helpers.js';
+import { GitMock } from './utils/git-mock.js';
+import { GitHubMock } from './utils/github-mock.js';
+import { FileSystemMock } from './utils/fs-mock.js';
 
 describe('Edge Cases and Error Handling', () => {
   let client: McpTestClient;
-  let gitMock: any;
-  let githubMock: any;
-  let fsMock: any;
-  let envMock: any;
+  let gitMock: GitMock;
+  let githubMock: GitHubMock;
+  let fsMock: FileSystemMock;
+  let envMock: { restore: () => void };
   const testProjectPath = createTestProjectPath();
 
   beforeEach(async () => {

@@ -1,10 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConfigManager } from '../config.js';
 import { getFileSystemMock } from './utils/persistent-mock.js';
+import { FileSystemMock } from './utils/fs-mock.js';
 
 describe('ConfigManager', () => {
   let configManager: ConfigManager;
-  let fsMock: any;
+  let fsMock: FileSystemMock;
 
   beforeEach(() => {
     fsMock = getFileSystemMock();
