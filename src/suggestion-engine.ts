@@ -1,4 +1,4 @@
-import { DevelopmentStatus, Config, SuggestionConfig, ProjectConfig } from './types.js';
+import { DevelopmentStatus, Config, SuggestionConfig } from './types.js';
 
 export interface Suggestion {
   type: 'commit' | 'branch' | 'checkpoint' | 'pr' | 'warning';
