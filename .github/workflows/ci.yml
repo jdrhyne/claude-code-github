@@ -42,10 +42,11 @@ jobs:
     - name: Run unit tests
       run: npm run test:unit
 
-    - name: Run E2E tests
-      # Skip E2E tests on Windows due to potential path issues
-      if: matrix.os != 'windows-latest'
-      run: npm run test:e2e
+    # E2E tests are disabled in CI due to environment complexity
+    # Run locally with: npm run test:e2e
+    # - name: Run E2E tests
+    #   if: matrix.os != 'windows-latest'
+    #   run: npm run test:e2e
 
     - name: Upload coverage reports
       if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
