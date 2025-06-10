@@ -45,7 +45,7 @@ describe('GitHubManager', () => {
     });
 
     it('should return false and clear token for invalid token', async () => {
-      // Set up the mock to return an empty token first
+      // Get the already mocked keytar instance (don't create a new one)
       const mockKeytar = githubMock.createMockKeytar();
       mockKeytar.getPassword.mockResolvedValue('invalid-token');
       
@@ -53,10 +53,14 @@ describe('GitHubManager', () => {
       const mockOctokit = githubMock.createMockOctokit();
       mockOctokit.rest.users.getAuthenticated.mockRejectedValue(new Error('Unauthorized'));
       
+      // Import keytar to verify it's using our mock
+      const keytar = await import('keytar');
+      
       const isValid = await githubManager.validateToken();
       
       expect(isValid).toBe(false);
-      expect(mockKeytar.deletePassword).toHaveBeenCalled();
+      // Check that the mocked keytar's deletePassword was called
+      expect(keytar.deletePassword).toHaveBeenCalled();
     });
   });
 
