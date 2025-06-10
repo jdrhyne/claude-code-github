@@ -1,5 +1,7 @@
 # claude-code-github
 
+![Claude Code GitHub Hero](https://github.com/jdrhyne/claude-code-github/assets/hero-image.png)
+
 An MCP server for Claude Code that automates your Git workflow, from local commits to GitHub pull requests.
 
 [![npm version](https://img.shields.io/npm/v/@jdrhyne/claude-code-github.svg)](https://www.npmjs.com/package/@jdrhyne/claude-code-github)
