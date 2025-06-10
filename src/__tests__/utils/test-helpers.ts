@@ -118,6 +118,7 @@ export async function waitForCondition(
 
 export function createMockEnvironment() {
   process.env.NODE_ENV = 'test';
+  process.env.CI = 'true';
   
   const originalCwd = process.cwd();
   const testCwd = createTestProjectPath();
@@ -134,6 +135,7 @@ export function createMockEnvironment() {
         configurable: true
       });
       delete process.env.NODE_ENV;
+      delete process.env.CI;
     }
   };
 }

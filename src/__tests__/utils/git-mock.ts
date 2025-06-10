@@ -34,6 +34,8 @@ export class GitMock {
     }
   ];
 
+  private mockGitInstance: any = null;
+
   setStatus(status: Partial<MockGitStatus>) {
     this.mockStatus = { ...this.mockStatus, ...status };
   }
@@ -43,15 +45,20 @@ export class GitMock {
   }
 
   createMockGit() {
-    return {
-      status: vi.fn().mockResolvedValue(this.mockStatus),
-      diff: vi.fn().mockResolvedValue('mock diff content'),
-      checkoutLocalBranch: vi.fn().mockResolvedValue(undefined),
-      add: vi.fn().mockResolvedValue(undefined),
-      commit: vi.fn().mockResolvedValue(undefined),
-      push: vi.fn().mockResolvedValue(undefined),
-      getRemotes: vi.fn().mockResolvedValue(this.mockRemotes)
-    };
+    if (!this.mockGitInstance) {
+      this.mockGitInstance = {
+        status: vi.fn(() => Promise.resolve(this.mockStatus)),
+        diff: vi.fn().mockResolvedValue('mock diff content'),
+        checkoutLocalBranch: vi.fn().mockResolvedValue(undefined),
+        add: vi.fn().mockResolvedValue(undefined),
+        commit: vi.fn().mockResolvedValue(undefined),
+        push: vi.fn().mockResolvedValue(undefined),
+        getRemotes: vi.fn(() => Promise.resolve(this.mockRemotes)),
+        log: vi.fn().mockResolvedValue({ all: [], latest: null }),
+        branch: vi.fn().mockResolvedValue({ all: ['main', 'feature/test'], current: 'main' })
+      };
+    }
+    return this.mockGitInstance;
   }
 
   mockUncommittedChanges() {
@@ -86,5 +93,9 @@ export class GitMock {
     this.setStatus({
       current: 'feature/test-branch'
     });
+  }
+
+  clearMockInstance() {
+    this.mockGitInstance = null;
   }
 }
