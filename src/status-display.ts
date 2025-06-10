@@ -84,4 +84,99 @@ export class StatusDisplay {
     
     return lines.join('\n');
   }
+
+  static showEnhancedStatus(status: any): string {
+    const lines: string[] = [];
+    
+    // Header
+    lines.push(chalk.bold.cyan('📊 Comprehensive Project Status'));
+    lines.push(chalk.gray('─'.repeat(50)));
+    
+    // Project info
+    lines.push(chalk.bold('\n📁 Project'));
+    lines.push(chalk.gray(`  Path: ${status.project.path}`));
+    lines.push(chalk.gray(`  Repo: ${status.project.repo}`));
+    
+    // Branch info
+    lines.push(chalk.bold('\n🌿 Branch'));
+    lines.push(`  Current: ${chalk.green(status.branch.current)}${status.branch.isProtected ? chalk.red(' (protected)') : ''}`);
+    if (status.branch.tracking) {
+      lines.push(chalk.gray(`  Tracking: ${status.branch.tracking}`));
+      if (status.branch.ahead > 0 || status.branch.behind > 0) {
+        const aheadBehind = [];
+        if (status.branch.ahead > 0) aheadBehind.push(chalk.green(`↑${status.branch.ahead}`));
+        if (status.branch.behind > 0) aheadBehind.push(chalk.red(`↓${status.branch.behind}`));
+        lines.push(`  Status: ${aheadBehind.join(' ')}`);
+      }
+    }
+    
+    // Uncommitted changes
+    lines.push(chalk.bold('\n📝 Working Directory'));
+    if (status.uncommittedChanges) {
+      lines.push(chalk.yellow(`  ${status.uncommittedChanges.file_count} uncommitted changes:`));
+      status.uncommittedChanges.files_changed.slice(0, 3).forEach((f: any) => {
+        const statusIcon = f.status === 'Modified' ? '±' : f.status === 'Added' ? '+' : '-';
+        lines.push(chalk.gray(`    ${statusIcon} ${f.file}`));
+      });
+      if (status.uncommittedChanges.files_changed.length > 3) {
+        lines.push(chalk.gray(`    ... and ${status.uncommittedChanges.files_changed.length - 3} more`));
+      }
+    } else {
+      lines.push(chalk.green('  ✓ Clean working directory'));
+    }
+    
+    // Recent commits
+    if (status.recentCommits && status.recentCommits.length > 0) {
+      lines.push(chalk.bold('\n📌 Recent Commits'));
+      status.recentCommits.slice(0, 3).forEach((commit: any) => {
+        lines.push(chalk.gray(`  ${commit.hash} ${commit.message.substring(0, 50)}${commit.message.length > 50 ? '...' : ''}`));
+        lines.push(chalk.gray(`         by ${commit.author} on ${commit.date}`));
+      });
+    }
+    
+    // Pull requests
+    if (status.pullRequests && status.pullRequests.length > 0) {
+      lines.push(chalk.bold('\n🔀 Pull Requests'));
+      status.pullRequests.forEach((pr: any) => {
+        const reviewIcon = pr.reviewStatus === 'approved' ? '✅' : 
+                          pr.reviewStatus === 'changes_requested' ? '❌' : 
+                          pr.reviewStatus === 'reviewed' ? '👀' : '⏳';
+        lines.push(`  #${pr.number} ${pr.title}`);
+        lines.push(chalk.gray(`       ${reviewIcon} ${pr.reviewStatus} • ${pr.draft ? 'Draft' : 'Ready'} • ${pr.url}`));
+      });
+    }
+    
+    // Issues
+    if (status.issues && status.issues.length > 0) {
+      lines.push(chalk.bold('\n🎯 Assigned Issues'));
+      status.issues.slice(0, 3).forEach((issue: any) => {
+        lines.push(`  #${issue.number} ${issue.title}`);
+        if (issue.labels.length > 0) {
+          lines.push(chalk.gray(`       Labels: ${issue.labels.join(', ')}`));
+        }
+      });
+    }
+    
+    // CI/CD Status
+    if (status.workflowRuns && status.workflowRuns.length > 0) {
+      lines.push(chalk.bold('\n🔄 CI/CD Status'));
+      status.workflowRuns.forEach((run: any) => {
+        const statusIcon = run.status === 'completed' ? '✅' : 
+                          run.status === 'failure' ? '❌' : '🔄';
+        lines.push(`  ${statusIcon} ${run.name} - ${run.status || 'running'}`);
+      });
+    }
+    
+    // Related branches
+    if (status.relatedBranches && status.relatedBranches.length > 0) {
+      lines.push(chalk.bold('\n🔗 Related Branches'));
+      status.relatedBranches.slice(0, 3).forEach((branch: string) => {
+        lines.push(chalk.gray(`  • ${branch}`));
+      });
+    }
+    
+    lines.push(chalk.gray('\n─'.repeat(50)));
+    
+    return lines.join('\n');
+  }
 }

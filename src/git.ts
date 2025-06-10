@@ -19,6 +19,50 @@ export class GitManager {
     return status.current || 'main';
   }
 
+  async getBranchInfo(projectPath: string): Promise<{
+    current: string;
+    ahead: number;
+    behind: number;
+    tracking?: string;
+  }> {
+    const git = this.getGit(projectPath);
+    const status = await git.status();
+    
+    return {
+      current: status.current || 'main',
+      ahead: status.ahead,
+      behind: status.behind,
+      tracking: status.tracking || undefined
+    };
+  }
+
+  async getRecentCommits(projectPath: string, limit: number = 5): Promise<Array<{
+    hash: string;
+    message: string;
+    author: string;
+    date: string;
+  }>> {
+    const git = this.getGit(projectPath);
+    const log = await git.log(['-n', limit.toString()]);
+    
+    return log.all.map(commit => ({
+      hash: commit.hash.substring(0, 7),
+      message: commit.message,
+      author: commit.author_name,
+      date: new Date(commit.date).toLocaleDateString()
+    }));
+  }
+
+  async getRemoteBranches(projectPath: string): Promise<string[]> {
+    const git = this.getGit(projectPath);
+    try {
+      const branches = await git.branch(['-r']);
+      return branches.all.filter(b => !b.includes('HEAD'));
+    } catch (error) {
+      return [];
+    }
+  }
+
   async getUncommittedChanges(projectPath: string): Promise<UncommittedChanges | null> {
     const git = this.getGit(projectPath);
     const status = await git.status();

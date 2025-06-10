@@ -5,6 +5,7 @@ import { DevelopmentTools } from './development-tools.js';
 import { McpTool } from './types.js';
 import { formatError } from './errors.js';
 import { SetupWizard } from './setup-wizard.js';
+import { StatusDisplay } from './status-display.js';
 
 async function main() {
   // Check for setup flag
@@ -28,6 +29,16 @@ async function main() {
   const statusTool: McpTool = {
     name: 'dev_status',
     description: 'Get the current development status of the active project',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  };
+
+  const enhancedStatusTool: McpTool = {
+    name: 'dev_status_enhanced',
+    description: 'Get comprehensive project status including PRs, issues, CI/CD status, and more',
     inputSchema: {
       type: 'object',
       properties: {},
@@ -103,8 +114,29 @@ async function main() {
     }
   };
 
+  const quickActionTool: McpTool = {
+    name: 'dev_quick',
+    description: 'Perform common workflow actions quickly: wip (save work), fix (amend), done (finalize PR), sync (pull latest), update (update deps)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action: {
+          type: 'string',
+          enum: ['wip', 'fix', 'done', 'sync', 'update'],
+          description: 'The quick action to perform'
+        }
+      },
+      required: ['action']
+    }
+  };
+
   server.registerTool(statusTool, async () => {
     return await devTools.getStatus();
+  });
+
+  server.registerTool(enhancedStatusTool, async () => {
+    const status = await devTools.getEnhancedStatus();
+    return StatusDisplay.showEnhancedStatus(status);
   });
 
   server.registerTool(createBranchTool, async (params) => {
@@ -121,6 +153,10 @@ async function main() {
 
   server.registerTool(checkpointTool, async (params) => {
     return await devTools.checkpoint(params);
+  });
+
+  server.registerTool(quickActionTool, async (params) => {
+    return await devTools.quickAction(params.action);
   });
 
   process.on('SIGINT', () => {

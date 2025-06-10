@@ -144,4 +144,120 @@ export class GitHubManager {
       return [];
     }
   }
+
+  async getActivePullRequests(
+    owner: string,
+    repo: string,
+    options?: {
+      state?: 'open' | 'closed' | 'all';
+      head?: string;
+      base?: string;
+    }
+  ): Promise<Array<{
+    number: number;
+    title: string;
+    state: string;
+    draft: boolean;
+    author: string;
+    reviewStatus: string;
+    url: string;
+    createdAt: string;
+  }>> {
+    const octokit = await this.getOctokit();
+    
+    try {
+      const response = await octokit.rest.pulls.list({
+        owner,
+        repo,
+        state: options?.state || 'open',
+        head: options?.head,
+        base: options?.base,
+        per_page: 10
+      });
+
+      const prs = await Promise.all(response.data.map(async (pr) => {
+        // Get review status
+        let reviewStatus = 'pending';
+        try {
+          const reviews = await octokit.rest.pulls.listReviews({
+            owner,
+            repo,
+            pull_number: pr.number
+          });
+          
+          const latestReviews = new Map();
+          reviews.data.forEach(review => {
+            if (!latestReviews.has(review.user?.login) || 
+                new Date(review.submitted_at!) > new Date(latestReviews.get(review.user?.login).submitted_at!)) {
+              latestReviews.set(review.user?.login, review);
+            }
+          });
+
+          const states = Array.from(latestReviews.values()).map(r => r.state);
+          if (states.includes('CHANGES_REQUESTED')) {
+            reviewStatus = 'changes_requested';
+          } else if (states.includes('APPROVED')) {
+            reviewStatus = 'approved';
+          } else if (states.length > 0) {
+            reviewStatus = 'reviewed';
+          }
+        } catch (error) {
+          // Ignore review fetch errors
+        }
+
+        return {
+          number: pr.number,
+          title: pr.title,
+          state: pr.state,
+          draft: pr.draft || false,
+          author: pr.user?.login || 'unknown',
+          reviewStatus,
+          url: pr.html_url,
+          createdAt: new Date(pr.created_at).toLocaleDateString()
+        };
+      }));
+
+      return prs;
+    } catch (error) {
+      return [];
+    }
+  }
+
+  async getUserIssues(
+    owner: string,
+    repo: string,
+    username?: string
+  ): Promise<Array<{
+    number: number;
+    title: string;
+    state: string;
+    labels: string[];
+    url: string;
+  }>> {
+    const octokit = await this.getOctokit();
+    
+    try {
+      const user = username || (await octokit.rest.users.getAuthenticated()).data.login;
+      
+      const response = await octokit.rest.issues.listForRepo({
+        owner,
+        repo,
+        assignee: user,
+        state: 'open',
+        per_page: 10
+      });
+
+      return response.data
+        .filter(issue => !issue.pull_request) // Exclude PRs
+        .map(issue => ({
+          number: issue.number,
+          title: issue.title,
+          state: issue.state,
+          labels: issue.labels.map(l => typeof l === 'string' ? l : l.name || ''),
+          url: issue.html_url
+        }));
+    } catch (error) {
+      return [];
+    }
+  }
 }

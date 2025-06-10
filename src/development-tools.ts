@@ -119,6 +119,89 @@ export class DevelopmentTools {
     };
   }
 
+  async getEnhancedStatus(): Promise<any> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      progress.start('Gathering comprehensive project status');
+      
+      const project = await this.getCurrentProject();
+      const config = await this.configManager.loadConfig();
+      
+      if (!await this.gitManager.isGitRepository(project.path)) {
+        throw new GitError(
+          `Project at ${project.path} is not a Git repository`,
+          'Initialize with "git init" or clone an existing repository'
+        );
+      }
+
+      // Get basic branch info
+      progress.update('Analyzing branch status');
+      const branchInfo = await this.gitManager.getBranchInfo(project.path);
+      const isProtected = config.git_workflow.protected_branches.includes(branchInfo.current);
+      
+      // Get uncommitted changes
+      const uncommittedChanges = await this.gitManager.getUncommittedChanges(project.path);
+      
+      // Get recent commits
+      progress.update('Fetching recent commits');
+      const recentCommits = await this.gitManager.getRecentCommits(project.path, 5);
+      
+      // Parse GitHub repo info
+      const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+      
+      // Get PRs
+      progress.update('Checking pull requests');
+      const pullRequests = await this.githubManager.getActivePullRequests(owner, repo, {
+        head: `${owner}:${branchInfo.current}`
+      });
+      
+      // Get issues
+      progress.update('Fetching assigned issues');
+      const issues = await this.githubManager.getUserIssues(owner, repo);
+      
+      // Get workflow runs for current branch
+      progress.update('Checking CI/CD status');
+      const workflowRuns = await this.githubManager.getLatestWorkflowRuns(
+        owner, 
+        repo, 
+        branchInfo.current,
+        3
+      );
+      
+      // Get remote branches for context
+      const remoteBranches = await this.gitManager.getRemoteBranches(project.path);
+      const relatedBranches = remoteBranches
+        .filter(b => b.includes(branchInfo.current.split('/').pop() || ''))
+        .filter(b => !b.includes(branchInfo.current));
+      
+      progress.succeed('Status gathered');
+      
+      return {
+        project: {
+          path: project.path,
+          repo: project.github_repo
+        },
+        branch: {
+          current: branchInfo.current,
+          isProtected,
+          ahead: branchInfo.ahead,
+          behind: branchInfo.behind,
+          tracking: branchInfo.tracking
+        },
+        uncommittedChanges,
+        recentCommits,
+        pullRequests,
+        issues,
+        workflowRuns,
+        relatedBranches
+      };
+    } catch (error) {
+      progress.fail();
+      throw error;
+    }
+  }
+
   async createBranch(params: CreateBranchParams): Promise<string> {
     const progress = new ProgressIndicator();
     
@@ -395,6 +478,139 @@ export class DevelopmentTools {
     }
 
     return results;
+  }
+
+  async quickAction(action: string): Promise<string> {
+    const progress = new ProgressIndicator();
+    
+    try {
+      const project = await this.getCurrentProject();
+      const config = await this.configManager.loadConfig();
+      
+      switch (action) {
+        case 'wip':
+          // Quick work-in-progress commit and push
+          progress.start('Creating WIP commit');
+          const uncommittedChanges = await this.gitManager.getUncommittedChanges(project.path);
+          if (!uncommittedChanges) {
+            progress.fail();
+            return '❌ No changes to commit';
+          }
+          
+          const timestamp = new Date().toISOString().substring(0, 16).replace('T', ' ');
+          const wipMessage = `wip: work in progress - ${timestamp}`;
+          await this.gitManager.commitChanges(project.path, wipMessage);
+          
+          const currentBranch = await this.gitManager.getCurrentBranch(project.path);
+          if (!config.git_workflow.protected_branches.includes(currentBranch)) {
+            progress.update('Pushing to remote');
+            await this.gitManager.pushBranch(project.path, currentBranch);
+            progress.succeed('WIP commit created and pushed');
+            return `✅ Created WIP commit and pushed to ${currentBranch}`;
+          } else {
+            progress.succeed('WIP commit created');
+            return `✅ Created WIP commit (not pushed - protected branch)`;
+          }
+          
+        case 'fix':
+          // Amend last commit
+          progress.start('Amending last commit');
+          const git = this.gitManager['getGit'](project.path);
+          await git.add('.');
+          await git.commit([], ['--amend', '--no-edit']);
+          progress.succeed('Last commit amended');
+          return '✅ Last commit amended with current changes';
+          
+        case 'done':
+          // Finalize branch - push and create PR
+          progress.start('Finalizing branch');
+          const branch = await this.gitManager.getCurrentBranch(project.path);
+          
+          if (config.git_workflow.protected_branches.includes(branch)) {
+            progress.fail();
+            return '❌ Cannot finalize protected branch';
+          }
+          
+          // Push if needed
+          const hasUnpushed = await this.gitManager.hasUnpushedCommits(project.path, branch);
+          if (hasUnpushed) {
+            progress.update('Pushing branch');
+            await this.gitManager.pushBranch(project.path, branch);
+          }
+          
+          // Get last commit for PR title
+          const lastCommit = await this.gitManager.getLastCommitMessage(project.path);
+          const prTitle = lastCommit.split('\n')[0];
+          
+          // Create PR
+          progress.update('Creating pull request');
+          const { owner, repo } = this.githubManager.parseRepoUrl(project.github_repo);
+          const pr = await this.githubManager.createPullRequest(
+            owner,
+            repo,
+            prTitle,
+            `Branch: ${branch}\n\nAuto-generated from quick action`,
+            branch,
+            config.git_workflow.main_branch,
+            false,
+            project.reviewers
+          );
+          
+          progress.succeed('Branch finalized');
+          return `✅ Branch finalized! Pull request created: ${pr.html_url}`;
+          
+        case 'sync':
+          // Pull and rebase current branch
+          progress.start('Syncing with remote');
+          const syncBranch = await this.gitManager.getCurrentBranch(project.path);
+          const syncGit = this.gitManager['getGit'](project.path);
+          
+          // Fetch latest
+          progress.update('Fetching latest changes');
+          await syncGit.fetch();
+          
+          // Pull with rebase
+          progress.update('Rebasing on latest');
+          await syncGit.pull('origin', syncBranch, ['--rebase']);
+          
+          progress.succeed('Synced with remote');
+          return `✅ Synced ${syncBranch} with remote`;
+          
+        case 'update':
+          // Update dependencies and commit
+          progress.start('Updating dependencies');
+          
+          // Check for package.json
+          const packagePath = path.join(project.path, 'package.json');
+          if (!await this.gitManager['getGit'](project.path).checkIsRepo()) {
+            progress.fail();
+            return '❌ No package.json found';
+          }
+          
+          // Run npm update
+          const { execSync } = await import('child_process');
+          progress.update('Running npm update');
+          execSync('npm update', { cwd: project.path, stdio: 'ignore' });
+          
+          // Check if there are changes
+          const updateChanges = await this.gitManager.getUncommittedChanges(project.path);
+          if (updateChanges) {
+            progress.update('Committing updates');
+            await this.gitManager.commitChanges(project.path, 'chore: update dependencies');
+            progress.succeed('Dependencies updated');
+            return '✅ Dependencies updated and committed';
+          } else {
+            progress.succeed('No updates needed');
+            return '✅ All dependencies are up to date';
+          }
+          
+        default:
+          return `❌ Unknown quick action: ${action}. Available: wip, fix, done, sync, update`;
+      }
+    } catch (error) {
+      progress.fail();
+      throw error;
+    }
   }
 
   close() {
