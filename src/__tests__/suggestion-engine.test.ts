@@ -18,6 +18,23 @@ describe('SuggestionEngine', () => {
         },
         auto_push: false
       },
+      suggestions: {
+        enabled: true,
+        protected_branch_warnings: true,
+        time_reminders: {
+          enabled: true,
+          warning_threshold_minutes: 120,
+          reminder_threshold_minutes: 60
+        },
+        large_changeset: {
+          enabled: true,
+          threshold: 5
+        },
+        pattern_recognition: true,
+        pr_suggestions: true,
+        change_pattern_suggestions: true,
+        branch_suggestions: true
+      },
       projects: []
     };
 
@@ -299,6 +316,145 @@ describe('SuggestionEngine', () => {
       for (let i = 1; i < priorityValues.length; i++) {
         expect(priorityValues[i]).toBeGreaterThanOrEqual(priorityValues[i - 1]);
       }
+    });
+  });
+
+  describe('Configuration control', () => {
+    it('should disable all suggestions when globally disabled', () => {
+      config.suggestions!.enabled = false;
+      const localEngine = new SuggestionEngine(config);
+      
+      const status: DevelopmentStatus = {
+        branch: 'main',
+        is_protected: true,
+        uncommitted_changes: {
+          file_count: 10,
+          diff_summary: 'changes',
+          files_changed: []
+        }
+      };
+
+      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      expect(suggestions).toHaveLength(0);
+    });
+
+    it('should disable protected branch warnings when configured', () => {
+      config.suggestions!.protected_branch_warnings = false;
+      const localEngine = new SuggestionEngine(config);
+      
+      const status: DevelopmentStatus = {
+        branch: 'main',
+        is_protected: true,
+        uncommitted_changes: {
+          file_count: 3,
+          diff_summary: 'changes',
+          files_changed: []
+        }
+      };
+
+      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      const protectedBranchSuggestion = suggestions.find(s => s.type === 'warning');
+      expect(protectedBranchSuggestion).toBeUndefined();
+    });
+
+    it('should use custom thresholds for large changesets', () => {
+      config.suggestions!.large_changeset.threshold = 10;
+      const localEngine = new SuggestionEngine(config);
+      
+      const status: DevelopmentStatus = {
+        branch: 'feature/test',
+        is_protected: false,
+        uncommitted_changes: {
+          file_count: 7, // Less than new threshold of 10
+          diff_summary: 'changes',
+          files_changed: []
+        }
+      };
+
+      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      const commitSuggestion = suggestions.find(s => s.type === 'commit');
+      expect(commitSuggestion).toBeUndefined();
+    });
+
+    it('should use custom time thresholds', () => {
+      config.suggestions!.time_reminders.warning_threshold_minutes = 30;
+      config.suggestions!.time_reminders.reminder_threshold_minutes = 15;
+      const localEngine = new SuggestionEngine(config);
+      
+      const projectPath = '/test/project';
+      const status: DevelopmentStatus = {
+        branch: 'feature/test',
+        is_protected: false,
+        uncommitted_changes: {
+          file_count: 2,
+          diff_summary: 'changes',
+          files_changed: []
+        }
+      };
+
+      // First call to set uncommitted start time
+      localEngine.analyzeSituation(projectPath, status);
+
+      // Simulate 45 minutes passing (should trigger high priority warning with custom threshold)
+      const context = (localEngine as unknown as { workContexts: Map<string, WorkContext> }).workContexts.get(projectPath);
+      context!.uncommittedStartTime = new Date(Date.now() - 45 * 60 * 1000);
+
+      const suggestions = localEngine.analyzeSituation(projectPath, status);
+      const timeSuggestion = suggestions.find(s => s.type === 'checkpoint' && s.priority === 'high');
+      expect(timeSuggestion).toBeDefined();
+    });
+
+    it('should support per-project overrides', () => {
+      // Add a project with suggestions disabled
+      config.projects = [{
+        path: '/test/project',
+        github_repo: 'test/repo',
+        suggestions: {
+          enabled: false
+        }
+      }];
+      const localEngine = new SuggestionEngine(config);
+      
+      const status: DevelopmentStatus = {
+        branch: 'main',
+        is_protected: true,
+        uncommitted_changes: {
+          file_count: 10,
+          diff_summary: 'changes',
+          files_changed: []
+        }
+      };
+
+      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      expect(suggestions).toHaveLength(0);
+    });
+
+    it('should use project-specific thresholds', () => {
+      // Add a project with custom threshold
+      config.projects = [{
+        path: '/test/project',
+        github_repo: 'test/repo',
+        suggestions: {
+          large_changeset: {
+            threshold: 15
+          }
+        }
+      }];
+      const localEngine = new SuggestionEngine(config);
+      
+      const status: DevelopmentStatus = {
+        branch: 'feature/test',
+        is_protected: false,
+        uncommitted_changes: {
+          file_count: 10, // Less than project threshold of 15
+          diff_summary: 'changes',
+          files_changed: []
+        }
+      };
+
+      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      const commitSuggestion = suggestions.find(s => s.type === 'commit');
+      expect(commitSuggestion).toBeUndefined();
     });
   });
 });

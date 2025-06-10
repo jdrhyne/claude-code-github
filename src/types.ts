@@ -32,6 +32,7 @@ export interface ProjectConfig {
   path: string;
   github_repo: string;
   reviewers?: string[];
+  suggestions?: Partial<SuggestionConfig>;
 }
 
 export type Project = ProjectConfig;
@@ -51,8 +52,27 @@ export interface GitWorkflowConfig {
   };
 }
 
+export interface SuggestionConfig {
+  enabled: boolean;
+  protected_branch_warnings: boolean;
+  time_reminders: {
+    enabled: boolean;
+    warning_threshold_minutes: number;
+    reminder_threshold_minutes: number;
+  };
+  large_changeset: {
+    enabled: boolean;
+    threshold: number;
+  };
+  pattern_recognition: boolean;
+  pr_suggestions: boolean;
+  change_pattern_suggestions: boolean;
+  branch_suggestions: boolean;
+}
+
 export interface Config {
   git_workflow: GitWorkflowConfig;
+  suggestions?: SuggestionConfig;
   projects: ProjectConfig[];
 }
 

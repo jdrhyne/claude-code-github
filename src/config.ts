@@ -49,6 +49,23 @@ export class ConfigManager {
           confirm_before_push: false
         }
       },
+      suggestions: {
+        enabled: true,
+        protected_branch_warnings: true,
+        time_reminders: {
+          enabled: true,
+          warning_threshold_minutes: 120,
+          reminder_threshold_minutes: 60
+        },
+        large_changeset: {
+          enabled: true,
+          threshold: 5
+        },
+        pattern_recognition: true,
+        pr_suggestions: true,
+        change_pattern_suggestions: true,
+        branch_suggestions: true
+      },
       projects
     };
   }
@@ -81,6 +98,30 @@ git_workflow:
     main_branch: false          # Automatically push main branch (use with caution)
     confirm_before_push: false  # Ask for confirmation before pushing
 
+# Intelligent suggestion system configuration
+suggestions:
+  enabled: true                 # Master switch for all suggestions
+  
+  # Warn when working directly on protected branches
+  protected_branch_warnings: true
+  
+  # Time-based reminders for uncommitted work
+  time_reminders:
+    enabled: true
+    warning_threshold_minutes: 120    # High priority warning after 2 hours
+    reminder_threshold_minutes: 60    # Medium priority reminder after 1 hour
+  
+  # Large changeset suggestions
+  large_changeset:
+    enabled: true
+    threshold: 5                # Suggest commit when this many files are changed
+  
+  # Pattern recognition for optimal workflows
+  pattern_recognition: true     # Recognize tests + implementation patterns
+  pr_suggestions: true          # Suggest PR creation when branches are ready
+  change_pattern_suggestions: true  # Suggestions for doc + code patterns
+  branch_suggestions: true      # Suggest feature branches for new work
+
 # A list of projects for the server to monitor.
 # Use absolute paths.
 projects: []
@@ -91,6 +132,13 @@ projects: []
   #   reviewers:
   #     - "github-user1"
   #     - "github-user2"
+  #   # Project-specific suggestion overrides
+  #   suggestions:
+  #     enabled: false           # Disable all suggestions for this project
+  #     time_reminders:
+  #       enabled: false         # Disable time reminders for this project
+  #     large_changeset:
+  #       threshold: 10          # Higher threshold for this project
 `;
 
     fs.writeFileSync(this.configPath, configWithComments, 'utf8');

@@ -1,4 +1,4 @@
-import { DevelopmentStatus, Config } from './types.js';
+import { DevelopmentStatus, Config, SuggestionConfig, ProjectConfig } from './types.js';
 
 export interface Suggestion {
   type: 'commit' | 'branch' | 'checkpoint' | 'pr' | 'warning';
@@ -22,22 +22,96 @@ export class SuggestionEngine {
   constructor(private config: Config) {}
 
   /**
+   * Get effective suggestion configuration for a project
+   */
+  private getEffectiveConfig(projectPath: string): SuggestionConfig {
+    const globalConfig = this.config.suggestions || this.getDefaultSuggestionConfig();
+    
+    // Find project-specific overrides
+    const project = this.config.projects.find(p => p.path === projectPath);
+    const projectOverrides = project?.suggestions || {};
+    
+    // Merge configuration with project overrides
+    return {
+      enabled: projectOverrides.enabled ?? globalConfig.enabled,
+      protected_branch_warnings: projectOverrides.protected_branch_warnings ?? globalConfig.protected_branch_warnings,
+      time_reminders: {
+        enabled: projectOverrides.time_reminders?.enabled ?? globalConfig.time_reminders.enabled,
+        warning_threshold_minutes: projectOverrides.time_reminders?.warning_threshold_minutes ?? globalConfig.time_reminders.warning_threshold_minutes,
+        reminder_threshold_minutes: projectOverrides.time_reminders?.reminder_threshold_minutes ?? globalConfig.time_reminders.reminder_threshold_minutes,
+      },
+      large_changeset: {
+        enabled: projectOverrides.large_changeset?.enabled ?? globalConfig.large_changeset.enabled,
+        threshold: projectOverrides.large_changeset?.threshold ?? globalConfig.large_changeset.threshold,
+      },
+      pattern_recognition: projectOverrides.pattern_recognition ?? globalConfig.pattern_recognition,
+      pr_suggestions: projectOverrides.pr_suggestions ?? globalConfig.pr_suggestions,
+      change_pattern_suggestions: projectOverrides.change_pattern_suggestions ?? globalConfig.change_pattern_suggestions,
+      branch_suggestions: projectOverrides.branch_suggestions ?? globalConfig.branch_suggestions,
+    };
+  }
+
+  private getDefaultSuggestionConfig(): SuggestionConfig {
+    return {
+      enabled: true,
+      protected_branch_warnings: true,
+      time_reminders: {
+        enabled: true,
+        warning_threshold_minutes: 120,
+        reminder_threshold_minutes: 60,
+      },
+      large_changeset: {
+        enabled: true,
+        threshold: 5,
+      },
+      pattern_recognition: true,
+      pr_suggestions: true,
+      change_pattern_suggestions: true,
+      branch_suggestions: true,
+    };
+  }
+
+  /**
    * Analyze the current state and provide intelligent suggestions
    */
   analyzeSituation(projectPath: string, status: DevelopmentStatus): Suggestion[] {
+    const suggestionConfig = this.getEffectiveConfig(projectPath);
+    
+    // If suggestions are disabled globally for this project, return empty
+    if (!suggestionConfig.enabled) {
+      return [];
+    }
+    
     const suggestions: Suggestion[] = [];
     const context = this.getOrCreateContext(projectPath);
     
     // Update context with current status
     this.updateContext(projectPath, status);
     
-    // Check various conditions and add suggestions
-    suggestions.push(...this.checkProtectedBranch(status));
-    suggestions.push(...this.checkUncommittedChanges(status, context));
-    suggestions.push(...this.checkTimeBasedSuggestions(status, context));
-    suggestions.push(...this.checkChangePatterns(status));
-    suggestions.push(...this.checkBranchSuggestions(status));
-    suggestions.push(...this.checkPRReadiness(status));
+    // Check various conditions and add suggestions based on configuration
+    if (suggestionConfig.protected_branch_warnings) {
+      suggestions.push(...this.checkProtectedBranch(status));
+    }
+    
+    if (suggestionConfig.large_changeset.enabled || suggestionConfig.change_pattern_suggestions) {
+      suggestions.push(...this.checkUncommittedChanges(status, context, suggestionConfig));
+    }
+    
+    if (suggestionConfig.time_reminders.enabled) {
+      suggestions.push(...this.checkTimeBasedSuggestions(status, context, suggestionConfig));
+    }
+    
+    if (suggestionConfig.pattern_recognition) {
+      suggestions.push(...this.checkChangePatterns(status));
+    }
+    
+    if (suggestionConfig.branch_suggestions) {
+      suggestions.push(...this.checkBranchSuggestions(status));
+    }
+    
+    if (suggestionConfig.pr_suggestions) {
+      suggestions.push(...this.checkPRReadiness(status));
+    }
     
     // Sort by priority
     return suggestions.sort((a, b) => {
@@ -85,12 +159,12 @@ export class SuggestionEngine {
     return suggestions;
   }
 
-  private checkUncommittedChanges(status: DevelopmentStatus, context: WorkContext): Suggestion[] {
+  private checkUncommittedChanges(status: DevelopmentStatus, context: WorkContext, config: SuggestionConfig): Suggestion[] {
     const suggestions: Suggestion[] = [];
     const fileCount = status.uncommitted_changes?.file_count || 0;
     
     // Suggest commit for significant changes
-    if (fileCount >= 5) {
+    if (config.large_changeset.enabled && fileCount >= config.large_changeset.threshold) {
       suggestions.push({
         type: 'commit',
         priority: 'medium',
@@ -101,7 +175,7 @@ export class SuggestionEngine {
     }
     
     // Check for mixed change types
-    if (status.uncommitted_changes?.files_changed) {
+    if (config.change_pattern_suggestions && status.uncommitted_changes?.files_changed) {
       const hasNewFiles = status.uncommitted_changes.files_changed.some(f => f.status === 'Added');
       const hasModified = status.uncommitted_changes.files_changed.some(f => f.status === 'Modified');
       const hasDeleted = status.uncommitted_changes.files_changed.some(f => f.status === 'Deleted');
@@ -119,13 +193,13 @@ export class SuggestionEngine {
     return suggestions;
   }
 
-  private checkTimeBasedSuggestions(status: DevelopmentStatus, context: WorkContext): Suggestion[] {
+  private checkTimeBasedSuggestions(status: DevelopmentStatus, context: WorkContext, config: SuggestionConfig): Suggestion[] {
     const suggestions: Suggestion[] = [];
     
     if (context.uncommittedStartTime && status.uncommitted_changes && status.uncommitted_changes.file_count > 0) {
       const minutesUncommitted = (Date.now() - context.uncommittedStartTime.getTime()) / (1000 * 60);
       
-      if (minutesUncommitted > 120) { // 2 hours
+      if (minutesUncommitted > config.time_reminders.warning_threshold_minutes) {
         suggestions.push({
           type: 'checkpoint',
           priority: 'high',
@@ -133,7 +207,7 @@ export class SuggestionEngine {
           action: 'dev_checkpoint',
           reason: "Don't lose your work! Regular commits help you track progress and recover from mistakes."
         });
-      } else if (minutesUncommitted > 60) { // 1 hour
+      } else if (minutesUncommitted > config.time_reminders.reminder_threshold_minutes) {
         suggestions.push({
           type: 'checkpoint',
           priority: 'medium',
