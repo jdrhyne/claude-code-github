@@ -47,7 +47,7 @@ export class GitHubMock {
   }
 
   mockInvalidToken() {
-    this.mockToken = null;
+    this.mockToken = '';
   }
 
   mockPullRequestCreation(pr: Partial<typeof this.mockPullRequest>) {

@@ -48,7 +48,8 @@
     "@vitest/coverage-v8": "^1.0.0"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/__tests__"
   ],
   "engines": {
     "node": ">=16.0.0"
