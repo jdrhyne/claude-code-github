@@ -29,13 +29,15 @@ export class FileWatcher {
 
     const watcher = chokidar.watch(project.path, {
       ignored: (filePath: string) => {
+        // Get relative path and normalize for cross-platform
+        const relativePath = path.relative(project.path, filePath).replace(/\\/g, '/');
+        
         // Always ignore .git directory
-        if (filePath.includes('.git/') || filePath.endsWith('.git')) {
+        if (relativePath === '.git' || relativePath.startsWith('.git/')) {
           return true;
         }
         
         // Check gitignore patterns
-        const relativePath = path.relative(project.path, filePath);
         if (relativePath && ig.ignores(relativePath)) {
           return true;
         }
@@ -57,9 +59,11 @@ export class FileWatcher {
           '**/.env.*.local'
         ];
         
+        // Normalize the full path for pattern matching
+        const normalizedPath = filePath.replace(/\\/g, '/');
         return defaultPatterns.some(pattern => {
           const regex = new RegExp(pattern.replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*'));
-          return regex.test(filePath);
+          return regex.test(normalizedPath);
         });
       },
       persistent: true,
