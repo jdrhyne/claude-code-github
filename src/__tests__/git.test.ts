@@ -13,6 +13,9 @@ describe('GitManager', () => {
     gitMock = getGitMock();
     fsMock = getFileSystemMock();
     fsMock.mockProjectDirectory(testProjectPath);
+    
+    // Reset git mock to default state
+    gitMock.resetToDefaults();
   });
 
   describe('getCurrentBranch', () => {

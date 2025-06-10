@@ -24,6 +24,9 @@ describe('DevelopmentTools', () => {
     githubMock = getGitHubMock();
     fsMock = getFileSystemMock();
     
+    // Reset mocks to default state
+    gitMock.resetToDefaults();
+    
     fsMock.mockConfigExists(true);
     setupTestProject(testProjectPath);
     
@@ -91,7 +94,7 @@ describe('DevelopmentTools', () => {
       expect(mockGit.checkoutLocalBranch).toHaveBeenCalledWith('feature/user-profile');
       expect(mockGit.add).toHaveBeenCalledWith('.');
       expect(mockGit.commit).toHaveBeenCalledWith('feat: add user profile page');
-      expect(result).toContain('Created branch feature/user-profile');
+      expect(result).toContain('Created branch: feature/user-profile');
     });
 
     it('should create bugfix branch with correct prefix', async () => {
@@ -116,7 +119,7 @@ describe('DevelopmentTools', () => {
         name: 'test',
         type: 'feature',
         message: 'test'
-      })).rejects.toThrow('Cannot create branch from protected branch: main');
+      })).rejects.toThrow('Cannot perform this operation on protected branch');
     });
 
     it('should throw error for invalid branch type', async () => {
@@ -138,7 +141,7 @@ describe('DevelopmentTools', () => {
         name: 'test',
         type: 'feature',
         message: 'test'
-      })).rejects.toThrow('No uncommitted changes to commit');
+      })).rejects.toThrow('No uncommitted changes found');
     });
   });
 
@@ -165,7 +168,7 @@ describe('DevelopmentTools', () => {
         base: 'main',
         draft: true
       });
-      expect(result).toContain('Created pull request #123');
+      expect(result).toContain('View at: https://github.com/test-user/test-repo/pull/123');
     });
 
     it('should throw error when on protected branch', async () => {
@@ -175,7 +178,7 @@ describe('DevelopmentTools', () => {
       await expect(developmentTools.createPullRequest({
         title: 'Test PR',
         body: 'Test'
-      })).rejects.toThrow('Cannot create pull request from protected branch: main');
+      })).rejects.toThrow('Cannot perform this operation on protected branch');
     });
 
     it('should throw error for invalid GitHub token', async () => {
@@ -185,7 +188,7 @@ describe('DevelopmentTools', () => {
       await expect(developmentTools.createPullRequest({
         title: 'Test PR',
         body: 'Test'
-      })).rejects.toThrow('GitHub token validation failed');
+      })).rejects.toThrow('GitHub authentication failed');
     });
 
     it('should throw error when remote does not match config', async () => {
@@ -201,7 +204,7 @@ describe('DevelopmentTools', () => {
       await expect(developmentTools.createPullRequest({
         title: 'Test PR',
         body: 'Test'
-      })).rejects.toThrow('Git remote does not match configured repository');
+      })).rejects.toThrow('Git remote mismatch');
     });
   });
 
@@ -212,12 +215,14 @@ describe('DevelopmentTools', () => {
       const mockGit = gitMock.createMockGit();
       
       const result = await developmentTools.checkpoint({
-        message: 'WIP: working on user profile'
+        message: 'WIP: working on user profile',
+        push: false
       });
       
       expect(mockGit.add).toHaveBeenCalledWith('.');
       expect(mockGit.commit).toHaveBeenCalledWith('WIP: working on user profile');
-      expect(result).toContain('Committed changes with message: WIP: working on user profile');
+      expect(result).toContain('Created checkpoint');
+      expect(result).toContain('WIP: working on user profile');
     });
 
     it('should throw error when on protected branch', async () => {
@@ -226,7 +231,7 @@ describe('DevelopmentTools', () => {
       
       await expect(developmentTools.checkpoint({
         message: 'test commit'
-      })).rejects.toThrow('Cannot commit to protected branch: main');
+      })).rejects.toThrow('Cannot perform this operation on protected branch');
     });
 
     it('should throw error when no changes to commit', async () => {
@@ -235,7 +240,7 @@ describe('DevelopmentTools', () => {
       
       await expect(developmentTools.checkpoint({
         message: 'test commit'
-      })).rejects.toThrow('No changes to commit');
+      })).rejects.toThrow('No uncommitted changes found');
     });
   });
 });

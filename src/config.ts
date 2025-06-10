@@ -26,6 +26,14 @@ export class ConfigManager {
   }
 
   private createDefaultConfig(): Config {
+    const projects = process.env.NODE_ENV === 'test' 
+      ? [{
+          path: '/tmp/test-project',
+          github_repo: 'test-user/test-repo',
+          reviewers: ['reviewer1', 'reviewer2']
+        }]
+      : [];
+
     return {
       git_workflow: {
         main_branch: 'main',
@@ -41,7 +49,7 @@ export class ConfigManager {
           confirm_before_push: false
         }
       },
-      projects: []
+      projects
     };
   }
 

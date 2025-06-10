@@ -31,6 +31,10 @@ export class GitHubManager {
     let token = await keytar.getPassword(GitHubManager.SERVICE_NAME, GitHubManager.ACCOUNT_NAME);
     
     if (!token) {
+      // Skip prompt in test environment
+      if (process.env.NODE_ENV === 'test' || process.env.CI) {
+        throw new Error('GitHub token not found. Set up a token or mock it in tests.');
+      }
       token = await this.promptForToken();
       await keytar.setPassword(GitHubManager.SERVICE_NAME, GitHubManager.ACCOUNT_NAME, token);
     }
