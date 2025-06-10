@@ -10,36 +10,44 @@ export class GitHubMock {
       html_url: 'https://github.com/test-user/test-repo/pull/123'
     }
   };
+  private mockKeytarInstance: any = null;
+  private mockOctokitInstance: any = null;
 
   createMockOctokit() {
-    return {
-      rest: {
-        users: {
-          getAuthenticated: vi.fn().mockResolvedValue({ data: { login: 'test-user' } })
-        },
-        pulls: {
-          create: vi.fn().mockResolvedValue(this.mockPullRequest),
-          requestReviewers: vi.fn().mockResolvedValue({})
-        },
-        repos: {
-          get: vi.fn().mockResolvedValue({
-            data: {
-              name: 'test-repo',
-              full_name: 'test-user/test-repo',
-              default_branch: 'main'
-            }
-          })
+    if (!this.mockOctokitInstance) {
+      this.mockOctokitInstance = {
+        rest: {
+          users: {
+            getAuthenticated: vi.fn().mockResolvedValue({ data: { login: 'test-user' } })
+          },
+          pulls: {
+            create: vi.fn().mockResolvedValue(this.mockPullRequest),
+            requestReviewers: vi.fn().mockResolvedValue({})
+          },
+          repos: {
+            get: vi.fn().mockResolvedValue({
+              data: {
+                name: 'test-repo',
+                full_name: 'test-user/test-repo',
+                default_branch: 'main'
+              }
+            })
+          }
         }
-      }
-    };
+      };
+    }
+    return this.mockOctokitInstance;
   }
 
   createMockKeytar() {
-    return {
-      getPassword: vi.fn().mockResolvedValue(this.mockToken),
-      setPassword: vi.fn().mockResolvedValue(undefined),
-      deletePassword: vi.fn().mockResolvedValue(true)
-    };
+    if (!this.mockKeytarInstance) {
+      this.mockKeytarInstance = {
+        getPassword: vi.fn(() => Promise.resolve(this.mockToken)),
+        setPassword: vi.fn().mockResolvedValue(undefined),
+        deletePassword: vi.fn().mockResolvedValue(true)
+      };
+    }
+    return this.mockKeytarInstance;
   }
 
   mockValidToken() {

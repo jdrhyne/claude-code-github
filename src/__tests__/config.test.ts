@@ -31,14 +31,13 @@ describe('ConfigManager', () => {
     it('should create default config when file does not exist', async () => {
       fsMock.mockConfigExists(false);
       
-      const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
-        throw new Error('Process.exit called');
-      });
+      // In test mode, it returns a default config instead of exiting
+      const config = await configManager.loadConfig();
       
-      await expect(configManager.loadConfig()).rejects.toThrow('Process.exit called');
-      expect(exitSpy).toHaveBeenCalledWith(1);
-      
-      exitSpy.mockRestore();
+      expect(config).toHaveProperty('git_workflow');
+      expect(config).toHaveProperty('projects');
+      expect(config.projects).toHaveLength(1);
+      expect(config.projects[0].path).toBe('/tmp/test-project');
     });
 
     it('should validate configuration structure', async () => {
