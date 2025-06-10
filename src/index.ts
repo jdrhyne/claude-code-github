@@ -6,10 +6,53 @@ import { McpTool } from './types.js';
 import { formatError } from './errors.js';
 import { SetupWizard } from './setup-wizard.js';
 import { StatusDisplay } from './status-display.js';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Read version from package.json at build/compile time
+let version = '1.1.0'; // fallback
+try {
+  const packagePath = join(process.cwd(), 'package.json');
+  const packageJson = JSON.parse(readFileSync(packagePath, 'utf8'));
+  version = packageJson.version;
+} catch {
+  // Use fallback version if package.json not found
+}
 
 async function main() {
-  // Check for setup flag
+  // Check for CLI flags
   const args = process.argv.slice(2);
+  
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(version);
+    process.exit(0);
+  }
+  
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`
+claude-code-github v${version}
+An intelligent MCP server for Claude Code that monitors development patterns
+
+Usage:
+  npx @jdrhyne/claude-code-github [options]
+
+Options:
+  -h, --help     Show this help message
+  -v, --version  Show version number
+  -s, --setup    Run interactive setup wizard
+
+MCP Server Mode:
+  When run without arguments, starts as an MCP server for Claude Code.
+  Configure in your Claude Code settings with:
+  
+  claude mcp add claude-code-github npx -- -y @jdrhyne/claude-code-github@latest
+
+Documentation:
+  https://github.com/jdrhyne/claude-code-github
+`);
+    process.exit(0);
+  }
+  
   if (args.includes('--setup') || args.includes('-s')) {
     const wizard = new SetupWizard();
     await wizard.run();
