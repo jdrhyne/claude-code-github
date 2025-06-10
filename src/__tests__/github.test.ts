@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { GitHubManager } from '../github.js';
 import { getGitHubMock } from './utils/persistent-mock.js';
 
 describe('GitHubManager', () => {
   let githubManager: GitHubManager;
-  let githubMock: any;
+  let githubMock: ReturnType<typeof getGitHubMock>;
 
   beforeEach(() => {
     githubManager = new GitHubManager();

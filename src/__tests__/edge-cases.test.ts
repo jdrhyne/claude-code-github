@@ -149,7 +149,7 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should handle expired GitHub token', async () => {
       gitMock.mockFeatureBranch();
-      const mockKeytar = githubMock.createMockKeytar();
+      githubMock.createMockKeytar();
       const mockOctokit = githubMock.createMockOctokit();
       
       mockOctokit.rest.users.getAuthenticated.mockRejectedValue(
@@ -283,7 +283,7 @@ describe('Edge Cases and Error Handling', () => {
     it('should handle multiple rapid tool calls', async () => {
       gitMock.mockFeatureBranch();
       
-      const promises = Array.from({ length: 5 }, (_, i) => 
+      const promises = Array.from({ length: 5 }, () => 
         client.callTool('development.status')
       );
       

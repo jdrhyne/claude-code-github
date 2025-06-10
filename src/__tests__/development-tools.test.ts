@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { DevelopmentTools } from '../development-tools.js';
 import { 
   getGitMock, 
@@ -7,17 +7,15 @@ import {
 } from './utils/persistent-mock.js';
 import { 
   createTestProjectPath, 
-  setupTestProject, 
-  setupCleanProject, 
-  setupProtectedBranch,
+  setupTestProject,
   expectValidDevelopmentStatus 
 } from './utils/test-helpers.js';
 
 describe('DevelopmentTools', () => {
   let developmentTools: DevelopmentTools;
-  let gitMock: any;
-  let githubMock: any;
-  let fsMock: any;
+  let gitMock: ReturnType<typeof getGitMock>;
+  let githubMock: ReturnType<typeof getGitHubMock>;
+  let fsMock: ReturnType<typeof getFileSystemMock>;
   const testProjectPath = createTestProjectPath();
 
   beforeEach(async () => {
