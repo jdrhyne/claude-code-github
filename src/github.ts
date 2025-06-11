@@ -102,6 +102,12 @@ export class GitHubManager {
       // Filter out the PR author from the reviewers list
       // GitHub API doesn't allow requesting review from the PR author
       const prAuthor = pr.data.user?.login;
+      
+      // Handle null user (deleted accounts or API issues)
+      if (!prAuthor) {
+        console.warn('PR author is null (possibly deleted user), skipping author filtering for reviewers');
+      }
+      
       const filteredReviewers = prAuthor 
         ? reviewers.filter(reviewer => reviewer.toLowerCase() !== prAuthor.toLowerCase())
         : reviewers;
@@ -196,7 +202,7 @@ export class GitHubManager {
         per_page: 10
       });
 
-      const prs = await Promise.all(response.data.map(async (pr) => {
+      const prs = await Promise.allSettled(response.data.map(async (pr) => {
         // Get review status
         let reviewStatus = 'pending';
         try {
@@ -238,7 +244,10 @@ export class GitHubManager {
         };
       }));
 
-      return prs;
+      // Filter out failed results and extract successful values
+      return prs
+        .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
+        .map(result => result.value);
     } catch (error) {
       return [];
     }
@@ -274,7 +283,7 @@ export class GitHubManager {
           number: issue.number,
           title: issue.title,
           state: issue.state,
-          labels: issue.labels.map(l => typeof l === 'string' ? l : l.name || ''),
+          labels: (issue.labels || []).map(l => typeof l === 'string' ? l : l.name || ''),
           url: issue.html_url
         }));
     } catch (error) {
@@ -313,6 +322,12 @@ export class GitHubManager {
       
       // Filter out the PR author from the reviewers list
       const prAuthor = pr.data.user?.login;
+      
+      // Handle null user (deleted accounts or API issues)
+      if (!prAuthor) {
+        console.warn('PR author is null (possibly deleted user), skipping author filtering for reviewers');
+      }
+      
       const filteredReviewers = prAuthor 
         ? params.reviewers.filter(reviewer => reviewer.toLowerCase() !== prAuthor.toLowerCase())
         : params.reviewers;
@@ -435,8 +450,9 @@ export class GitHubManager {
         const other: string[] = [];
         
         commits.forEach(commit => {
-          const message = commit.commit.message;
-          const firstLine = message.split('\n')[0];
+          const message = commit.commit.message || '';
+          const lines = message.split('\n');
+          const firstLine = lines.length > 0 ? lines[0] : '';
           
           if (firstLine.startsWith('feat:') || firstLine.startsWith('feat(')) {
             features.push(`- ${firstLine}`);

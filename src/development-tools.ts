@@ -624,10 +624,21 @@ export class DevelopmentTools {
             return '❌ No package.json found';
           }
           
-          // Run npm update
+          // Run npm update with timeout
           const { execSync } = await import('child_process');
           progress.update('Running npm update');
-          execSync('npm update', { cwd: project.path, stdio: 'ignore' });
+          try {
+            execSync('npm update', { 
+              cwd: project.path, 
+              stdio: 'ignore',
+              timeout: 60000 // 60 second timeout
+            });
+          } catch (error: any) {
+            if (error.code === 'ETIMEDOUT') {
+              throw new Error('npm update timed out after 60 seconds');
+            }
+            throw new Error(`npm update failed: ${error.message}`);
+          }
           
           // Check if there are changes
           const updateChanges = await this.gitManager.getUncommittedChanges(project.path);

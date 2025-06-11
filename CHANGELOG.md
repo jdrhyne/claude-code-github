@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.3] - 2025-06-11
+
+### Fixed
+- File system race condition when reading .gitignore files
+  - Now handles gracefully when files are deleted between existence check and read
+  - Continues operation without gitignore rules rather than crashing
+- JSON parsing errors for malformed package.json files
+  - Added proper error handling with informative messages
+  - Prevents crashes during version detection and updates
+- GitHub API null user handling for deleted accounts
+  - Properly handles PRs created by deleted users
+  - Adds warning logs when encountering null users
+- Array operations safety
+  - Fixed potential undefined access when commit messages are empty
+  - Added null checks for issue labels array
+- Non-null assertion in suggestion engine
+  - Replaced unsafe assertion with proper error handling
+  - Prevents runtime errors from race conditions
+- Added 60-second timeout for npm operations
+  - Prevents indefinite hangs during dependency updates
+  - Provides clear error messages on timeout
+- Improved Git remote URL parsing
+  - Now supports SSH with custom ports
+  - Handles GitHub Enterprise URLs
+  - Properly trims whitespace from URLs
+  - Works with or without .git extension
+- Promise.all replaced with Promise.allSettled
+  - PR list fetching now continues even if individual PR details fail
+  - Provides partial results instead of complete failure
+
+### Enhanced
+- Error resilience throughout the codebase
+- Logging for debugging edge cases
+- Input validation for external data
+
 ## [1.1.2] - 2025-06-11
 
 ### Fixed
@@ -113,7 +148,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Package name and installation commands alignment
 
-[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.2...v1.1.0

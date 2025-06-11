@@ -168,17 +168,31 @@ export class GitManager {
   }
 
   parseGitHubUrl(url: string): { owner: string; repo: string } | null {
+    // Clean up the URL first
+    const cleanUrl = url.trim();
+    
+    // Handle various GitHub URL formats including enterprise
     const patterns = [
-      /github\.com[:/]([^/]+)\/([^/.]+)(\.git)?$/,
+      // SSH format: git@github.com:owner/repo.git
+      /^git@([^:]+):([^/]+)\/([^/.]+?)(\.git)?$/,
+      // HTTPS format: https://github.com/owner/repo.git
+      /^https?:\/\/([^/]+)\/([^/]+)\/([^/.]+?)(\.git)?$/,
+      // SSH with protocol: ssh://git@github.com/owner/repo.git
+      /^ssh:\/\/git@([^/]+)\/([^/]+)\/([^/.]+?)(\.git)?$/,
+      // Legacy patterns for backward compatibility
+      /github\.com[:/]([^/]+)\/([^/.]+?)(\.git)?$/,
       /github\.com\/([^/]+)\/([^/.]+)/
     ];
 
     for (const pattern of patterns) {
-      const match = url.match(pattern);
+      const match = cleanUrl.match(pattern);
       if (match) {
+        // For the new patterns, owner is at index 2, repo at index 3
+        // For legacy patterns, owner is at index 1, repo at index 2
+        const isNewPattern = match.length > 3;
         return {
-          owner: match[1],
-          repo: match[2]
+          owner: isNewPattern ? match[2] : match[1],
+          repo: isNewPattern ? match[3] : match[2]
         };
       }
     }
@@ -247,7 +261,13 @@ export class GitManager {
     try {
       const packagePath = path.join(projectPath, 'package.json');
       const packageContent = await fs.readFile(packagePath, 'utf-8');
-      JSON.parse(packageContent);
+      try {
+        JSON.parse(packageContent);
+      } catch (parseError) {
+        console.error('Warning: package.json contains invalid JSON:', parseError);
+        // Continue without version bump detection
+        return deployment;
+      }
       
       // Check if package.json was modified in the last commit
       const git = this.getGit(projectPath);
@@ -367,7 +387,12 @@ export class GitManager {
     try {
       const packagePath = path.join(projectPath, 'package.json');
       const packageContent = await fs.readFile(packagePath, 'utf-8');
-      const packageJson = JSON.parse(packageContent);
+      let packageJson;
+      try {
+        packageJson = JSON.parse(packageContent);
+      } catch (parseError) {
+        throw new Error(`Invalid JSON in package.json: ${parseError}`);
+      }
       packageJson.version = newVersion;
       await fs.writeFile(packagePath, JSON.stringify(packageJson, null, 2) + '\n');
     } catch (error) {

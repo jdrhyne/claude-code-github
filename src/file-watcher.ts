@@ -89,18 +89,29 @@ export class FileWatcher {
     try {
       // Load .gitignore from project root
       const gitignorePath = path.join(projectPath, '.gitignore');
-      if (fs.existsSync(gitignorePath)) {
+      try {
         const gitignoreContent = fs.readFileSync(gitignorePath, 'utf8');
         ig.add(gitignoreContent);
+      } catch (error) {
+        // File might have been deleted between check and read, or no permission
+        // This is not critical, we can continue without gitignore
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+          console.error(`Warning: Could not read .gitignore file: ${error}`);
+        }
       }
       
       // Also check for global gitignore
       const homeDir = process.env.HOME || process.env.USERPROFILE;
       if (homeDir) {
         const globalGitignorePath = path.join(homeDir, '.gitignore_global');
-        if (fs.existsSync(globalGitignorePath)) {
+        try {
           const globalGitignoreContent = fs.readFileSync(globalGitignorePath, 'utf8');
           ig.add(globalGitignoreContent);
+        } catch (error) {
+          // Global gitignore is optional, ignore if not found
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+            console.error(`Warning: Could not read global .gitignore file: ${error}`);
+          }
         }
       }
     } catch (error) {

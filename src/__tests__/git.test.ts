@@ -141,7 +141,7 @@ describe('GitManager', () => {
     });
 
     it('should return null for invalid URL', () => {
-      const url = 'https://gitlab.com/user/repo.git';
+      const url = 'not-a-valid-url';
       
       const parsed = gitManager.parseGitHubUrl(url);
       

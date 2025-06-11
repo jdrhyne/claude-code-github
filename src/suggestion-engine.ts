@@ -126,7 +126,12 @@ export class SuggestionEngine {
         sessionStartTime: new Date(),
       });
     }
-    return this.workContexts.get(projectPath)!;
+    const context = this.workContexts.get(projectPath);
+    if (!context) {
+      // This should never happen, but handle it defensively
+      throw new Error(`Failed to create work context for ${projectPath}`);
+    }
+    return context;
   }
 
   private updateContext(projectPath: string, status: DevelopmentStatus): void {
