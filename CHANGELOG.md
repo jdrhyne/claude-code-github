@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2025-06-11
+
+### Fixed
+- Pull request creation error when configured reviewers include the PR author
+  - GitHub API doesn't allow requesting reviews from the PR author
+  - Now automatically filters out the PR author from reviewers list
+  - Uses case-insensitive comparison to handle username variations
+  - Prevents "Review cannot be requested from pull request author" error
+
 ## [1.1.1] - 2025-06-10
 
 ### Fixed
@@ -104,7 +113,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Package name and installation commands alignment
 
-[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.2...HEAD
+[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.1...v1.1.2
+[1.1.1]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.0...v1.1.1
+[1.1.0]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/jdrhyne/claude-code-github/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/jdrhyne/claude-code-github/releases/tag/v1.0.0

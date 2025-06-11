@@ -99,12 +99,21 @@ export class GitHubManager {
     });
 
     if (reviewers && reviewers.length > 0) {
-      await octokit.rest.pulls.requestReviewers({
-        owner,
-        repo,
-        pull_number: pr.data.number,
-        reviewers
-      });
+      // Filter out the PR author from the reviewers list
+      // GitHub API doesn't allow requesting review from the PR author
+      const prAuthor = pr.data.user?.login;
+      const filteredReviewers = prAuthor 
+        ? reviewers.filter(reviewer => reviewer.toLowerCase() !== prAuthor.toLowerCase())
+        : reviewers;
+
+      if (filteredReviewers.length > 0) {
+        await octokit.rest.pulls.requestReviewers({
+          owner,
+          repo,
+          pull_number: pr.data.number,
+          reviewers: filteredReviewers
+        });
+      }
     }
 
     return pr.data;
@@ -295,12 +304,27 @@ export class GitHubManager {
 
     // Update reviewers
     if (params.reviewers) {
-      await octokit.rest.pulls.requestReviewers({
+      // Get the PR to find the author
+      const pr = await octokit.rest.pulls.get({
         owner,
         repo,
-        pull_number: params.pr_number,
-        reviewers: params.reviewers
+        pull_number: params.pr_number
       });
+      
+      // Filter out the PR author from the reviewers list
+      const prAuthor = pr.data.user?.login;
+      const filteredReviewers = prAuthor 
+        ? params.reviewers.filter(reviewer => reviewer.toLowerCase() !== prAuthor.toLowerCase())
+        : params.reviewers;
+
+      if (filteredReviewers.length > 0) {
+        await octokit.rest.pulls.requestReviewers({
+          owner,
+          repo,
+          pull_number: params.pr_number,
+          reviewers: filteredReviewers
+        });
+      }
     }
 
     // Update labels
