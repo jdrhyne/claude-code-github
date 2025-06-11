@@ -7,6 +7,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] - 2025-06-11
+
+### Added
+- **Active Monitoring System** - Comprehensive monitoring architecture that tracks development patterns
+  - Conversation monitoring through MCP protocol with pattern recognition
+  - Git state monitoring with change detection and milestone tracking
+  - File system monitoring with intelligent change analysis
+  - Event aggregation system that detects feature completion, bug fixes, and release readiness
+  - Smart suggestion engine for commits, releases, and workflow optimization
+  - Real-time notifications for development milestones without interrupting flow
+- **Process Lifecycle Management** - Prevents zombie processes and ensures clean operation
+  - Lock file system to enforce single instance per project
+  - Automatic cleanup of stale processes from previous sessions
+  - Graceful shutdown handling with proper resource cleanup
+  - Health monitoring and auto-restart capabilities
+- **Enhanced MCP Server** - Extended MCP protocol support for intelligent development assistance
+  - Conversation message processing for development insights
+  - Notification system for proactive suggestions
+  - Real-time status updates and milestone detection
+- **Monitoring Configuration** - Flexible configuration options for monitoring behavior
+  - Enable/disable conversation tracking and auto-suggestions
+  - Configurable thresholds for commit and release suggestions
+  - Notification style preferences (inline, summary, none)
+  - Learning mode for adaptive development pattern recognition
+- **New Tools**
+  - `dev_monitoring_status()` - View active monitoring insights and recent events
+  - Enhanced status displays with monitoring integration
+
+### Enhanced
+- **Documentation** - Comprehensive updates for monitoring features
+  - Configuration examples for monitoring setup
+  - Troubleshooting guide for monitoring issues
+  - Feature overview with monitoring capabilities
+- **Test Coverage** - Added comprehensive test suite for monitoring functionality
+  - Unit tests for conversation pattern detection
+  - Event aggregation and milestone detection tests
+  - Process management and lifecycle tests
+  - Integration tests for monitoring system
+
+### Fixed
+- **Zombie Process Prevention** (#26) - Eliminated accumulation of MCP server processes
+  - Proper process cleanup on session end
+  - Single instance enforcement per project
+  - Automatic stale process detection and cleanup
+- **Active Monitoring Implementation** (#27) - Now provides intelligent development assistance
+  - Monitors conversation context for development progress
+  - Suggests commits, releases, and workflow improvements
+  - Detects patterns like feature completion and test success
+  - Provides contextual notifications based on development activity
+
 ## [1.1.3] - 2025-06-11
 
 ### Fixed
