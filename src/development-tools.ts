@@ -37,6 +37,8 @@ import {
 import { ProgressIndicator } from './progress.js';
 import { StatusDisplay } from './status-display.js';
 import { SuggestionEngine } from './suggestion-engine.js';
+import { MonitorManager } from './monitoring/monitor-manager.js';
+import { MonitoringEventType } from './monitoring/types.js';
 
 export class DevelopmentTools {
   private configManager: ConfigManager;
@@ -44,6 +46,7 @@ export class DevelopmentTools {
   private githubManager: GitHubManager;
   private fileWatcher: FileWatcher;
   private suggestionEngine!: SuggestionEngine;
+  private monitorManager: MonitorManager | null = null;
   private currentProjectPath: string | null = null;
 
   constructor() {
@@ -64,6 +67,15 @@ export class DevelopmentTools {
       
       // Initialize suggestion engine with config
       this.suggestionEngine = new SuggestionEngine(config);
+      
+      // Initialize monitor manager if monitoring is enabled
+      if (config.monitoring?.enabled !== false) {
+        this.monitorManager = new MonitorManager({
+          fileWatcher: this.fileWatcher,
+          gitManager: this.gitManager,
+          projects: config.projects
+        });
+      }
       
       if (config.projects.length > 0) {
         progress.start(`Setting up ${config.projects.length} project${config.projects.length > 1 ? 's' : ''}`);
@@ -664,6 +676,9 @@ export class DevelopmentTools {
 
   close() {
     this.fileWatcher.close();
+    if (this.monitorManager) {
+      this.monitorManager.stop();
+    }
   }
 
   // Enhanced PR Management Methods
@@ -1107,6 +1122,52 @@ export class DevelopmentTools {
     } catch (error) {
       progress.fail('Failed to list releases');
       throw error;
+    }
+  }
+
+  /**
+   * Process conversation message for monitoring
+   */
+  processConversationMessage(message: string, role: 'user' | 'assistant'): void {
+    if (this.monitorManager) {
+      this.monitorManager.processConversationMessage(message, role);
+    }
+  }
+
+  /**
+   * Get monitoring status
+   */
+  getMonitoringStatus(): any {
+    if (!this.monitorManager) {
+      return { enabled: false };
+    }
+    
+    return {
+      enabled: true,
+      ...this.monitorManager.getMonitoringState()
+    };
+  }
+
+  /**
+   * Set up monitoring event listeners
+   */
+  setupMonitoringListeners(callbacks: {
+    onSuggestion?: (suggestion: any) => void;
+    onMilestone?: (milestone: any) => void;
+    onEvent?: (event: any) => void;
+  }): void {
+    if (!this.monitorManager) return;
+
+    if (callbacks.onSuggestion) {
+      this.monitorManager.on('suggestion', callbacks.onSuggestion);
+    }
+    
+    if (callbacks.onMilestone) {
+      this.monitorManager.on('milestone', callbacks.onMilestone);
+    }
+    
+    if (callbacks.onEvent) {
+      this.monitorManager.on('monitoring-event', callbacks.onEvent);
     }
   }
 }

@@ -9,7 +9,9 @@ export interface JsonRpcResponse {
   jsonrpc: '2.0';
   result?: any;
   error?: JsonRpcError;
-  id: string | number | null;
+  id?: string | number | null;
+  method?: string;
+  params?: any;
 }
 
 export interface JsonRpcError {
@@ -74,6 +76,20 @@ export interface Config {
   git_workflow: GitWorkflowConfig;
   suggestions?: SuggestionConfig;
   projects: ProjectConfig[];
+  monitoring?: MonitoringConfig;
+}
+
+export interface MonitoringConfig {
+  enabled?: boolean;
+  conversation_tracking?: boolean;
+  auto_suggestions?: boolean;
+  commit_threshold?: number;
+  release_threshold?: {
+    features: number;
+    bugfixes: number;
+  };
+  notification_style?: 'inline' | 'summary' | 'none';
+  learning_mode?: boolean;
 }
 
 export interface FileChange {

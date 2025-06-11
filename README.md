@@ -48,6 +48,12 @@ Let Claude handle your Git workflow with **intelligent automation**:
 - **Change Analysis** - Suggests optimal commit strategies based on file types and changes
 - **Workflow Guidance** - Recommends when to branch, commit, or create pull requests
 
+### 🔍 **Active Monitoring System** (NEW)
+- **Conversation Tracking** - Monitors your development conversation for progress insights
+- **Event Aggregation** - Detects milestones like feature completion and test success
+- **Smart Notifications** - Proactive suggestions based on your development activity
+- **Release Detection** - Knows when you're ready for a release based on completed work
+
 ### 🛡️ **Smart Safety & Best Practices**
 - **Protected Branch Safety** - Warns when working directly on main/develop branches
 - **Atomic Commit Suggestions** - Identifies large changesets and mixed change types
@@ -157,11 +163,35 @@ projects:
         threshold: 3           # Smaller commits for production
 ```
 
-### 3. GitHub Token
+### 3. Active Monitoring Configuration (NEW)
+
+Enable intelligent monitoring that tracks your development progress:
+
+```yaml
+# Advanced monitoring system configuration
+monitoring:
+  enabled: true                 # Master switch for monitoring system
+  conversation_tracking: true   # Track conversation for development insights
+  auto_suggestions: true        # Automatically suggest based on activity
+  commit_threshold: 5           # Suggest commit after this many changes
+  release_threshold:
+    features: 3                 # Suggest release after this many features
+    bugfixes: 10                # Or this many bug fixes
+  notification_style: inline    # inline, summary, or none
+  learning_mode: false          # Learn from your development patterns
+```
+
+The monitoring system automatically:
+- Detects when you complete features, fix bugs, or add tests
+- Tracks file changes and suggests optimal commit timing
+- Identifies release-ready milestones
+- Provides contextual notifications without interrupting flow
+
+### 4. GitHub Token
 
 Create a token at [GitHub Settings → Tokens](https://github.com/settings/tokens/new) with `repo` and `workflow` scopes. The server will prompt for it on first use and store it securely in your system keychain.
 
-### 4. Configure Claude Code
+### 5. Configure Claude Code
 
 ```bash
 # Add the MCP server
@@ -216,6 +246,7 @@ Claude: "Created draft PR #42 at github.com/yourname/project/pull/42"
 | Tool | Description |
 |------|-------------|
 | `dev_status()` | Get project status with branch info and change summaries |
+| `dev_monitoring_status()` | View active monitoring insights and recent events |
 | `dev_create_branch(name, type, message)` | Create branch with prefix and commit changes |
 | `dev_create_pull_request(title, body, is_draft)` | Push branch and create GitHub PR |
 | `dev_checkpoint(message)` | Commit current changes |
@@ -260,6 +291,17 @@ node --version  # Should be 16+
 git --version   # Should be 2.20+
 DEBUG=claude-code-github* npx @jdrhyne/claude-code-github@latest
 ```
+
+**Monitoring Not Working**
+- Check `monitoring.enabled: true` in config
+- Ensure conversation tracking is enabled
+- Use `dev_monitoring_status()` to check system status
+- Notifications appear inline during conversation
+
+**Zombie Processes**
+- Fixed in latest version with process management
+- Old processes are automatically cleaned up
+- Check with: `ps aux | grep claude-code-github`
 
 **GitHub Authentication**
 ```bash

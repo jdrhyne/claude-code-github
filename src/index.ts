@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-import { McpServer } from './mcp-server.js';
+import { EnhancedMcpServer } from './enhanced-mcp-server.js';
 import { DevelopmentTools } from './development-tools.js';
 import { McpTool } from './types.js';
 import { formatError } from './errors.js';
 import { SetupWizard } from './setup-wizard.js';
 import { StatusDisplay } from './status-display.js';
+import { ProcessManager } from './process-manager.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
@@ -59,11 +60,41 @@ Documentation:
     process.exit(0);
   }
 
-  const server = new McpServer();
+  const server = new EnhancedMcpServer();
   const devTools = new DevelopmentTools();
+  const processManager = new ProcessManager();
 
   try {
+    // Initialize development tools first to load config
     await devTools.initialize();
+    
+    // Initialize process management with first project
+    const configManager = new (await import('./config.js')).ConfigManager();
+    const config = await configManager.loadConfig();
+    if (config.projects.length > 0) {
+      await processManager.initialize(config.projects[0].path);
+    }
+    
+    // Set up monitoring listeners
+    devTools.setupMonitoringListeners({
+      onSuggestion: (suggestion) => {
+        server.sendSuggestion(suggestion);
+      },
+      onMilestone: (milestone) => {
+        server.sendMilestone(milestone);
+      }
+    });
+    
+    // Set up conversation monitoring
+    server.onConversationMessage((params) => {
+      devTools.processConversationMessage(params.message, params.role as 'user' | 'assistant');
+    });
+    
+    // Register cleanup handlers
+    processManager.onCleanup(() => {
+      devTools.close();
+      server.shutdown();
+    });
   } catch (error) {
     console.error(formatError(error instanceof Error ? error : new Error(String(error))));
     process.exit(1);
@@ -455,6 +486,16 @@ Documentation:
     }
   };
 
+  const monitoringStatusTool: McpTool = {
+    name: 'dev_monitoring_status',
+    description: 'Get the current monitoring system status and recent events',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: []
+    }
+  };
+
   server.registerTool(statusTool, async () => {
     return await devTools.getStatus();
   });
@@ -538,15 +579,11 @@ Documentation:
     return await devTools.listReleases(params.limit);
   });
 
-  process.on('SIGINT', () => {
-    devTools.close();
-    process.exit(0);
+  server.registerTool(monitoringStatusTool, async () => {
+    return await devTools.getMonitoringStatus();
   });
 
-  process.on('SIGTERM', () => {
-    devTools.close();
-    process.exit(0);
-  });
+  // Process management handles all cleanup now
 
   server.start();
 }

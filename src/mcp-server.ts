@@ -3,7 +3,7 @@ import { formatJsonRpcError } from './errors.js';
 
 export class McpServer {
   private tools: Map<string, McpTool> = new Map();
-  private handlers: Map<string, (params: any) => Promise<any>> = new Map();
+  protected handlers: Map<string, (params: any) => Promise<any>> = new Map();
 
   constructor() {
     this.setupStandardHandlers();

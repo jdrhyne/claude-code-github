@@ -66,6 +66,18 @@ export class ConfigManager {
         change_pattern_suggestions: true,
         branch_suggestions: true
       },
+      monitoring: {
+        enabled: true,
+        conversation_tracking: true,
+        auto_suggestions: true,
+        commit_threshold: 5,
+        release_threshold: {
+          features: 3,
+          bugfixes: 10
+        },
+        notification_style: 'inline',
+        learning_mode: false
+      },
       projects
     };
   }
@@ -121,6 +133,18 @@ suggestions:
   pr_suggestions: true          # Suggest PR creation when branches are ready
   change_pattern_suggestions: true  # Suggestions for doc + code patterns
   branch_suggestions: true      # Suggest feature branches for new work
+
+# Advanced monitoring system configuration
+monitoring:
+  enabled: true                 # Master switch for monitoring system
+  conversation_tracking: true   # Track conversation for development insights
+  auto_suggestions: true        # Automatically suggest based on activity
+  commit_threshold: 5           # Suggest commit after this many changes
+  release_threshold:
+    features: 3                 # Suggest release after this many features
+    bugfixes: 10                # Or this many bug fixes
+  notification_style: inline    # inline, summary, or none
+  learning_mode: false          # Learn from your development patterns
 
 # A list of projects for the server to monitor.
 # Use absolute paths.
