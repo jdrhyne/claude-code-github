@@ -118,6 +118,72 @@ describe('GitHubManager', () => {
       expect(mockOctokit.rest.pulls.create).toHaveBeenCalled();
       expect(mockOctokit.rest.pulls.requestReviewers).not.toHaveBeenCalled();
     });
+
+    it('should filter out PR author from reviewers list', async () => {
+      githubMock.mockValidToken();
+      const mockOctokit = githubMock.createMockOctokit();
+      
+      // Mock the PR creation to return a specific user as the author
+      (mockOctokit.rest.pulls.create as jest.Mock).mockResolvedValueOnce({
+        data: {
+          number: 123,
+          html_url: 'https://github.com/test-user/test-repo/pull/123',
+          user: { login: 'test-user' }
+        }
+      });
+      
+      await githubManager.createPullRequest(
+        'test-user',
+        'test-repo',
+        'Test PR',
+        'Test PR description',
+        'feature/test',
+        'main',
+        false,
+        ['test-user', 'reviewer1', 'reviewer2']  // Include PR author in reviewers
+      );
+      
+      expect(mockOctokit.rest.pulls.create).toHaveBeenCalled();
+      expect(mockOctokit.rest.pulls.requestReviewers).toHaveBeenCalledWith({
+        owner: 'test-user',
+        repo: 'test-repo',
+        pull_number: 123,
+        reviewers: ['reviewer1', 'reviewer2']  // PR author should be filtered out
+      });
+    });
+
+    it('should handle case-insensitive filtering of PR author', async () => {
+      githubMock.mockValidToken();
+      const mockOctokit = githubMock.createMockOctokit();
+      
+      // Mock the PR creation to return a specific user as the author
+      (mockOctokit.rest.pulls.create as jest.Mock).mockResolvedValueOnce({
+        data: {
+          number: 123,
+          html_url: 'https://github.com/test-user/test-repo/pull/123',
+          user: { login: 'Test-User' }  // Mixed case
+        }
+      });
+      
+      await githubManager.createPullRequest(
+        'test-user',
+        'test-repo',
+        'Test PR',
+        'Test PR description',
+        'feature/test',
+        'main',
+        false,
+        ['test-user', 'TEST-USER', 'reviewer1']  // Different cases
+      );
+      
+      expect(mockOctokit.rest.pulls.create).toHaveBeenCalled();
+      expect(mockOctokit.rest.pulls.requestReviewers).toHaveBeenCalledWith({
+        owner: 'test-user',
+        repo: 'test-repo',
+        pull_number: 123,
+        reviewers: ['reviewer1']  // Both variations should be filtered out
+      });
+    });
   });
 
   describe('getRepository', () => {
