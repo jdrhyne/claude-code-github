@@ -1,0 +1,39 @@
+# Example configuration with intelligent suggestions enabled
+
+git_workflow:
+  main_branch: main
+  protected_branches:
+    - main
+    - master
+    - develop
+  branch_prefixes:
+    feature: feature/
+    bugfix: bugfix/
+    refactor: refactor/
+
+# Intelligent suggestions configuration
+suggestions:
+  enabled: true  # Master switch for all suggestions
+  
+  time_based_commits:
+    enabled: true
+    reminder_minutes: 60    # Gentle reminder after 1 hour
+    warning_minutes: 120    # Stronger warning after 2 hours
+  
+  branch_protection:
+    enabled: true
+  
+  commit_size:
+    enabled: true
+    max_files: 5           # Suggest splitting if more than 5 files
+  
+  pr_suggestions:
+    enabled: true
+
+projects:
+  - path: "/path/to/your/project"
+    github_repo: "username/repo"
+    # Project-specific overrides (optional)
+    suggestions:
+      time_based_commits:
+        reminder_minutes: 30  # More frequent reminders for this project
