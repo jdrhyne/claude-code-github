@@ -4,11 +4,11 @@ import { MonitoringSuggestion, AggregatedMilestone } from './monitoring/types.js
 
 export interface McpNotification {
   method: string;
-  params: any;
+  params: unknown;
 }
 
 export class EnhancedMcpServer extends McpServer {
-  private notificationHandlers: Map<string, (params: any) => void> = new Map();
+  private notificationHandlers: Map<string, (params: unknown) => void> = new Map();
   private pendingNotifications: McpNotification[] = [];
   private notificationInterval: NodeJS.Timeout | null = null;
 
@@ -29,12 +29,12 @@ export class EnhancedMcpServer extends McpServer {
     });
 
     // Enable/disable notifications
-    this.handlers.set('notifications/enable', async (params) => {
+    this.handlers.set('notifications/enable', async (_params) => {
       this.startNotificationProcessor();
       return { success: true };
     });
 
-    this.handlers.set('notifications/disable', async (params) => {
+    this.handlers.set('notifications/disable', async (_params) => {
       this.stopNotificationProcessor();
       return { success: true };
     });
@@ -44,13 +44,13 @@ export class EnhancedMcpServer extends McpServer {
    * Register a handler for conversation messages
    */
   onConversationMessage(handler: (params: {message: string, role: string}) => void): void {
-    this.notificationHandlers.set('conversation_message', handler);
+    this.notificationHandlers.set('conversation_message', handler as (params: unknown) => void);
   }
 
   /**
    * Send a notification to Claude
    */
-  sendNotification(method: string, params: any): void {
+  sendNotification(method: string, params: unknown): void {
     const notification: McpNotification = { method, params };
     this.pendingNotifications.push(notification);
   }
@@ -85,7 +85,7 @@ export class EnhancedMcpServer extends McpServer {
   /**
    * Send a development status update
    */
-  sendStatusUpdate(status: any): void {
+  sendStatusUpdate(status: unknown): void {
     this.sendNotification('notifications/status', status);
   }
 

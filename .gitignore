@@ -12,3 +12,5 @@ coverage/
 
 # Claude conversation logs
 claude-conversations/
+# Claude conversation logs
+.claude-conversations/

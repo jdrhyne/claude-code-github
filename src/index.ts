@@ -9,6 +9,7 @@ import { StatusDisplay } from './status-display.js';
 import { ProcessManager } from './process-manager.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { MonitoringSuggestion, AggregatedMilestone } from './monitoring/types.js';
 
 // Read version from package.json at build/compile time
 let version = '1.1.1'; // fallback
@@ -84,10 +85,10 @@ Documentation:
     // Set up monitoring listeners
     devTools.setupMonitoringListeners({
       onSuggestion: (suggestion) => {
-        server.sendSuggestion(suggestion);
+        server.sendSuggestion(suggestion as MonitoringSuggestion);
       },
       onMilestone: (milestone) => {
-        server.sendMilestone(milestone);
+        server.sendMilestone(milestone as AggregatedMilestone);
       }
     });
     

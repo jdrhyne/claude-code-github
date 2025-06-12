@@ -1,4 +1,5 @@
 import { ConfigManager } from './config.js';
+import { Config } from './types.js';
 import { GitManager } from './git.js';
 import { GitHubManager } from './github.js';
 import { FileWatcher } from './file-watcher.js';
@@ -38,7 +39,6 @@ import { ProgressIndicator } from './progress.js';
 import { StatusDisplay } from './status-display.js';
 import { SuggestionEngine } from './suggestion-engine.js';
 import { MonitorManager } from './monitoring/monitor-manager.js';
-import { MonitoringEventType } from './monitoring/types.js';
 
 export class DevelopmentTools {
   private configManager: ConfigManager;
@@ -421,7 +421,7 @@ export class DevelopmentTools {
     }
   }
 
-  private shouldAutoPush(config: any, currentBranch: string, explicitPush?: boolean): boolean {
+  private shouldAutoPush(config: Config, currentBranch: string, explicitPush?: boolean): boolean {
     // Explicit push parameter overrides everything
     if (explicitPush !== undefined) {
       return explicitPush;
@@ -448,7 +448,7 @@ export class DevelopmentTools {
 
   private async performAutoPush(
     project: ProjectConfig, 
-    config: any, 
+    config: Config, 
     currentBranch: string, 
     commitMessage: string,
     progress: ProgressIndicator
@@ -646,11 +646,11 @@ export class DevelopmentTools {
               stdio: 'ignore',
               timeout: 60000 // 60 second timeout
             });
-          } catch (error: any) {
-            if (error.code === 'ETIMEDOUT') {
+          } catch (error) {
+            if (error instanceof Error && 'code' in error && error.code === 'ETIMEDOUT') {
               throw new Error('npm update timed out after 60 seconds');
             }
-            throw new Error(`npm update failed: ${error.message}`);
+            throw new Error(`npm update failed: ${error instanceof Error ? error.message : String(error)}`);
           }
           
           // Check if there are changes
@@ -1138,7 +1138,7 @@ export class DevelopmentTools {
   /**
    * Get monitoring status
    */
-  getMonitoringStatus(): any {
+  getMonitoringStatus(): Record<string, unknown> {
     if (!this.monitorManager) {
       return { enabled: false };
     }
@@ -1153,9 +1153,9 @@ export class DevelopmentTools {
    * Set up monitoring event listeners
    */
   setupMonitoringListeners(callbacks: {
-    onSuggestion?: (suggestion: any) => void;
-    onMilestone?: (milestone: any) => void;
-    onEvent?: (event: any) => void;
+    onSuggestion?: (suggestion: unknown) => void;
+    onMilestone?: (milestone: unknown) => void;
+    onEvent?: (event: unknown) => void;
   }): void {
     if (!this.monitorManager) return;
 
