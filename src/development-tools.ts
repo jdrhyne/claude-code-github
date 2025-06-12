@@ -86,6 +86,7 @@ export class DevelopmentTools {
       }
 
       await this.setCurrentProject();
+      return config;
     } catch (error) {
       progress.fail('Initialization failed');
       throw error;

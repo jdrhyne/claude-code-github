@@ -174,12 +174,17 @@ projects: []
     }
 
     if (!fs.existsSync(this.configPath)) {
-      console.error(chalk.yellow(`\n⚠️  Configuration file not found at ${this.configPath}`));
-      console.error(chalk.gray('Creating default configuration file...'));
+      // Only show messages if not in MCP mode
+      if (process.env.MCP_MODE !== 'true') {
+        console.error(chalk.yellow(`\n⚠️  Configuration file not found at ${this.configPath}`));
+        console.error(chalk.gray('Creating default configuration file...'));
+      }
       this.writeDefaultConfig();
-      console.error(chalk.cyan(`\n✨ Created default configuration at ${this.configPath}`));
-      console.error(chalk.gray('Please edit this file to configure your projects.'));
-      console.error(chalk.gray('\nTip: Run with --setup flag for an interactive setup wizard.'));
+      if (process.env.MCP_MODE !== 'true') {
+        console.error(chalk.cyan(`\n✨ Created default configuration at ${this.configPath}`));
+        console.error(chalk.gray('Please edit this file to configure your projects.'));
+        console.error(chalk.gray('\nTip: Run with --setup flag for an interactive setup wizard.'));
+      }
       
       // Don't exit during tests
       if (process.env.NODE_ENV !== 'test') {
@@ -198,23 +203,27 @@ projects: []
       // Skip validation in test environment
       if (process.env.NODE_ENV !== 'test') {
         // Run comprehensive validation
-        console.error(chalk.gray('Validating configuration...'));
+        if (process.env.MCP_MODE !== 'true') {
+          console.error(chalk.gray('Validating configuration...'));
+        }
         const validationResult = await this.validator.validateConfig(this.config);
         
         if (!validationResult.valid) {
-          console.error(this.validator.formatValidationResults(validationResult));
-          console.error(chalk.red('\n❌ Configuration validation failed!'));
-          console.error(chalk.gray(`Please fix the errors in ${this.configPath}`));
+          if (process.env.MCP_MODE !== 'true') {
+            console.error(this.validator.formatValidationResults(validationResult));
+            console.error(chalk.red('\n❌ Configuration validation failed!'));
+            console.error(chalk.gray(`Please fix the errors in ${this.configPath}`));
+          }
           process.exit(1);
         }
         
-        if (validationResult.warnings.length > 0) {
+        if (validationResult.warnings.length > 0 && process.env.MCP_MODE !== 'true') {
           console.error(this.validator.formatValidationResults(validationResult));
         }
         
         // Validate GitHub token
         const tokenResult = await this.validator.validateGitHubToken();
-        if (!tokenResult.valid) {
+        if (!tokenResult.valid && process.env.MCP_MODE !== 'true') {
           console.error(this.validator.formatValidationResults(tokenResult));
           console.error(chalk.yellow('\n⚠️  GitHub authentication required'));
           console.error(chalk.gray('You will be prompted for a token when needed.'));
@@ -223,12 +232,14 @@ projects: []
       
       return this.config;
     } catch (error) {
-      if (error instanceof yaml.YAMLException) {
-        console.error(chalk.red(`\n❌ Invalid YAML in configuration file:`));
-        console.error(chalk.gray(error.message));
-        console.error(chalk.gray(`\nPlease check the syntax in ${this.configPath}`));
-      } else {
-        console.error(chalk.red(`\n❌ Failed to load configuration: ${error instanceof Error ? error.message : String(error)}`));
+      if (process.env.MCP_MODE !== 'true') {
+        if (error instanceof yaml.YAMLException) {
+          console.error(chalk.red(`\n❌ Invalid YAML in configuration file:`));
+          console.error(chalk.gray(error.message));
+          console.error(chalk.gray(`\nPlease check the syntax in ${this.configPath}`));
+        } else {
+          console.error(chalk.red(`\n❌ Failed to load configuration: ${error instanceof Error ? error.message : String(error)}`));
+        }
       }
       process.exit(1);
     }

@@ -6,10 +6,13 @@ export class ProgressIndicator {
   private interval: NodeJS.Timeout | null = null;
   private message: string = '';
   private isInteractive: boolean;
+  private isSilent: boolean;
 
   constructor() {
     // Only show progress spinners if stderr is a TTY
     this.isInteractive = process.stderr.isTTY || false;
+    // Check if running in MCP mode (should be silent)
+    this.isSilent = process.env.MCP_MODE === 'true';
   }
 
   start(message: string) {
@@ -18,6 +21,11 @@ export class ProgressIndicator {
     
     // Clear any existing interval
     this.stop();
+    
+    // Don't output anything in silent/MCP mode
+    if (this.isSilent) {
+      return;
+    }
     
     if (!this.isInteractive) {
       // In non-interactive mode, just log the message
@@ -43,6 +51,11 @@ export class ProgressIndicator {
   update(message: string) {
     this.message = message;
     
+    // Don't output anything in silent/MCP mode
+    if (this.isSilent) {
+      return;
+    }
+    
     if (!this.isInteractive) {
       // In non-interactive mode, just log the new message
       console.error(chalk.gray(`• ${message}`));
@@ -57,6 +70,11 @@ export class ProgressIndicator {
   succeed(message?: string) {
     this.stop();
     
+    // Don't output anything in silent/MCP mode
+    if (this.isSilent) {
+      return;
+    }
+    
     if (!this.isInteractive) {
       console.error(`${chalk.green('✓')} ${chalk.gray(message || this.message)}`);
       return;
@@ -68,6 +86,11 @@ export class ProgressIndicator {
 
   fail(message?: string) {
     this.stop();
+    
+    // Don't output anything in silent/MCP mode
+    if (this.isSilent) {
+      return;
+    }
     
     if (!this.isInteractive) {
       console.error(`${chalk.red('✗')} ${chalk.gray(message || this.message)}`);
@@ -81,6 +104,11 @@ export class ProgressIndicator {
   warn(message?: string) {
     this.stop();
     
+    // Don't output anything in silent/MCP mode
+    if (this.isSilent) {
+      return;
+    }
+    
     if (!this.isInteractive) {
       console.error(`${chalk.yellow('⚠')} ${chalk.gray(message || this.message)}`);
       return;
@@ -92,6 +120,11 @@ export class ProgressIndicator {
 
   info(message?: string) {
     this.stop();
+    
+    // Don't output anything in silent/MCP mode
+    if (this.isSilent) {
+      return;
+    }
     
     if (!this.isInteractive) {
       console.error(`${chalk.blue('ℹ')} ${chalk.gray(message || this.message)}`);

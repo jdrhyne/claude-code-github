@@ -24,6 +24,14 @@ async function main() {
   // Check for CLI flags
   const args = process.argv.slice(2);
   
+  // Detect MCP mode (no CLI args = MCP mode)
+  const isMcpMode = args.length === 0;
+  
+  // Set global flag for MCP mode to suppress console output
+  if (isMcpMode) {
+    process.env.MCP_MODE = 'true';
+  }
+  
   if (args.includes('--version') || args.includes('-v')) {
     console.log(version);
     process.exit(0);
@@ -65,12 +73,10 @@ Documentation:
   const processManager = new ProcessManager();
 
   try {
-    // Initialize development tools first to load config
-    await devTools.initialize();
+    // Initialize development tools and get config
+    const config = await devTools.initialize();
     
     // Initialize process management with first project
-    const configManager = new (await import('./config.js')).ConfigManager();
-    const config = await configManager.loadConfig();
     if (config.projects.length > 0) {
       await processManager.initialize(config.projects[0].path);
     }
