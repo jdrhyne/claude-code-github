@@ -157,7 +157,7 @@ export class EventAggregator extends EventEmitter {
         };
         break;
 
-      case MonitoringEventType.GIT_STATE_CHANGE:
+      case MonitoringEventType.GIT_STATE_CHANGE: {
         const uncommittedChanges = event.data?.uncommittedChanges as { file_count?: number } | undefined;
         if (uncommittedChanges?.file_count && uncommittedChanges.file_count > 10) {
           suggestion = {
@@ -170,6 +170,7 @@ export class EventAggregator extends EventEmitter {
           };
         }
         break;
+      }
     }
 
     if (suggestion) {
