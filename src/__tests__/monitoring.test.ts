@@ -71,8 +71,8 @@ describe('ConversationMonitor', () => {
 
     const context = monitor.getRecentContext(2);
     expect(context).toHaveLength(2);
-    expect(context[0].message).toBe('Second message');
-    expect(context[1].message).toBe('Third message');
+    expect(context[0].content).toBe('Second message');
+    expect(context[1].content).toBe('Third message');
   });
 });
 

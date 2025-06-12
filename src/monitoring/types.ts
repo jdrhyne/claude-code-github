@@ -35,7 +35,7 @@ export interface MonitoringEvent {
   type: MonitoringEventType;
   timestamp: Date;
   projectPath: string;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 export interface ConversationPattern {
@@ -60,6 +60,12 @@ export interface MonitoringSuggestion {
   action?: string;
   reason: string;
   relatedEvents: MonitoringEvent[];
+}
+
+export interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date;
 }
 
 export interface MonitoringConfig {

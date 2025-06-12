@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { MonitoringEvent, MonitoringEventType, ConversationPattern } from './types.js';
+import { MonitoringEvent, MonitoringEventType, ConversationPattern, ConversationMessage } from './types.js';
 
 export class ConversationMonitor extends EventEmitter {
   private patterns: ConversationPattern[] = [
@@ -96,7 +96,7 @@ export class ConversationMonitor extends EventEmitter {
     }
   ];
 
-  private messageBuffer: Array<{message: string, role: string, timestamp: Date}> = [];
+  private messageBuffer: ConversationMessage[] = [];
   private readonly MAX_BUFFER_SIZE = 100;
   private isRunning = false;
 
@@ -113,8 +113,8 @@ export class ConversationMonitor extends EventEmitter {
 
     // Add to buffer
     this.messageBuffer.push({
-      message,
-      role,
+      content: message,
+      role: role as 'user' | 'assistant',
       timestamp: new Date()
     });
 
@@ -183,8 +183,8 @@ export class ConversationMonitor extends EventEmitter {
     // Common file patterns
     const filePatterns = [
       /(?:file|created|modified|updated|deleted)\s+`([^`]+)`/gi,
-      /(?:in|at|from)\s+([\/\w\-\.]+\.\w+)/gi,
-      /([\/\w\-\.]+\.\w+)(?:\s+(?:file|was|is))/gi
+      /(?:in|at|from)\s+([\\/\w\\-\\.]+\\.\\w+)/gi,
+      /([\\/\w\\-\\.]+\\.\\w+)(?:\s+(?:file|was|is))/gi
     ];
 
     for (const pattern of filePatterns) {
@@ -221,7 +221,7 @@ export class ConversationMonitor extends EventEmitter {
   /**
    * Get recent conversation context
    */
-  getRecentContext(messageCount: number = 10): any[] {
+  getRecentContext(messageCount: number = 10): ConversationMessage[] {
     return this.messageBuffer.slice(-messageCount);
   }
 

@@ -158,11 +158,12 @@ export class EventAggregator extends EventEmitter {
         break;
 
       case MonitoringEventType.GIT_STATE_CHANGE:
-        if (event.data?.uncommittedChanges?.file_count > 10) {
+        const uncommittedChanges = event.data?.uncommittedChanges as { file_count?: number } | undefined;
+        if (uncommittedChanges?.file_count && uncommittedChanges.file_count > 10) {
           suggestion = {
             type: 'commit',
             priority: 'medium',
-            message: `You have ${event.data.uncommittedChanges.file_count} uncommitted files. Consider breaking them into smaller commits.`,
+            message: `You have ${uncommittedChanges.file_count} uncommitted files. Consider breaking them into smaller commits.`,
             action: 'dev_checkpoint',
             reason: 'Smaller commits are easier to review and revert if needed.',
             relatedEvents: [event]
@@ -199,7 +200,7 @@ export class EventAggregator extends EventEmitter {
   /**
    * Get statistics about events
    */
-  getStats(): any {
+  getStats(): Record<string, number | Record<string, number>> {
     const now = Date.now();
     const oneHourAgo = now - 60 * 60 * 1000;
     const oneDayAgo = now - 24 * 60 * 60 * 1000;

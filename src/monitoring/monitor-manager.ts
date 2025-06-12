@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { FileWatcher, FileChangeEvent } from '../file-watcher.js';
 import { GitManager } from '../git.js';
-import { ProjectConfig, DevelopmentStatus } from '../types.js';
+import { ProjectConfig } from '../types.js';
 import { ConversationMonitor } from './conversation-monitor.js';
 import { EventAggregator } from './event-aggregator.js';
 import { MonitoringEvent, MonitoringEventType } from './types.js';
@@ -139,7 +139,7 @@ export class MonitorManager extends EventEmitter {
   /**
    * Check Git state for changes
    */
-  private async checkGitState(projectPath: string, project: ProjectConfig): Promise<void> {
+  private async checkGitState(projectPath: string, _project: ProjectConfig): Promise<void> {
     try {
       // Get current Git state
       const branch = await this.gitManager.getCurrentBranch(projectPath);
@@ -147,7 +147,7 @@ export class MonitorManager extends EventEmitter {
       const commits = await this.gitManager.getRecentCommits(projectPath, 1);
 
       // Create state hash
-      const stateHash = this.createGitStateHash(branch, changes, commits);
+      const stateHash = this.createGitStateHash(branch, changes || {}, commits);
       const lastHash = this.lastGitStates.get(projectPath);
 
       if (stateHash !== lastHash) {
@@ -176,7 +176,7 @@ export class MonitorManager extends EventEmitter {
   /**
    * Create a hash of Git state for comparison
    */
-  private createGitStateHash(branch: string, changes: any, commits: any[]): string {
+  private createGitStateHash(branch: string, changes: { file_count?: number }, commits: Array<{ hash?: string }>): string {
     const stateObj = {
       branch,
       changeCount: changes?.file_count || 0,
@@ -195,7 +195,16 @@ export class MonitorManager extends EventEmitter {
   /**
    * Get current monitoring state
    */
-  getMonitoringState(): any {
+  getMonitoringState(): {
+    projects: ProjectConfig[];
+    activeMonitors: {
+      fileWatcher: boolean;
+      gitMonitor: boolean;
+      conversationMonitor: boolean;
+    };
+    eventStats: Record<string, number | Record<string, number>>;
+    lastEvents: MonitoringEvent[];
+  } {
     return {
       projects: Array.from(this.projects.values()),
       activeMonitors: {
