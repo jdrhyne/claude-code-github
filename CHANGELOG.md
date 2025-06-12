@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.5] - 2025-06-12
+
+### Fixed
+- **MCP Server Initialization** - Fixed server hanging during initialization with Claude Code
+  - Suppress all console output to stderr when running in MCP mode
+  - Detect MCP mode automatically when no CLI arguments are provided
+  - Fix double configuration loading that caused duplicate validation messages
+  - Ensure clean JSON-RPC protocol communication without interference
+
 ## [1.1.4] - 2025-06-11
 
 ### Added
