@@ -4,6 +4,7 @@ import * as os from 'os';
 import * as yaml from 'js-yaml';
 import { Config } from './types.js';
 import { ConfigValidator } from './validation.js';
+import { ProjectDiscovery } from './project-discovery.js';
 import chalk from 'chalk';
 
 export class ConfigManager {
@@ -78,6 +79,17 @@ export class ConfigManager {
         notification_style: 'inline',
         learning_mode: false
       },
+      project_discovery: {
+        enabled: false,
+        scan_paths: [],
+        exclude_patterns: [
+          '*/node_modules/*',
+          '*/archived/*',
+          '*/.Trash/*'
+        ],
+        auto_detect_github_repo: true,
+        max_depth: 3
+      },
       projects
     };
   }
@@ -146,6 +158,20 @@ monitoring:
   notification_style: inline    # inline, summary, or none
   learning_mode: false          # Learn from your development patterns
 
+# Automatic project discovery configuration
+project_discovery:
+  enabled: false                # Enable automatic discovery of Git repositories
+  scan_paths: []                # List of directories to scan for Git repositories
+    # Example:
+    # - "/Users/steve/Projects"
+    # - "/Users/steve/Work"
+  exclude_patterns:             # Patterns to exclude from scanning
+    - "*/node_modules/*"
+    - "*/archived/*"
+    - "*/.Trash/*"
+  auto_detect_github_repo: true # Automatically detect GitHub repository from git remote
+  max_depth: 3                  # Maximum directory depth to scan
+
 # A list of projects for the server to monitor.
 # Use absolute paths.
 projects: []
@@ -166,6 +192,38 @@ projects: []
 `;
 
     fs.writeFileSync(this.configPath, configWithComments, 'utf8');
+  }
+
+  private async discoverProjects(config: Config): Promise<Config> {
+    if (!config.project_discovery?.enabled) {
+      return config;
+    }
+
+    try {
+      const discovery = new ProjectDiscovery(config.project_discovery);
+      const discoveredProjects = await discovery.discoverProjects();
+      
+      if (discoveredProjects.length > 0) {
+        // Merge discovered projects with existing ones
+        const mergedProjects = discovery.mergeWithExistingProjects(config.projects);
+        
+        if (process.env.MCP_MODE !== 'true' && mergedProjects.length > config.projects.length) {
+          const newCount = mergedProjects.length - config.projects.length;
+          console.error(chalk.cyan(`\n✨ Discovered ${newCount} new project(s) via automatic discovery`));
+        }
+        
+        return {
+          ...config,
+          projects: mergedProjects
+        };
+      }
+    } catch (error) {
+      if (process.env.MCP_MODE !== 'true') {
+        console.error(chalk.yellow(`\n⚠️  Error during project discovery: ${error instanceof Error ? error.message : String(error)}`));
+      }
+    }
+
+    return config;
   }
 
   async loadConfig(): Promise<Config> {
@@ -228,6 +286,9 @@ projects: []
           console.error(chalk.yellow('\n⚠️  GitHub authentication required'));
           console.error(chalk.gray('You will be prompted for a token when needed.'));
         }
+        
+        // Run project discovery after validation
+        this.config = await this.discoverProjects(this.config);
       }
       
       return this.config;

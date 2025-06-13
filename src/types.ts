@@ -72,11 +72,20 @@ export interface SuggestionConfig {
   branch_suggestions: boolean;
 }
 
+export interface ProjectDiscoveryConfig {
+  enabled: boolean;
+  scan_paths: string[];
+  exclude_patterns?: string[];
+  auto_detect_github_repo?: boolean;
+  max_depth?: number;
+}
+
 export interface Config {
   git_workflow: GitWorkflowConfig;
   suggestions?: SuggestionConfig;
   projects: ProjectConfig[];
   monitoring?: MonitoringConfig;
+  project_discovery?: ProjectDiscoveryConfig;
 }
 
 export interface MonitoringConfig {

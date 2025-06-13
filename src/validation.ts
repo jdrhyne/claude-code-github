@@ -40,6 +40,9 @@ export class ConfigValidator {
     // Validate git_workflow section
     this.validateGitWorkflow(config, errors, warnings);
 
+    // Validate project discovery
+    this.validateProjectDiscovery(config, errors, warnings);
+
     // Validate projects
     await this.validateProjects(config, errors, warnings);
 
@@ -136,6 +139,71 @@ export class ConfigValidator {
           });
         }
       }
+    }
+  }
+
+  private validateProjectDiscovery(config: Config, errors: ValidationError[], warnings: ValidationWarning[]) {
+    if (!config.project_discovery) {
+      return; // Optional section
+    }
+
+    const discovery = config.project_discovery;
+
+    // Validate scan_paths if enabled
+    if (discovery.enabled) {
+      if (!Array.isArray(discovery.scan_paths) || discovery.scan_paths.length === 0) {
+        errors.push({
+          type: 'error',
+          field: 'project_discovery.scan_paths',
+          message: 'Project discovery is enabled but no scan paths are configured',
+          suggestion: 'Add at least one directory path to scan_paths or disable project discovery'
+        });
+      } else {
+        // Validate each scan path
+        for (let i = 0; i < discovery.scan_paths.length; i++) {
+          const scanPath = discovery.scan_paths[i];
+          if (!fs.existsSync(scanPath)) {
+            warnings.push({
+              type: 'warning',
+              field: `project_discovery.scan_paths[${i}]`,
+              message: `Scan path does not exist: ${scanPath}`,
+              suggestion: 'Check the path or create the directory'
+            });
+          } else {
+            const stats = fs.statSync(scanPath);
+            if (!stats.isDirectory()) {
+              errors.push({
+                type: 'error',
+                field: `project_discovery.scan_paths[${i}]`,
+                message: `Scan path is not a directory: ${scanPath}`,
+                suggestion: 'Scan paths must be directories, not files'
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Validate max_depth
+    if (discovery.max_depth !== undefined) {
+      if (typeof discovery.max_depth !== 'number' || discovery.max_depth < 1 || discovery.max_depth > 10) {
+        errors.push({
+          type: 'error',
+          field: 'project_discovery.max_depth',
+          message: `Invalid max_depth: ${discovery.max_depth}`,
+          suggestion: 'Set max_depth between 1 and 10'
+        });
+      }
+    }
+
+    // Validate exclude_patterns
+    if (discovery.exclude_patterns && !Array.isArray(discovery.exclude_patterns)) {
+      errors.push({
+        type: 'error',
+        field: 'project_discovery.exclude_patterns',
+        message: 'exclude_patterns must be an array',
+        suggestion: 'Set exclude_patterns to an array of glob patterns'
+      });
     }
   }
 
