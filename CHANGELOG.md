@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-06-13
+
+### Added
+- **Automatic Project Discovery** (#24) - No more manual configuration for each project!
+  - Configure directory paths to scan for Git repositories
+  - Automatically detects GitHub repository from git remotes (SSH & HTTPS)
+  - Smart exclusion patterns (skip node_modules, archived folders, etc.)
+  - Configurable scan depth (default: 3 levels)
+  - Works seamlessly alongside manually configured projects
+  - Cross-platform support with proper path handling
+- **Project Discovery Configuration** - New `project_discovery` section in config
+  - `enabled`: Toggle automatic discovery on/off
+  - `scan_paths`: List of directories to scan
+  - `exclude_patterns`: Glob patterns to exclude from scanning
+  - `auto_detect_github_repo`: Auto-detect from git remote
+  - `max_depth`: Maximum directory depth to scan
+
+### Fixed
+- Windows path separator issues in project discovery
+- ESLint errors that were causing CI failures
+- Const declaration scope issue with block statements
+
 ## [1.1.5] - 2025-06-12
 
 ### Fixed
@@ -207,7 +229,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Package name and installation commands alignment
 
-[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.5...HEAD
+[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.5...v1.2.0
 [1.1.5]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.3...v1.1.4
 [1.1.3]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.2...v1.1.3
