@@ -57,7 +57,7 @@ describe('ProjectDiscovery', () => {
 
       const projects = await discovery.discoverProjects();
       expect(projects).toHaveLength(2);
-      expect(projects.map(p => p.path).sort()).toEqual([repo1, repo2].sort());
+      expect(projects.map(p => path.normalize(p.path)).sort()).toEqual([repo1, repo2].map(p => path.normalize(p)).sort());
     });
 
     it('should respect max_depth setting', async () => {
@@ -82,7 +82,7 @@ describe('ProjectDiscovery', () => {
 
       const projects = await discovery.discoverProjects();
       expect(projects).toHaveLength(1);
-      expect(projects[0].path).toBe(repo1);
+      expect(path.normalize(projects[0].path)).toBe(path.normalize(repo1));
     });
 
     it('should exclude paths based on patterns', async () => {
@@ -107,7 +107,8 @@ describe('ProjectDiscovery', () => {
 
       const projects = await discovery.discoverProjects();
       expect(projects).toHaveLength(1);
-      expect(projects[0].path).toBe(repo1);
+      // Use path normalization for cross-platform path comparison
+      expect(path.normalize(projects[0].path)).toBe(path.normalize(repo1));
     });
 
     it('should skip common non-project directories', async () => {
@@ -130,7 +131,7 @@ describe('ProjectDiscovery', () => {
 
       const projects = await discovery.discoverProjects();
       expect(projects).toHaveLength(1);
-      expect(projects[0].path).toBe(repo2);
+      expect(path.normalize(projects[0].path)).toBe(path.normalize(repo2));
     });
   });
 
@@ -216,7 +217,7 @@ describe('ProjectDiscovery', () => {
       const merged = discovery.mergeWithExistingProjects(existingProjects);
       expect(merged).toHaveLength(2);
       expect(merged[0]).toEqual(existingProjects[0]);
-      expect(merged[1].path).toBe(repo2);
+      expect(path.normalize(merged[1].path)).toBe(path.normalize(repo2));
       expect(merged[1].github_repo).toBe('user/repo2');
     });
 

@@ -181,10 +181,13 @@ export class ProjectDiscovery {
       return false;
     }
 
+    // Normalize path separators for cross-platform compatibility
+    const normalizedPath = filePath.replace(/\\/g, '/');
+
     for (const pattern of this.config.exclude_patterns) {
       // Simple glob pattern matching
       const regex = new RegExp(pattern.replace(/\*/g, '.*').replace(/\?/g, '.'));
-      if (regex.test(filePath)) {
+      if (regex.test(normalizedPath)) {
         return true;
       }
     }
