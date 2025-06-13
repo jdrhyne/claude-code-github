@@ -115,6 +115,34 @@ projects:
     reviewers: ["teammate1", "teammate2"]
 ```
 
+### Automatic Project Discovery
+
+Instead of manually configuring each project, you can enable automatic discovery:
+
+```yaml
+# Automatic project discovery configuration
+project_discovery:
+  enabled: true                 # Enable automatic discovery of Git repositories
+  scan_paths:                   # List of directories to scan for Git repositories
+    - "/Users/yourname/Projects"
+    - "/Users/yourname/Work"
+  exclude_patterns:             # Patterns to exclude from scanning
+    - "*/node_modules/*"
+    - "*/archived/*"
+    - "*/.Trash/*"
+  auto_detect_github_repo: true # Automatically detect GitHub repository from git remote
+  max_depth: 3                  # Maximum directory depth to scan
+
+# Your manually configured projects (discovered projects will be added to this list)
+projects: []
+```
+
+When enabled, claude-code-github will:
+- Scan the specified directories for Git repositories
+- Automatically detect the GitHub repository from the git remote URL
+- Merge discovered projects with your manually configured ones
+- Skip common non-project directories like `node_modules`, `.git`, etc.
+
 ### 2. Intelligent Suggestions
 
 Configure the intelligent workflow assistant to match your preferences:
