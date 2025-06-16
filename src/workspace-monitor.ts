@@ -128,7 +128,10 @@ export class WorkspaceMonitor extends EventEmitter {
         const gitPath = path.join(fullPath, '.git');
         
         if (fs.existsSync(gitPath)) {
-          await this.detectProject(fullPath, workspace);
+          // Skip if already in cache
+          if (!this.discoveredProjects.has(fullPath)) {
+            await this.detectProject(fullPath, workspace);
+          }
         }
       }
     } catch (error) {
@@ -147,7 +150,7 @@ export class WorkspaceMonitor extends EventEmitter {
       let githubRepo: string | undefined;
 
       // Detect GitHub repository based on configuration
-      if (workspace.github_repo_detection === 'from_remote') {
+      if (workspace.github_repo_detection === 'from_remote' || !workspace.github_repo_detection) {
         const remoteUrl = await this.gitManager.getRemoteUrl(projectPath);
         if (remoteUrl) {
           githubRepo = this.parseGitHubRepo(remoteUrl);
@@ -184,15 +187,15 @@ export class WorkspaceMonitor extends EventEmitter {
    */
   private parseGitHubRepo(remoteUrl: string): string | undefined {
     // Handle SSH URLs: git@github.com:user/repo.git
-    const sshMatch = remoteUrl.match(/git@github\.com:(.+?)(?:\.git)?$/);
+    const sshMatch = remoteUrl.match(/git@github\.com:([^/]+\/[^/]+?)(?:\.git)?$/);
     if (sshMatch) {
-      return sshMatch[1];
+      return sshMatch[1].replace(/\.git$/, '');
     }
 
     // Handle HTTPS URLs: https://github.com/user/repo.git
-    const httpsMatch = remoteUrl.match(/https?:\/\/github\.com\/(.+?)(?:\.git)?$/);
+    const httpsMatch = remoteUrl.match(/https?:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?$/);
     if (httpsMatch) {
-      return httpsMatch[1];
+      return httpsMatch[1].replace(/\.git$/, '');
     }
 
     return undefined;
@@ -262,9 +265,12 @@ export class WorkspaceMonitor extends EventEmitter {
       for (const project of cached) {
         // Verify the project still exists
         if (fs.existsSync(path.join(project.path, '.git'))) {
-          project.cached = true;
-          project.last_detected = new Date(project.last_detected);
-          this.discoveredProjects.set(project.path, project);
+          const loadedProject: WorkspaceProject = {
+            ...project,
+            cached: true,
+            last_detected: new Date(project.last_detected)
+          };
+          this.discoveredProjects.set(project.path, loadedProject);
         }
       }
     } catch (error) {

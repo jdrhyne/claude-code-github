@@ -3,6 +3,7 @@ import { Config } from './types.js';
 import { GitManager } from './git.js';
 import { GitHubManager } from './github.js';
 import { FileWatcher } from './file-watcher.js';
+import { WorkspaceMonitor, WorkspaceProject } from './workspace-monitor.js';
 import { 
   DevelopmentStatus, 
   CreateBranchParams, 
@@ -45,6 +46,7 @@ export class DevelopmentTools {
   private gitManager: GitManager;
   private githubManager: GitHubManager;
   private fileWatcher: FileWatcher;
+  private workspaceMonitor: WorkspaceMonitor | null = null;
   private suggestionEngine!: SuggestionEngine;
   private monitorManager: MonitorManager | null = null;
   private currentProjectPath: string | null = null;
@@ -75,6 +77,45 @@ export class DevelopmentTools {
           gitManager: this.gitManager,
           projects: config.projects
         });
+      }
+      
+      // Initialize workspace monitor if enabled
+      if (config.workspace_monitoring?.enabled) {
+        progress.start('Initializing workspace monitoring');
+        const cacheFile = path.join(process.env.HOME || process.env.USERPROFILE || '', '.config', 'claude-code-github', 'workspace-cache.json');
+        this.workspaceMonitor = new WorkspaceMonitor(config.workspace_monitoring, cacheFile);
+        
+        // Start monitoring workspaces
+        await this.workspaceMonitor.start();
+        
+        // Merge discovered projects with configured ones
+        const discoveredProjects = this.workspaceMonitor.getProjectConfigs();
+        if (discoveredProjects.length > 0) {
+          const existingPaths = new Set(config.projects.map(p => p.path));
+          for (const discovered of discoveredProjects) {
+            if (!existingPaths.has(discovered.path)) {
+              config.projects.push(discovered);
+              this.fileWatcher.addProject(discovered);
+            }
+          }
+          progress.succeed(`Workspace monitoring initialized (${discoveredProjects.length} projects discovered)`);
+        } else {
+          progress.succeed('Workspace monitoring initialized');
+        }
+        
+        // Listen for new project discoveries
+        this.workspaceMonitor.on('project-detected', (project: any) => {
+          if (project.github_repo) {
+            const projectConfig: ProjectConfig = {
+              path: project.path,
+              github_repo: project.github_repo
+            };
+            this.fileWatcher.addProject(projectConfig);
+          }
+        });
+        
+        // Update current directory for context awareness
+        this.workspaceMonitor.setCurrentDirectory(process.cwd());
       }
       
       if (config.projects.length > 0) {
@@ -679,6 +720,9 @@ export class DevelopmentTools {
     this.fileWatcher.close();
     if (this.monitorManager) {
       this.monitorManager.stop();
+    }
+    if (this.workspaceMonitor) {
+      this.workspaceMonitor.stop();
     }
   }
 

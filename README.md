@@ -48,11 +48,12 @@ Let Claude handle your Git workflow with **intelligent automation**:
 - **Change Analysis** - Suggests optimal commit strategies based on file types and changes
 - **Workflow Guidance** - Recommends when to branch, commit, or create pull requests
 
-### 🔍 **Active Monitoring System** (NEW)
+### 🔍 **Active Monitoring System**
 - **Conversation Tracking** - Monitors your development conversation for progress insights
 - **Event Aggregation** - Detects milestones like feature completion and test success
 - **Smart Notifications** - Proactive suggestions based on your development activity
 - **Release Detection** - Knows when you're ready for a release based on completed work
+- **Workspace Monitoring** (NEW v1.3.0) - Real-time detection of new Git repositories in your folders
 
 ### 🛡️ **Smart Safety & Best Practices**
 - **Protected Branch Safety** - Warns when working directly on main/develop branches
@@ -142,6 +143,29 @@ When enabled, claude-code-github will:
 - Automatically detect the GitHub repository from the git remote URL
 - Merge discovered projects with your manually configured ones
 - Skip common non-project directories like `node_modules`, `.git`, etc.
+
+### Workspace Monitoring (NEW in v1.3.0)
+
+Enable real-time monitoring of your development folders:
+
+```yaml
+# Workspace monitoring for real-time project detection
+workspace_monitoring:
+  enabled: true
+  workspaces:
+    - path: "/Users/yourname/Projects"
+      auto_detect: true
+      cache_discovery: true
+      github_repo_detection: from_remote  # or from_folder_name
+```
+
+Workspace monitoring:
+- Detects when you clone or create new Git repositories
+- Automatically adds them to your active projects
+- Provides context awareness based on your current directory
+- Uses efficient file system watchers for minimal overhead
+
+See [Workspace Monitoring Guide](docs/WORKSPACE_MONITORING.md) for complete details.
 
 ### 2. Intelligent Suggestions
 
