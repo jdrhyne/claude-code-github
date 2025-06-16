@@ -1,0 +1,590 @@
+openapi: 3.0.3
+info:
+  title: Claude Code GitHub API
+  description: |
+    RESTful API for claude-code-github that provides real-time development
+    suggestions, monitoring events, and workflow automation.
+  version: 1.0.0
+  contact:
+    name: API Support
+    url: https://github.com/jdrhyne/claude-code-github/issues
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local development server
+  - url: http://{host}:{port}/api/v1
+    description: Custom server
+    variables:
+      host:
+        default: localhost
+      port:
+        default: '3000'
+
+security:
+  - bearerAuth: []
+  - apiKey: []
+
+paths:
+  /status:
+    get:
+      summary: Get development status
+      description: Returns the current development status including branch info and suggestions
+      operationId: getStatus
+      tags:
+        - Status
+      security:
+        - bearerAuth: [read:status]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /status/enhanced:
+    get:
+      summary: Get enhanced status
+      description: Returns comprehensive project status including PRs, issues, and CI/CD
+      operationId: getEnhancedStatus
+      tags:
+        - Status
+      security:
+        - bearerAuth: [read:status]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnhancedStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /status/monitoring:
+    get:
+      summary: Get monitoring status
+      description: Returns the current monitoring system status
+      operationId: getMonitoringStatus
+      tags:
+        - Status
+      security:
+        - bearerAuth: [read:status]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringStatusResponse'
+
+  /suggestions:
+    get:
+      summary: List suggestions
+      description: Returns a list of development suggestions with optional filtering
+      operationId: listSuggestions
+      tags:
+        - Suggestions
+      security:
+        - bearerAuth: [read:suggestions]
+      parameters:
+        - name: project
+          in: query
+          description: Filter by project path
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Filter by suggestion type
+          schema:
+            type: string
+        - name: since
+          in: query
+          description: Filter suggestions created after this timestamp
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestionsResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /suggestions/{id}:
+    get:
+      summary: Get suggestion
+      description: Returns a single suggestion by ID
+      operationId: getSuggestion
+      tags:
+        - Suggestions
+      security:
+        - bearerAuth: [read:suggestions]
+      parameters:
+        - $ref: '#/components/parameters/suggestionId'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /suggestions/{id}/dismiss:
+    post:
+      summary: Dismiss suggestion
+      description: Dismisses a suggestion, removing it from the active list
+      operationId: dismissSuggestion
+      tags:
+        - Suggestions
+      security:
+        - bearerAuth: [write:suggestions]
+      parameters:
+        - $ref: '#/components/parameters/suggestionId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Optional reason for dismissal
+      responses:
+        '200':
+          description: Suggestion dismissed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DismissResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /suggestions/{id}/action:
+    post:
+      summary: Execute suggestion action
+      description: Executes an action associated with a suggestion
+      operationId: executeSuggestionAction
+      tags:
+        - Suggestions
+      security:
+        - bearerAuth: [write:suggestions, execute:actions]
+      parameters:
+        - $ref: '#/components/parameters/suggestionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionRequest'
+      responses:
+        '200':
+          description: Action executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '501':
+          $ref: '#/components/responses/NotImplemented'
+
+  /monitoring/events:
+    get:
+      summary: List monitoring events
+      description: Returns a list of monitoring events with optional filtering
+      operationId: listEvents
+      tags:
+        - Monitoring
+      security:
+        - bearerAuth: [read:monitoring]
+      parameters:
+        - name: type
+          in: query
+          description: Filter by event type
+          schema:
+            type: string
+        - name: project
+          in: query
+          description: Filter by project path
+          schema:
+            type: string
+        - name: since
+          in: query
+          description: Filter events after this timestamp
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of results
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsResponse'
+
+  /monitoring/events/{id}:
+    get:
+      summary: Get event
+      description: Returns a single event by ID
+      operationId: getEvent
+      tags:
+        - Monitoring
+      security:
+        - bearerAuth: [read:monitoring]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Event ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /monitoring/stats:
+    get:
+      summary: Get statistics
+      description: Returns statistics about events and suggestions
+      operationId: getStats
+      tags:
+        - Monitoring
+      security:
+        - bearerAuth: [read:monitoring]
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+
+  /monitoring/stream:
+    get:
+      summary: Stream events
+      description: Server-sent event stream for real-time monitoring
+      operationId: streamEvents
+      tags:
+        - Monitoring
+      security:
+        - bearerAuth: [read:monitoring]
+      responses:
+        '200':
+          description: Event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-sent events stream
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token authentication
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key authentication
+
+  parameters:
+    suggestionId:
+      name: id
+      in: path
+      required: true
+      description: Suggestion ID
+      schema:
+        type: string
+
+  schemas:
+    APIResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        error:
+          $ref: '#/components/schemas/APIError'
+
+    APIError:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    StatusResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                project:
+                  $ref: '#/components/schemas/ProjectStatus'
+                suggestions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Suggestion'
+                hints:
+                  type: array
+                  items:
+                    type: string
+
+    ProjectStatus:
+      type: object
+      properties:
+        branch:
+          type: string
+        is_protected:
+          type: boolean
+        uncommitted_changes:
+          type: object
+          properties:
+            file_count:
+              type: integer
+            files_changed:
+              type: array
+              items:
+                type: object
+                properties:
+                  file:
+                    type: string
+                  status:
+                    type: string
+
+    Suggestion:
+      type: object
+      required:
+        - id
+        - timestamp
+        - type
+        - priority
+        - message
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        project:
+          type: string
+        type:
+          type: string
+        priority:
+          type: string
+          enum: [low, medium, high]
+        message:
+          type: string
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuggestionAction'
+        metadata:
+          type: object
+
+    SuggestionAction:
+      type: object
+      required:
+        - type
+        - label
+      properties:
+        type:
+          type: string
+        label:
+          type: string
+        params:
+          type: object
+
+    Event:
+      type: object
+      required:
+        - id
+        - timestamp
+        - type
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+        project:
+          type: string
+        data:
+          type: object
+
+    SuggestionsResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                suggestions:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Suggestion'
+                total:
+                  type: integer
+                stats:
+                  $ref: '#/components/schemas/SuggestionStats'
+
+    SuggestionStats:
+      type: object
+      properties:
+        total:
+          type: integer
+        byType:
+          type: object
+          additionalProperties:
+            type: integer
+        byPriority:
+          type: object
+          additionalProperties:
+            type: integer
+        byProject:
+          type: object
+          additionalProperties:
+            type: integer
+
+    ActionRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+        params:
+          type: object
+
+    ActionResponse:
+      allOf:
+        - $ref: '#/components/schemas/APIResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                id:
+                  type: string
+                action:
+                  type: string
+                result:
+                  type: object
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIResponse'
+          example:
+            success: false
+            error:
+              code: UNAUTHORIZED
+              message: Missing authentication token
+
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIResponse'
+          example:
+            success: false
+            error:
+              code: VALIDATION_ERROR
+              message: Invalid request parameters
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIResponse'
+          example:
+            success: false
+            error:
+              code: NOT_FOUND
+              message: Resource not found
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIResponse'
+          example:
+            success: false
+            error:
+              code: INTERNAL_ERROR
+              message: An unexpected error occurred
+
+    NotImplemented:
+      description: Feature not implemented
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/APIResponse'
+          example:
+            success: false
+            error:
+              code: NOT_IMPLEMENTED
+              message: This feature is not yet implemented
