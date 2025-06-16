@@ -80,12 +80,26 @@ export interface ProjectDiscoveryConfig {
   max_depth?: number;
 }
 
+export interface WorkspaceMonitoringConfig {
+  enabled: boolean;
+  workspaces: WorkspacePathConfig[];
+}
+
+export interface WorkspacePathConfig {
+  path: string;
+  auto_detect: boolean;
+  inherit_settings?: boolean;
+  cache_discovery?: boolean;
+  github_repo_detection?: 'from_remote' | 'from_folder_name';
+}
+
 export interface Config {
   git_workflow: GitWorkflowConfig;
   suggestions?: SuggestionConfig;
   projects: ProjectConfig[];
   monitoring?: MonitoringConfig;
   project_discovery?: ProjectDiscoveryConfig;
+  workspace_monitoring?: WorkspaceMonitoringConfig;
 }
 
 export interface MonitoringConfig {

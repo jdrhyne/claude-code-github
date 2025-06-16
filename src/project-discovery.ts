@@ -22,12 +22,30 @@ export interface DiscoveredProject {
   remote_url?: string;
 }
 
+export interface DiscoveryMetrics {
+  startTime: number;
+  endTime?: number;
+  duration?: number;
+  directoriesScanned: number;
+  projectsFound: number;
+  errors: number;
+  scanPaths: { [path: string]: { duration: number; projects: number } };
+}
+
 export class ProjectDiscovery {
   private config: ProjectDiscoveryConfig;
   private discoveredProjects: Map<string, DiscoveredProject> = new Map();
+  private metrics: DiscoveryMetrics;
 
   constructor(config: ProjectDiscoveryConfig) {
     this.config = config;
+    this.metrics = {
+      startTime: 0,
+      directoriesScanned: 0,
+      projectsFound: 0,
+      errors: 0,
+      scanPaths: {}
+    };
   }
 
   /**
@@ -38,20 +56,48 @@ export class ProjectDiscovery {
       return [];
     }
 
+    // Reset metrics
+    this.metrics = {
+      startTime: Date.now(),
+      directoriesScanned: 0,
+      projectsFound: 0,
+      errors: 0,
+      scanPaths: {}
+    };
+
     const allProjects: DiscoveredProject[] = [];
 
     for (const scanPath of this.config.scan_paths) {
       if (!fs.existsSync(scanPath)) {
+        this.metrics.errors++;
         continue;
       }
 
+      const pathStartTime = Date.now();
       const projects = await this.scanDirectory(scanPath, 0);
+      const pathDuration = Date.now() - pathStartTime;
+
+      this.metrics.scanPaths[scanPath] = {
+        duration: pathDuration,
+        projects: projects.length
+      };
+
       allProjects.push(...projects);
     }
 
     // Update the discovered projects map
     for (const project of allProjects) {
       this.discoveredProjects.set(project.path, project);
+    }
+
+    // Finalize metrics
+    this.metrics.endTime = Date.now();
+    this.metrics.duration = this.metrics.endTime - this.metrics.startTime;
+    this.metrics.projectsFound = allProjects.length;
+
+    // Log performance metrics if not in test mode
+    if (process.env.NODE_ENV !== 'test' && process.env.MCP_MODE !== 'true') {
+      this.logMetrics();
     }
 
     return allProjects;
@@ -66,6 +112,7 @@ export class ProjectDiscovery {
       return [];
     }
 
+    this.metrics.directoriesScanned++;
     const projects: DiscoveredProject[] = [];
 
     // Check if this directory is a Git repository
@@ -249,5 +296,41 @@ export class ProjectDiscovery {
     }
 
     return mergedProjects;
+  }
+
+  /**
+   * Get the latest discovery metrics
+   */
+  getMetrics(): DiscoveryMetrics {
+    return { ...this.metrics };
+  }
+
+  /**
+   * Log discovery metrics
+   */
+  private logMetrics(): void {
+    console.log('\n📊 Project Discovery Metrics:');
+    console.log(`⏱️  Total duration: ${this.metrics.duration}ms`);
+    console.log(`📁 Directories scanned: ${this.metrics.directoriesScanned}`);
+    console.log(`🔍 Projects found: ${this.metrics.projectsFound}`);
+    
+    if (this.metrics.errors > 0) {
+      console.log(`❌ Errors: ${this.metrics.errors}`);
+    }
+
+    if (Object.keys(this.metrics.scanPaths).length > 0) {
+      console.log('\n📍 Per-path breakdown:');
+      for (const [path, stats] of Object.entries(this.metrics.scanPaths)) {
+        console.log(`   ${path}: ${stats.projects} projects in ${stats.duration}ms`);
+      }
+    }
+
+    // Performance warnings
+    if (this.metrics.duration && this.metrics.duration > 5000) {
+      console.log('\n⚠️  Discovery took more than 5 seconds. Consider:');
+      console.log('   - Reducing max_depth');
+      console.log('   - Adding exclude_patterns');
+      console.log('   - Using more specific scan_paths');
+    }
   }
 }

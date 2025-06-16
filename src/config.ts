@@ -5,6 +5,7 @@ import * as yaml from 'js-yaml';
 import { Config } from './types.js';
 import { ConfigValidator } from './validation.js';
 import { ProjectDiscovery } from './project-discovery.js';
+import { WorkspaceMonitor } from './workspace-monitor.js';
 import chalk from 'chalk';
 
 export class ConfigManager {
@@ -89,6 +90,10 @@ export class ConfigManager {
         ],
         auto_detect_github_repo: true,
         max_depth: 3
+      },
+      workspace_monitoring: {
+        enabled: false,
+        workspaces: []
       },
       projects
     };
