@@ -4,6 +4,7 @@ import { GitManager } from './git.js';
 import { GitHubManager } from './github.js';
 import { FileWatcher } from './file-watcher.js';
 import { WorkspaceMonitor, WorkspaceProject } from './workspace-monitor.js';
+import { APIServer } from './api/server.js';
 import { 
   DevelopmentStatus, 
   CreateBranchParams, 
@@ -49,6 +50,7 @@ export class DevelopmentTools {
   private workspaceMonitor: WorkspaceMonitor | null = null;
   private suggestionEngine!: SuggestionEngine;
   private monitorManager: MonitorManager | null = null;
+  private apiServer: APIServer | null = null;
   private currentProjectPath: string | null = null;
 
   constructor() {
@@ -124,6 +126,31 @@ export class DevelopmentTools {
           this.fileWatcher.addProject(project);
         }
         progress.succeed(`${config.projects.length} project${config.projects.length > 1 ? 's' : ''} configured`);
+      }
+
+      // Initialize API server if enabled
+      if (config.api_server?.enabled) {
+        progress.start('Starting API server');
+        this.apiServer = new APIServer(config.api_server, this);
+        
+        try {
+          await this.apiServer.start();
+          progress.succeed(`API server started on ${config.api_server.host}:${config.api_server.port}`);
+          
+          // Set up event forwarding from monitoring to API
+          if (this.monitorManager) {
+            this.monitorManager.on('suggestion', (suggestion) => {
+              this.apiServer?.emitSuggestion(suggestion);
+            });
+            
+            this.monitorManager.on('monitoring-event', (event) => {
+              this.apiServer?.emitEvent(event);
+            });
+          }
+        } catch (error: any) {
+          progress.fail(`Failed to start API server: ${error.message}`);
+          // Don't throw - API server is optional
+        }
       }
 
       await this.setCurrentProject();
@@ -716,13 +743,16 @@ export class DevelopmentTools {
     }
   }
 
-  close() {
+  async close() {
     this.fileWatcher.close();
     if (this.monitorManager) {
       this.monitorManager.stop();
     }
     if (this.workspaceMonitor) {
-      this.workspaceMonitor.stop();
+      await this.workspaceMonitor.stop();
+    }
+    if (this.apiServer) {
+      await this.apiServer.stop();
     }
   }
 

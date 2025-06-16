@@ -100,7 +100,22 @@ export interface Config {
   monitoring?: MonitoringConfig;
   project_discovery?: ProjectDiscoveryConfig;
   workspace_monitoring?: WorkspaceMonitoringConfig;
+  api_server?: APIConfig;
+  websocket?: WebSocketConfig;
+  webhooks?: WebhookConfig;
 }
+
+// Re-export API types for convenience
+export type { 
+  APIConfig, 
+  WebSocketConfig, 
+  WebhookConfig,
+  AuthConfig,
+  AuthToken,
+  CorsConfig,
+  RateLimitConfig,
+  WebhookEndpoint
+} from './api/types.js';
 
 export interface MonitoringConfig {
   enabled?: boolean;

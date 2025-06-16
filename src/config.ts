@@ -95,6 +95,39 @@ export class ConfigManager {
         enabled: false,
         workspaces: []
       },
+      api_server: {
+        enabled: false,
+        type: 'http',
+        port: 3000,
+        host: '127.0.0.1',
+        auth: {
+          enabled: true,
+          type: 'bearer',
+          tokens: []
+        },
+        cors: {
+          enabled: true,
+          origins: ['http://localhost:*']
+        },
+        rateLimit: {
+          enabled: true,
+          window: 60,
+          max_requests: 100,
+          by: 'token'
+        },
+        logging: {
+          enabled: true,
+          level: 'info'
+        }
+      },
+      websocket: {
+        enabled: false,
+        namespace: '/suggestions'
+      },
+      webhooks: {
+        enabled: false,
+        endpoints: []
+      },
       projects
     };
   }
