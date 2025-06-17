@@ -4,7 +4,8 @@
   "description": "An intelligent MCP server for Claude Code that monitors your development patterns and automates Git workflows with smart suggestions",
   "main": "dist/index.js",
   "bin": {
-    "claude-code-github": "dist/index.js"
+    "claude-code-github": "dist/index.js",
+    "claude-code-notify": "bin/claude-code-notify"
   },
   "scripts": {
     "build": "tsc",
@@ -47,8 +48,11 @@
     "url": "https://github.com/jdrhyne/claude-code-github/issues"
   },
   "dependencies": {
+    "blessed": "^0.1.81",
     "chalk": "^4.1.2",
     "chokidar": "^3.5.3",
+    "cli-table3": "^0.6.5",
+    "commander": "^14.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
@@ -57,15 +61,18 @@
     "joi": "^17.13.3",
     "js-yaml": "^4.1.0",
     "keytar": "^7.9.0",
+    "node-notifier": "^10.0.1",
     "octokit": "^3.1.2",
     "simple-git": "^3.20.0",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/js-yaml": "^4.0.8",
     "@types/node": "^20.10.0",
+    "@types/node-notifier": "^8.0.5",
     "@types/socket.io": "^3.0.1",
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^6.13.0",

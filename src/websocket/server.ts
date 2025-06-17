@@ -184,15 +184,14 @@ export class WebSocketServer {
   }
 
   private setupLogging() {
-    if (this.config.authConfig?.logging?.enabled) {
-      this.io.on('connection', (socket) => {
-        socket.onAny((event, ...args) => {
-          if (this.config.authConfig?.logging?.level === 'debug') {
-            console.log(`[WebSocket] Event '${event}' from ${socket.id}:`, args);
-          }
-        });
+    // WebSocket logging is always enabled in debug mode
+    this.io.on('connection', (socket) => {
+      socket.onAny((event, ...args) => {
+        if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {
+          console.log(`[WebSocket] Event '${event}' from ${socket.id}:`, args);
+        }
       });
-    }
+    });
   }
 
   private async handleRequest(socket: Socket, method: string, params?: any): Promise<any> {
@@ -253,7 +252,8 @@ export class WebSocketServer {
       }
     }
 
-    if (this.config.authConfig?.logging?.enabled) {
+    // Log broadcasts in debug mode
+    if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {
       console.log(`[WebSocket] Broadcast '${event}' to ${handlers.size} clients`);
     }
   }

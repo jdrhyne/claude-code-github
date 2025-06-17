@@ -24,7 +24,7 @@ export interface WebhookDelivery {
 export class WebhookManager extends EventEmitter {
   private endpoints: WebhookEndpoint[];
   private deliveryQueue: Map<string, WebhookDelivery> = new Map();
-  private retryTimer: NodeJS.Timer | null = null;
+  private retryTimer: NodeJS.Timeout | null = null;
   private http: any;
   private https: any;
 

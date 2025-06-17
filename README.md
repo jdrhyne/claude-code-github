@@ -309,6 +309,28 @@ You: "Claude, create a feature branch called 'user-profile' and commit my change
 You: "Claude, create a draft pull request for my current work"
 ```
 
+### Real-time Notifications (NEW)
+
+Get real-time suggestions in your terminal while you work:
+
+```bash
+# Install globally or run with npx
+npm install -g @jdrhyne/claude-code-github
+
+# Start notifications in a separate terminal
+claude-code-notify --sound
+
+# Or with npx (no installation needed)
+npx @jdrhyne/claude-code-github claude-code-notify --sound
+```
+
+This will show real-time notifications about:
+- 💡 Development suggestions (commit reminders, branch suggestions)
+- 🎉 Milestones reached (feature completions, release readiness)
+- 📝 Commits and PRs (when using --verbose)
+
+See [Notification Tools Guide](docs/NOTIFICATION_TOOLS.md) for more options.
+
 ### Common Commands
 
 | What you say | What Claude does |
