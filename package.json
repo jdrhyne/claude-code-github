@@ -5,7 +5,9 @@
   "main": "dist/index.js",
   "bin": {
     "claude-code-github": "dist/index.js",
-    "claude-code-notify": "bin/claude-code-notify"
+    "claude-code-notify": "bin/claude-code-notify",
+    "claude-code-notify-desktop": "dist/cli/notify-desktop.js",
+    "claude-code-dashboard": "dist/cli/notify-dashboard.js"
   },
   "scripts": {
     "build": "tsc",
