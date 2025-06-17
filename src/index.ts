@@ -98,8 +98,8 @@ Documentation:
     });
     
     // Register cleanup handlers
-    processManager.onCleanup(() => {
-      devTools.close();
+    processManager.onCleanup(async () => {
+      await devTools.close();
       server.shutdown();
     });
   } catch (error) {

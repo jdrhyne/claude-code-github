@@ -48,11 +48,12 @@ Let Claude handle your Git workflow with **intelligent automation**:
 - **Change Analysis** - Suggests optimal commit strategies based on file types and changes
 - **Workflow Guidance** - Recommends when to branch, commit, or create pull requests
 
-### 🔍 **Active Monitoring System** (NEW)
+### 🔍 **Active Monitoring System**
 - **Conversation Tracking** - Monitors your development conversation for progress insights
 - **Event Aggregation** - Detects milestones like feature completion and test success
 - **Smart Notifications** - Proactive suggestions based on your development activity
 - **Release Detection** - Knows when you're ready for a release based on completed work
+- **Workspace Monitoring** (NEW v1.3.0) - Real-time detection of new Git repositories in your folders
 
 ### 🛡️ **Smart Safety & Best Practices**
 - **Protected Branch Safety** - Warns when working directly on main/develop branches
@@ -143,6 +144,29 @@ When enabled, claude-code-github will:
 - Merge discovered projects with your manually configured ones
 - Skip common non-project directories like `node_modules`, `.git`, etc.
 
+### Workspace Monitoring (NEW in v1.3.0)
+
+Enable real-time monitoring of your development folders:
+
+```yaml
+# Workspace monitoring for real-time project detection
+workspace_monitoring:
+  enabled: true
+  workspaces:
+    - path: "/Users/yourname/Projects"
+      auto_detect: true
+      cache_discovery: true
+      github_repo_detection: from_remote  # or from_folder_name
+```
+
+Workspace monitoring:
+- Detects when you clone or create new Git repositories
+- Automatically adds them to your active projects
+- Provides context awareness based on your current directory
+- Uses efficient file system watchers for minimal overhead
+
+See [Workspace Monitoring Guide](docs/WORKSPACE_MONITORING.md) for complete details.
+
 ### 2. Intelligent Suggestions
 
 Configure the intelligent workflow assistant to match your preferences:
@@ -215,11 +239,57 @@ The monitoring system automatically:
 - Identifies release-ready milestones
 - Provides contextual notifications without interrupting flow
 
-### 4. GitHub Token
+### 4. API & Integration Configuration (NEW in v1.2.0)
+
+Enable the API server for external integrations:
+
+```yaml
+# REST API and WebSocket server configuration
+api_server:
+  enabled: true
+  port: 3000
+  host: localhost
+  auth:
+    enabled: true
+    type: bearer
+    tokens:
+      - name: "vscode-extension"
+        token: "your-secure-token"
+        scopes: ["*"]
+
+# Real-time WebSocket connections
+websocket:
+  enabled: true
+  namespace: "/socket.io"  # Socket.IO namespace
+
+# Webhook delivery for external services
+webhooks:
+  enabled: true
+  signing_secret: "your-webhook-secret"  # For HMAC verification
+  endpoints:
+    - url: "https://your-server.com/claude-webhook"
+      events: ["suggestion.*", "milestone.*"]
+      auth:
+        type: bearer
+        token: "webhook-token"
+      retry:
+        max_attempts: 3
+        backoff: exponential
+```
+
+The API enables:
+- **REST API**: Query status, get suggestions, execute actions
+- **WebSocket**: Real-time event streaming to clients
+- **Webhooks**: Push events to external services
+- **Integration**: VS Code extensions, Slack bots, dashboards
+
+See the [Integration Guide](docs/INTEGRATION_GUIDE.md) for complete API documentation.
+
+### 5. GitHub Token
 
 Create a token at [GitHub Settings → Tokens](https://github.com/settings/tokens/new) with `repo` and `workflow` scopes. The server will prompt for it on first use and store it securely in your system keychain.
 
-### 5. Configure Claude Code
+### 6. Configure Claude Code
 
 ```bash
 # Add the MCP server
@@ -238,6 +308,28 @@ You: "Claude, what's the status of my current project?"
 You: "Claude, create a feature branch called 'user-profile' and commit my changes"
 You: "Claude, create a draft pull request for my current work"
 ```
+
+### Real-time Notifications (NEW)
+
+Get real-time suggestions in your terminal while you work:
+
+```bash
+# Install globally or run with npx
+npm install -g @jdrhyne/claude-code-github
+
+# Start notifications in a separate terminal
+claude-code-notify --sound
+
+# Or with npx (no installation needed)
+npx @jdrhyne/claude-code-github claude-code-notify --sound
+```
+
+This will show real-time notifications about:
+- 💡 Development suggestions (commit reminders, branch suggestions)
+- 🎉 Milestones reached (feature completions, release readiness)
+- 📝 Commits and PRs (when using --verbose)
+
+See [Notification Tools Guide](docs/NOTIFICATION_TOOLS.md) for more options.
 
 ### Common Commands
 

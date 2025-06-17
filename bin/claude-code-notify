@@ -1,0 +1,210 @@
+#!/usr/bin/env node
+
+const { io } = require('socket.io-client');
+const chalk = require('chalk');
+const { program } = require('commander');
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const yaml = require('js-yaml');
+
+// Load configuration
+function loadConfig() {
+  const configPath = path.join(os.homedir(), '.config', 'claude-code-github', 'config.yml');
+  try {
+    const configContent = fs.readFileSync(configPath, 'utf8');
+    return yaml.load(configContent);
+  } catch (error) {
+    console.error(chalk.red('Failed to load config:'), error.message);
+    return {};
+  }
+}
+
+// Main notification client
+class NotificationClient {
+  constructor(options) {
+    this.options = options;
+    this.socket = null;
+  }
+
+  async start() {
+    const config = loadConfig();
+    
+    const apiUrl = this.options.url || `http://${config.api_server?.host || 'localhost'}:${config.api_server?.port || 3000}`;
+    const apiToken = this.options.token || config.api_server?.auth?.tokens?.[0]?.token;
+
+    if (!apiToken) {
+      console.error(chalk.red('❌ No API token provided. Use --token or configure in config.yml'));
+      process.exit(1);
+    }
+
+    console.clear();
+    console.log(chalk.cyan.bold('🔔 Claude Code GitHub - Real-time Notifications\n'));
+    console.log(chalk.gray(`Connecting to ${apiUrl}...`));
+    
+    this.socket = io(apiUrl, {
+      auth: { token: apiToken },
+      transports: ['websocket', 'polling']
+    });
+
+    this.setupEventHandlers();
+  }
+
+  setupEventHandlers() {
+    this.socket.on('connect', () => {
+      console.log(chalk.green('✅ Connected to server\n'));
+      
+      const events = this.options.filter || ['suggestion.*', 'milestone.*', 'commit.created', 'pr.created'];
+      const projects = this.options.project ? [this.options.project] : ['*'];
+      
+      this.socket.emit('subscribe', { events, projects });
+      
+      console.log(chalk.gray('Subscribed to events:'), events.join(', '));
+      console.log(chalk.gray('Projects:'), projects.join(', '));
+      console.log(chalk.gray('\nWaiting for events... (Press Ctrl+C to exit)\n'));
+    });
+
+    this.socket.on('disconnect', (reason) => {
+      console.log(chalk.yellow(`\n⚠️  Disconnected: ${reason}`));
+    });
+
+    // Handle suggestion events
+    this.socket.on('suggestion.created', (event) => {
+      this.handleSuggestion(event);
+    });
+
+    this.socket.on('suggestion.executed', (event) => {
+      this.showNotification(
+        '✅ Suggestion Executed',
+        event.data.message,
+        'success',
+        event
+      );
+    });
+
+    // Handle milestone events
+    this.socket.on('milestone.reached', (event) => {
+      this.showNotification(
+        '🎉 Milestone Reached!',
+        event.data.description,
+        'milestone',
+        event
+      );
+    });
+
+    // Handle development events
+    if (this.options.verbose) {
+      this.socket.on('commit.created', (event) => {
+        this.showNotification(
+          '📝 Commit Created',
+          event.data.message,
+          'info',
+          event
+        );
+      });
+
+      this.socket.on('pr.created', (event) => {
+        this.showNotification(
+          '🔀 Pull Request Created',
+          `PR #${event.data.number}: ${event.data.title}`,
+          'success',
+          event
+        );
+      });
+    }
+  }
+
+  handleSuggestion(event) {
+    const suggestion = event.data;
+    const priority = suggestion.priority || 'medium';
+    
+    let icon = '💡';
+    let color = chalk.yellow;
+    
+    switch (priority) {
+      case 'high':
+        icon = '🚨';
+        color = chalk.red;
+        break;
+      case 'medium':
+        icon = '💡';
+        color = chalk.yellow;
+        break;
+      case 'low':
+        icon = '💭';
+        color = chalk.blue;
+        break;
+    }
+
+    const title = `${icon} ${priority.charAt(0).toUpperCase() + priority.slice(1)} Priority Suggestion`;
+    const message = suggestion.message;
+    
+    // Add actions if available
+    let fullMessage = message;
+    if (suggestion.actions && suggestion.actions.length > 0) {
+      fullMessage += '\n' + chalk.gray('Actions: ') + 
+        suggestion.actions.map(a => chalk.cyan(a.label)).join(', ');
+    }
+
+    this.showNotification(title, fullMessage, priority, event);
+  }
+
+  showNotification(title, message, type, event) {
+    const timestamp = new Date().toLocaleTimeString();
+    const project = event.project ? chalk.gray(` [${path.basename(event.project)}]`) : '';
+    
+    // Terminal bell if sound is enabled
+    if (this.options.sound) {
+      process.stdout.write('\x07');
+    }
+
+    // Format the notification
+    console.log(chalk.dim(`[${timestamp}]${project}`));
+    console.log(chalk.bold(title));
+    console.log(message);
+    
+    if (this.options.verbose && event.id) {
+      console.log(chalk.gray(`ID: ${event.id}`));
+    }
+    
+    console.log(); // Empty line for spacing
+  }
+
+  stop() {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+}
+
+// CLI setup
+program
+  .name('claude-code-notify')
+  .description('Real-time terminal notifications for Claude Code GitHub')
+  .version('1.0.0')
+  .option('-u, --url <url>', 'API server URL (default: from config)')
+  .option('-t, --token <token>', 'API token (default: from config)')
+  .option('-s, --sound', 'Enable terminal bell for notifications')
+  .option('-f, --filter <events...>', 'Filter events (e.g., suggestion.* milestone.*)')
+  .option('-p, --project <path>', 'Only show events for specific project')
+  .option('-v, --verbose', 'Show all events and additional details')
+  .action(async (options) => {
+    const client = new NotificationClient(options);
+    
+    // Handle graceful shutdown
+    process.on('SIGINT', async () => {
+      console.log(chalk.gray('\n\nShutting down...'));
+      client.stop();
+      process.exit(0);
+    });
+
+    try {
+      await client.start();
+    } catch (error) {
+      console.error(chalk.red('Failed to start:'), error);
+      process.exit(1);
+    }
+  });
+
+// Run the program
+program.parse(process.argv);

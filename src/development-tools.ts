@@ -3,6 +3,8 @@ import { Config } from './types.js';
 import { GitManager } from './git.js';
 import { GitHubManager } from './github.js';
 import { FileWatcher } from './file-watcher.js';
+import { WorkspaceMonitor, WorkspaceProject } from './workspace-monitor.js';
+import { APIServer } from './api/server.js';
 import { 
   DevelopmentStatus, 
   CreateBranchParams, 
@@ -45,8 +47,10 @@ export class DevelopmentTools {
   private gitManager: GitManager;
   private githubManager: GitHubManager;
   private fileWatcher: FileWatcher;
+  private workspaceMonitor: WorkspaceMonitor | null = null;
   private suggestionEngine!: SuggestionEngine;
   private monitorManager: MonitorManager | null = null;
+  private apiServer: APIServer | null = null;
   private currentProjectPath: string | null = null;
 
   constructor() {
@@ -77,12 +81,80 @@ export class DevelopmentTools {
         });
       }
       
+      // Initialize workspace monitor if enabled
+      if (config.workspace_monitoring?.enabled) {
+        progress.start('Initializing workspace monitoring');
+        const cacheFile = path.join(process.env.HOME || process.env.USERPROFILE || '', '.config', 'claude-code-github', 'workspace-cache.json');
+        this.workspaceMonitor = new WorkspaceMonitor(config.workspace_monitoring, cacheFile);
+        
+        // Start monitoring workspaces
+        await this.workspaceMonitor.start();
+        
+        // Merge discovered projects with configured ones
+        const discoveredProjects = this.workspaceMonitor.getProjectConfigs();
+        if (discoveredProjects.length > 0) {
+          const existingPaths = new Set(config.projects.map(p => p.path));
+          for (const discovered of discoveredProjects) {
+            if (!existingPaths.has(discovered.path)) {
+              config.projects.push(discovered);
+              this.fileWatcher.addProject(discovered);
+            }
+          }
+          progress.succeed(`Workspace monitoring initialized (${discoveredProjects.length} projects discovered)`);
+        } else {
+          progress.succeed('Workspace monitoring initialized');
+        }
+        
+        // Listen for new project discoveries
+        this.workspaceMonitor.on('project-detected', (project: any) => {
+          if (project.github_repo) {
+            const projectConfig: ProjectConfig = {
+              path: project.path,
+              github_repo: project.github_repo
+            };
+            this.fileWatcher.addProject(projectConfig);
+          }
+        });
+        
+        // Update current directory for context awareness
+        this.workspaceMonitor.setCurrentDirectory(process.cwd());
+      }
+      
       if (config.projects.length > 0) {
         progress.start(`Setting up ${config.projects.length} project${config.projects.length > 1 ? 's' : ''}`);
         for (const project of config.projects) {
           this.fileWatcher.addProject(project);
         }
         progress.succeed(`${config.projects.length} project${config.projects.length > 1 ? 's' : ''} configured`);
+      }
+
+      // Initialize API server if enabled
+      if (config.api_server?.enabled) {
+        progress.start('Starting API server');
+        this.apiServer = new APIServer({
+          ...config.api_server,
+          websocket: config.websocket,
+          webhooks: config.webhooks
+        }, this);
+        
+        try {
+          await this.apiServer.start();
+          progress.succeed(`API server started on ${config.api_server.host}:${config.api_server.port}`);
+          
+          // Set up event forwarding from monitoring to API
+          if (this.monitorManager) {
+            this.monitorManager.on('suggestion', async (suggestion) => {
+              await this.apiServer?.emitSuggestion(suggestion);
+            });
+            
+            this.monitorManager.on('monitoring-event', async (event) => {
+              await this.apiServer?.emitEvent(event);
+            });
+          }
+        } catch (error: any) {
+          progress.fail(`Failed to start API server: ${error.message}`);
+          // Don't throw - API server is optional
+        }
       }
 
       await this.setCurrentProject();
@@ -675,10 +747,16 @@ export class DevelopmentTools {
     }
   }
 
-  close() {
+  async close() {
     this.fileWatcher.close();
     if (this.monitorManager) {
       this.monitorManager.stop();
+    }
+    if (this.workspaceMonitor) {
+      await this.workspaceMonitor.stop();
+    }
+    if (this.apiServer) {
+      await this.apiServer.stop();
     }
   }
 

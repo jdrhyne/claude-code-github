@@ -80,13 +80,42 @@ export interface ProjectDiscoveryConfig {
   max_depth?: number;
 }
 
+export interface WorkspaceMonitoringConfig {
+  enabled: boolean;
+  workspaces: WorkspacePathConfig[];
+}
+
+export interface WorkspacePathConfig {
+  path: string;
+  auto_detect: boolean;
+  inherit_settings?: boolean;
+  cache_discovery?: boolean;
+  github_repo_detection?: 'from_remote' | 'from_folder_name';
+}
+
 export interface Config {
   git_workflow: GitWorkflowConfig;
   suggestions?: SuggestionConfig;
   projects: ProjectConfig[];
   monitoring?: MonitoringConfig;
   project_discovery?: ProjectDiscoveryConfig;
+  workspace_monitoring?: WorkspaceMonitoringConfig;
+  api_server?: APIConfig;
+  websocket?: WebSocketConfig;
+  webhooks?: WebhookConfig;
 }
+
+// Re-export API types for convenience
+export type { 
+  APIConfig, 
+  WebSocketConfig, 
+  WebhookConfig,
+  AuthConfig,
+  AuthToken,
+  CorsConfig,
+  RateLimitConfig,
+  WebhookEndpoint
+} from './api/types.js';
 
 export interface MonitoringConfig {
   enabled?: boolean;

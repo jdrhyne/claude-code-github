@@ -5,6 +5,7 @@ import * as yaml from 'js-yaml';
 import { Config } from './types.js';
 import { ConfigValidator } from './validation.js';
 import { ProjectDiscovery } from './project-discovery.js';
+import { WorkspaceMonitor } from './workspace-monitor.js';
 import chalk from 'chalk';
 
 export class ConfigManager {
@@ -89,6 +90,43 @@ export class ConfigManager {
         ],
         auto_detect_github_repo: true,
         max_depth: 3
+      },
+      workspace_monitoring: {
+        enabled: false,
+        workspaces: []
+      },
+      api_server: {
+        enabled: false,
+        type: 'http',
+        port: 3000,
+        host: '127.0.0.1',
+        auth: {
+          enabled: true,
+          type: 'bearer',
+          tokens: []
+        },
+        cors: {
+          enabled: true,
+          origins: ['http://localhost:*']
+        },
+        rateLimit: {
+          enabled: true,
+          window: 60,
+          max_requests: 100,
+          by: 'token'
+        },
+        logging: {
+          enabled: true,
+          level: 'info'
+        }
+      },
+      websocket: {
+        enabled: false,
+        namespace: '/suggestions'
+      },
+      webhooks: {
+        enabled: false,
+        endpoints: []
       },
       projects
     };
