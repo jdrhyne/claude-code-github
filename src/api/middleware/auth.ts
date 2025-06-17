@@ -39,24 +39,26 @@ export function authMiddleware(config?: AuthConfig) {
     }
 
     if (!providedToken) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'UNAUTHORIZED',
           message: 'Missing authentication token'
         }
       });
+      return;
     }
 
     const authToken = tokenMap.get(providedToken);
     if (!authToken) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'INVALID_TOKEN',
           message: 'Invalid authentication token'
         }
       });
+      return;
     }
 
     // Check scopes if needed (implement scope checking based on route)
@@ -81,13 +83,14 @@ export async function verifyToken(token: string, config?: AuthConfig): Promise<A
 export function requireScopes(...requiredScopes: string[]) {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     if (!req.auth) {
-      return res.status(401).json({
+      res.status(401).json({
         success: false,
         error: {
           code: 'UNAUTHORIZED',
           message: 'Authentication required'
         }
       });
+      return;
     }
 
     const userScopes = req.auth.token.scopes;
@@ -96,13 +99,14 @@ export function requireScopes(...requiredScopes: string[]) {
     );
 
     if (!hasAllScopes) {
-      return res.status(403).json({
+      res.status(403).json({
         success: false,
         error: {
           code: 'FORBIDDEN',
           message: `Insufficient permissions. Required scopes: ${requiredScopes.join(', ')}`
         }
       });
+      return;
     }
 
     next();

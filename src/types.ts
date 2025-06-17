@@ -100,9 +100,9 @@ export interface Config {
   monitoring?: MonitoringConfig;
   project_discovery?: ProjectDiscoveryConfig;
   workspace_monitoring?: WorkspaceMonitoringConfig;
-  api_server?: APIConfig;
-  websocket?: WebSocketConfig;
-  webhooks?: WebhookConfig;
+  api_server?: import('./api/types.js').APIConfig;
+  websocket?: import('./api/types.js').WebSocketConfig;
+  webhooks?: import('./api/types.js').WebhookConfig;
 }
 
 // Re-export API types for convenience

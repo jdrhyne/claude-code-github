@@ -194,7 +194,7 @@ export class WebSocketServer {
     });
   }
 
-  private async handleRequest(socket: Socket, method: string, params?: any): Promise<any> {
+  private async handleRequest(socket: Socket, method: string, _params?: any): Promise<any> {
     // Check if client has required scope for the method
     if (socket.data.authenticated) {
       const requiredScope = this.getRequiredScope(method);
@@ -314,7 +314,7 @@ export class WebSocketServer {
     this.io.emit('server-closing', { message: 'Server is shutting down' });
 
     // Close all connections
-    for (const [_, connection] of this.connections) {
+    for (const [, connection] of this.connections) {
       connection.disconnect();
     }
 

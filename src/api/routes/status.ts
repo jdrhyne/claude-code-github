@@ -6,7 +6,7 @@ import { requireScopes } from '../middleware/auth.js';
 export const statusRoutes = Router();
 
 // Get current development status
-statusRoutes.get('/', requireScopes('read:status'), async (req, res) => {
+statusRoutes.get('/', requireScopes('read:status'), async (req, res): Promise<void> => {
   try {
     const tools = req.app.locals.developmentTools as DevelopmentTools;
     const status = await tools.getStatus();
@@ -24,7 +24,7 @@ statusRoutes.get('/', requireScopes('read:status'), async (req, res) => {
       }
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Status error:', error);
     
@@ -36,12 +36,12 @@ statusRoutes.get('/', requireScopes('read:status'), async (req, res) => {
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });
 
 // Get enhanced status with more details
-statusRoutes.get('/enhanced', requireScopes('read:status'), async (req, res) => {
+statusRoutes.get('/enhanced', requireScopes('read:status'), async (req, res): Promise<void> => {
   try {
     const tools = req.app.locals.developmentTools as DevelopmentTools;
     const status = await tools.getEnhancedStatus();
@@ -51,7 +51,7 @@ statusRoutes.get('/enhanced', requireScopes('read:status'), async (req, res) => 
       data: status
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Enhanced status error:', error);
     
@@ -63,12 +63,12 @@ statusRoutes.get('/enhanced', requireScopes('read:status'), async (req, res) => 
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });
 
 // Get monitoring status
-statusRoutes.get('/monitoring', requireScopes('read:status'), async (req, res) => {
+statusRoutes.get('/monitoring', requireScopes('read:status'), async (req, res): Promise<void> => {
   try {
     const tools = req.app.locals.developmentTools as DevelopmentTools;
     const monitoringStatus = tools.getMonitoringStatus();
@@ -78,7 +78,7 @@ statusRoutes.get('/monitoring', requireScopes('read:status'), async (req, res) =
       data: monitoringStatus
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Monitoring status error:', error);
     
@@ -90,6 +90,6 @@ statusRoutes.get('/monitoring', requireScopes('read:status'), async (req, res) =
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });

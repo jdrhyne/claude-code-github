@@ -7,6 +7,165 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2025-06-16
+
+### 🚀 Major Release - API & Real-time Notification Architecture
+
+This is a transformative release that introduces a complete API server architecture with real-time notifications, making claude-code-github much more than just an MCP server.
+
+### ✨ Added
+
+- **🔥 REST API Server** (#33) - Complete HTTP API for external integrations
+  - Express.js server with comprehensive endpoint coverage
+  - Authentication system with bearer tokens and scoped permissions
+  - Rate limiting and security middleware (helmet, CORS)
+  - Health checks and status endpoints
+  - Full CRUD operations for Git workflow automation
+
+- **⚡ Real-time WebSocket Server** - Live event streaming and notifications
+  - Socket.IO server for bidirectional communication
+  - Event broadcasting to subscribed clients
+  - Connection management with authentication
+  - Client subscription system for filtered events
+  - Real-time status updates and suggestion delivery
+
+- **📡 Advanced Webhook System** - External service integration
+  - Webhook delivery with exponential backoff retry logic
+  - Multiple authentication methods (Bearer token, HMAC signatures)
+  - Event filtering and conditional delivery
+  - Delivery status tracking and error handling
+  - Support for multiple webhook endpoints per event type
+
+- **🖥️ Terminal Notification Client** (`claude-code-notify`) - Real-time development suggestions
+  - Connects to API server via WebSocket for live notifications
+  - Terminal-based UI with colored output and progress indicators
+  - Sound notifications for high-priority suggestions
+  - Event filtering and project-specific monitoring
+  - Command-line interface with multiple options
+  - Background operation support
+
+- **🔍 Workspace Monitoring** (#32) - Dynamic Git repository discovery
+  - Real-time detection of new Git repositories in parent directories
+  - Efficient file system watching with chokidar
+  - Automatic GitHub repository detection from git remotes
+  - Smart exclusion patterns for performance optimization
+  - Cross-platform path handling and error resilience
+  - Integration with existing project configuration
+
+- **📊 Enhanced Development Tools** - Extended functionality
+  - Improved status reporting with API integration
+  - Enhanced error handling and progress indicators
+  - Better Git workflow management
+  - Extended MCP tool coverage
+
+### 🔧 Enhanced
+
+- **Configuration System** - Extended for API and webhook management
+  - New `api_server` configuration section
+  - WebSocket and webhook configuration options
+  - Token-based authentication setup
+  - Flexible enabling/disabling of services
+
+- **Type System** - Comprehensive TypeScript definitions
+  - API request/response types
+  - WebSocket event types
+  - Webhook configuration types
+  - Enhanced error types for better debugging
+
+- **Error Handling** - Robust error management
+  - Structured error responses for API
+  - Graceful degradation when services are unavailable
+  - Better error messages and troubleshooting guidance
+
+- **Documentation** - Comprehensive guides and examples
+  - API endpoint documentation
+  - WebSocket integration examples
+  - Webhook setup and configuration guides
+  - Terminal notification usage documentation
+
+### 🛠️ Technical Improvements
+
+- **Dependencies** - New core dependencies for enhanced functionality
+  - `express` ^5.1.0 - HTTP server framework
+  - `socket.io` ^4.8.1 - Real-time WebSocket communication
+  - `socket.io-client` ^4.8.1 - Client-side WebSocket connections
+  - `blessed` ^0.1.81 - Terminal UI components
+  - `commander` ^14.0.0 - Command-line interface framework
+  - `cors` ^2.8.5 - Cross-origin resource sharing
+  - `express-rate-limit` ^7.5.0 - API rate limiting
+  - `helmet` ^8.1.0 - Security middleware
+
+- **Build System** - Enhanced TypeScript compilation
+  - Updated type definitions for new dependencies
+  - Custom type definitions for packages without @types
+  - Improved build process with new entry points
+
+- **Testing** - Extended test coverage
+  - API server unit tests
+  - WebSocket functionality tests
+  - Webhook delivery system tests
+  - Workspace monitoring integration tests
+
+### 📋 Configuration Changes
+
+**BREAKING CHANGE**: New configuration structure required for API features
+
+```yaml
+# New sections in config.yml
+api_server:
+  enabled: true
+  port: 3000
+  host: localhost
+  auth:
+    enabled: true
+    tokens:
+      - name: "notification-client"
+        token: "your-secure-token"
+        scopes: ["*"]
+
+websocket:
+  enabled: true
+  events: ["*"]
+
+webhooks:
+  enabled: false
+  endpoints: []
+
+workspace_monitoring:
+  enabled: true
+  workspaces:
+    - path: "/Users/username/Projects"
+      max_depth: 3
+      exclude_patterns: ["node_modules", ".git", "dist"]
+```
+
+### 🎯 Use Cases Unlocked
+
+1. **Real-time Development Monitoring**: Get live suggestions without manual MCP calls
+2. **Team Collaboration**: Share development insights via webhooks to Slack/Teams
+3. **CI/CD Integration**: Trigger workflows based on development patterns
+4. **External Tool Integration**: Connect IDEs, editors, and other tools via REST API
+5. **Dashboard Creation**: Build custom monitoring dashboards using WebSocket feeds
+6. **Automated Workflows**: Create sophisticated automation based on development events
+
+### 📈 Performance & Scalability
+
+- Efficient event-driven architecture
+- Minimal resource usage with smart file watching
+- Configurable monitoring depth and exclusion patterns
+- Graceful handling of large numbers of repositories
+- Background processing for webhook deliveries
+
+### 🔒 Security Features
+
+- Token-based authentication for API access
+- Scoped permissions system
+- Rate limiting to prevent abuse
+- HMAC signature verification for webhooks
+- Secure storage of GitHub tokens via keytar
+
+This release transforms claude-code-github from a simple MCP server into a comprehensive development workflow platform that provides real-time insights and enables powerful integrations with external tools and services.
+
 ## [1.2.0] - 2025-06-13
 
 ### Added
@@ -229,7 +388,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Package name and installation commands alignment
 
-[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/jdrhyne/claude-code-github/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.5...v1.2.0
 [1.1.5]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.4...v1.1.5
 [1.1.4]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.3...v1.1.4

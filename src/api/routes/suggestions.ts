@@ -25,18 +25,19 @@ const actionSchema = Joi.object({
 });
 
 // Get suggestions
-suggestionsRoutes.get('/', requireScopes('read:suggestions'), async (req: AuthenticatedRequest, res) => {
+suggestionsRoutes.get('/', requireScopes('read:suggestions'), async (req: AuthenticatedRequest, res): Promise<void> => {
   try {
     // Validate query parameters
     const { error, value } = querySchema.validate(req.query);
     if (error) {
-      return res.status(400).json({
+      void res.status(400).json({
         success: false,
         error: {
           code: 'VALIDATION_ERROR',
           message: error.details[0].message
         }
       });
+      return;
     }
 
     const store = req.app.locals.suggestionStore as SuggestionStore;
@@ -59,7 +60,7 @@ suggestionsRoutes.get('/', requireScopes('read:suggestions'), async (req: Authen
       }
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Get suggestions error:', error);
     
@@ -71,24 +72,25 @@ suggestionsRoutes.get('/', requireScopes('read:suggestions'), async (req: Authen
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });
 
 // Get single suggestion
-suggestionsRoutes.get('/:id', requireScopes('read:suggestions'), async (req, res) => {
+suggestionsRoutes.get('/:id', requireScopes('read:suggestions'), async (req, res): Promise<void> => {
   try {
     const store = req.app.locals.suggestionStore as SuggestionStore;
     const suggestion = store.getSuggestion(req.params.id);
 
     if (!suggestion) {
-      return res.status(404).json({
+      void res.status(404).json({
         success: false,
         error: {
           code: 'NOT_FOUND',
           message: 'Suggestion not found'
         }
       });
+      return;
     }
 
     const response: APIResponse = {
@@ -96,7 +98,7 @@ suggestionsRoutes.get('/:id', requireScopes('read:suggestions'), async (req, res
       data: suggestion
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Get suggestion error:', error);
     
@@ -108,36 +110,38 @@ suggestionsRoutes.get('/:id', requireScopes('read:suggestions'), async (req, res
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });
 
 // Dismiss suggestion
-suggestionsRoutes.post('/:id/dismiss', requireScopes('write:suggestions'), async (req, res) => {
+suggestionsRoutes.post('/:id/dismiss', requireScopes('write:suggestions'), async (req, res): Promise<void> => {
   try {
     // Validate body
     const { error } = dismissSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({
+      void res.status(400).json({
         success: false,
         error: {
           code: 'VALIDATION_ERROR',
           message: error.details[0].message
         }
       });
+      return;
     }
 
     const store = req.app.locals.suggestionStore as SuggestionStore;
     const dismissed = store.dismissSuggestion(req.params.id);
 
     if (!dismissed) {
-      return res.status(404).json({
+      void res.status(404).json({
         success: false,
         error: {
           code: 'NOT_FOUND',
           message: 'Suggestion not found'
         }
       });
+      return;
     }
 
     const response: APIResponse = {
@@ -148,7 +152,7 @@ suggestionsRoutes.post('/:id/dismiss', requireScopes('write:suggestions'), async
       }
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Dismiss suggestion error:', error);
     
@@ -160,48 +164,51 @@ suggestionsRoutes.post('/:id/dismiss', requireScopes('write:suggestions'), async
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });
 
 // Execute suggestion action
-suggestionsRoutes.post('/:id/action', requireScopes('write:suggestions', 'execute:actions'), async (req, res) => {
+suggestionsRoutes.post('/:id/action', requireScopes('write:suggestions', 'execute:actions'), async (req, res): Promise<void> => {
   try {
     // Validate body
     const { error, value } = actionSchema.validate(req.body);
     if (error) {
-      return res.status(400).json({
+      void res.status(400).json({
         success: false,
         error: {
           code: 'VALIDATION_ERROR',
           message: error.details[0].message
         }
       });
+      return;
     }
 
     const store = req.app.locals.suggestionStore as SuggestionStore;
     const suggestion = store.getSuggestion(req.params.id);
 
     if (!suggestion) {
-      return res.status(404).json({
+      void res.status(404).json({
         success: false,
         error: {
           code: 'NOT_FOUND',
           message: 'Suggestion not found'
         }
       });
+      return;
     }
 
     // Verify action is valid for this suggestion
     const validAction = suggestion.actions?.find(a => a.type === value.action);
     if (!validAction) {
-      return res.status(400).json({
+      void res.status(400).json({
         success: false,
         error: {
           code: 'INVALID_ACTION',
           message: `Action '${value.action}' is not valid for this suggestion`
         }
       });
+      return;
     }
 
     // Execute the action
@@ -224,13 +231,14 @@ suggestionsRoutes.post('/:id/action', requireScopes('write:suggestions', 'execut
         break;
       
       default:
-        return res.status(501).json({
+        void res.status(501).json({
           success: false,
           error: {
             code: 'NOT_IMPLEMENTED',
             message: `Action '${value.action}' is not implemented`
           }
         });
+        return;
     }
 
     // Mark suggestion as actioned
@@ -245,7 +253,7 @@ suggestionsRoutes.post('/:id/action', requireScopes('write:suggestions', 'execut
       }
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Action suggestion error:', error);
     
@@ -257,6 +265,6 @@ suggestionsRoutes.post('/:id/action', requireScopes('write:suggestions', 'execut
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });

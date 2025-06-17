@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import { EventStore } from '../stores/event-store.js';
 import { APIResponse, EventFilters } from '../types.js';
 import { requireScopes } from '../middleware/auth.js';
@@ -15,18 +15,19 @@ const querySchema = Joi.object({
 });
 
 // Get monitoring events
-monitoringRoutes.get('/events', requireScopes('read:monitoring'), async (req, res) => {
+const getEventsHandler: RequestHandler = async (req, res): Promise<void> => {
   try {
     // Validate query parameters
     const { error, value } = querySchema.validate(req.query);
     if (error) {
-      return res.status(400).json({
+      res.status(400).json({
         success: false,
         error: {
           code: 'VALIDATION_ERROR',
           message: error.details[0].message
         }
       });
+      return;
     }
 
     const store = req.app.locals.eventStore as EventStore;
@@ -49,7 +50,7 @@ monitoringRoutes.get('/events', requireScopes('read:monitoring'), async (req, re
       }
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Get events error:', error);
     
@@ -61,12 +62,14 @@ monitoringRoutes.get('/events', requireScopes('read:monitoring'), async (req, re
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
-});
+};
+
+monitoringRoutes.get('/events', requireScopes('read:monitoring'), getEventsHandler);
 
 // Get event statistics
-monitoringRoutes.get('/stats', requireScopes('read:monitoring'), async (req, res) => {
+monitoringRoutes.get('/stats', requireScopes('read:monitoring'), async (req, res): Promise<void> => {
   try {
     const eventStore = req.app.locals.eventStore as EventStore;
     const suggestionStore = req.app.locals.suggestionStore;
@@ -83,7 +86,7 @@ monitoringRoutes.get('/stats', requireScopes('read:monitoring'), async (req, res
       }
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Get stats error:', error);
     
@@ -95,24 +98,25 @@ monitoringRoutes.get('/stats', requireScopes('read:monitoring'), async (req, res
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });
 
 // Get specific event
-monitoringRoutes.get('/events/:id', requireScopes('read:monitoring'), async (req, res) => {
+monitoringRoutes.get('/events/:id', requireScopes('read:monitoring'), async (req, res): Promise<void> => {
   try {
     const store = req.app.locals.eventStore as EventStore;
     const event = store.getEvent(req.params.id);
 
     if (!event) {
-      return res.status(404).json({
+      void res.status(404).json({
         success: false,
         error: {
           code: 'NOT_FOUND',
           message: 'Event not found'
         }
       });
+      return;
     }
 
     const response: APIResponse = {
@@ -120,7 +124,7 @@ monitoringRoutes.get('/events/:id', requireScopes('read:monitoring'), async (req
       data: event
     };
 
-    res.json(response);
+    void res.json(response);
   } catch (error: any) {
     console.error('[API] Get event error:', error);
     
@@ -132,12 +136,12 @@ monitoringRoutes.get('/events/:id', requireScopes('read:monitoring'), async (req
       }
     };
 
-    res.status(500).json(response);
+    void res.status(500).json(response);
   }
 });
 
 // Server-sent events endpoint for real-time streaming
-monitoringRoutes.get('/stream', requireScopes('read:monitoring'), (req, res) => {
+monitoringRoutes.get('/stream', requireScopes('read:monitoring'), (req, res): void => {
   // Set headers for SSE
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');

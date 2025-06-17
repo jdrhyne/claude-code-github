@@ -1,5 +1,5 @@
 import { WebhookConfig, WebhookEndpoint, DeliveryResult } from '../api/types.js';
-import { createHash, createHmac } from 'crypto';
+import { createHmac } from 'crypto';
 import { EventEmitter } from 'events';
 
 export interface WebhookEvent {
@@ -299,7 +299,7 @@ export class WebhookManager extends EventEmitter {
     const now = Date.now();
     const retries: Promise<void>[] = [];
 
-    for (const [id, delivery] of this.deliveryQueue) {
+    for (const [, delivery] of this.deliveryQueue) {
       if (delivery.status === 'pending' && delivery.nextRetry && delivery.nextRetry.getTime() <= now) {
         const endpoint = this.endpoints.find(e => e.url === delivery.endpoint);
         if (endpoint) {
