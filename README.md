@@ -239,11 +239,57 @@ The monitoring system automatically:
 - Identifies release-ready milestones
 - Provides contextual notifications without interrupting flow
 
-### 4. GitHub Token
+### 4. API & Integration Configuration (NEW in v1.2.0)
+
+Enable the API server for external integrations:
+
+```yaml
+# REST API and WebSocket server configuration
+api_server:
+  enabled: true
+  port: 3000
+  host: localhost
+  auth:
+    enabled: true
+    type: bearer
+    tokens:
+      - name: "vscode-extension"
+        token: "your-secure-token"
+        scopes: ["*"]
+
+# Real-time WebSocket connections
+websocket:
+  enabled: true
+  namespace: "/socket.io"  # Socket.IO namespace
+
+# Webhook delivery for external services
+webhooks:
+  enabled: true
+  signing_secret: "your-webhook-secret"  # For HMAC verification
+  endpoints:
+    - url: "https://your-server.com/claude-webhook"
+      events: ["suggestion.*", "milestone.*"]
+      auth:
+        type: bearer
+        token: "webhook-token"
+      retry:
+        max_attempts: 3
+        backoff: exponential
+```
+
+The API enables:
+- **REST API**: Query status, get suggestions, execute actions
+- **WebSocket**: Real-time event streaming to clients
+- **Webhooks**: Push events to external services
+- **Integration**: VS Code extensions, Slack bots, dashboards
+
+See the [Integration Guide](docs/INTEGRATION_GUIDE.md) for complete API documentation.
+
+### 5. GitHub Token
 
 Create a token at [GitHub Settings → Tokens](https://github.com/settings/tokens/new) with `repo` and `workflow` scopes. The server will prompt for it on first use and store it securely in your system keychain.
 
-### 5. Configure Claude Code
+### 6. Configure Claude Code
 
 ```bash
 # Add the MCP server

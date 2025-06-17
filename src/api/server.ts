@@ -1,7 +1,7 @@
 import express, { Application, Request, Response } from 'express';
 import helmet from 'helmet';
 import http from 'http';
-import { APIConfig, APIResponse } from './types.js';
+import { APIConfig, APIResponse, WebhookConfig } from './types.js';
 import { authMiddleware } from './middleware/auth.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
@@ -11,20 +11,34 @@ import { statusRoutes } from './routes/status.js';
 import { suggestionsRoutes } from './routes/suggestions.js';
 import { monitoringRoutes } from './routes/monitoring.js';
 import { DevelopmentTools } from '../development-tools.js';
+import { WebSocketServer } from '../websocket/server.js';
+import { EventBroadcaster } from '../websocket/event-broadcaster.js';
+import { WebhookManager } from '../webhooks/manager.js';
 
 export class APIServer {
   private app: Application;
   private server: http.Server | null = null;
   private eventStore: EventStore;
   private suggestionStore: SuggestionStore;
+  private wsServer: WebSocketServer | null = null;
+  private eventBroadcaster: EventBroadcaster;
+  private webhookManager: WebhookManager | null = null;
 
   constructor(
-    private config: APIConfig,
+    private config: APIConfig & { websocket?: any; webhooks?: WebhookConfig },
     private developmentTools: DevelopmentTools
   ) {
     this.app = express();
     this.eventStore = new EventStore();
     this.suggestionStore = new SuggestionStore(this.eventStore);
+    
+    // Initialize webhook manager if configured
+    if (this.config.webhooks?.enabled) {
+      this.webhookManager = new WebhookManager(this.config.webhooks);
+    }
+    
+    // Event broadcaster will be initialized after server starts
+    this.eventBroadcaster = new EventBroadcaster(null, this.eventStore, this.webhookManager);
     
     this.setupMiddleware();
     this.setupRoutes();
@@ -140,8 +154,31 @@ export class APIServer {
         this.server = this.app.listen(
           this.config.port,
           this.config.host,
-          () => {
+          async () => {
             console.log(`[API] Server listening on ${this.config.host}:${this.config.port}`);
+            
+            // Initialize WebSocket server if enabled
+            if (this.config.websocket?.enabled && this.server) {
+              try {
+                this.wsServer = new WebSocketServer(this.server, {
+                  ...this.config.websocket,
+                  authConfig: this.config.auth
+                });
+                
+                // Update event broadcaster with WebSocket server
+                this.eventBroadcaster = new EventBroadcaster(
+                  this.wsServer,
+                  this.eventStore,
+                  this.webhookManager
+                );
+                
+                console.log(`[WebSocket] Server initialized on ${this.config.websocket.namespace || '/socket.io'}`);
+              } catch (error) {
+                console.error('[WebSocket] Failed to initialize:', error);
+                // Don't fail startup - WebSocket is optional
+              }
+            }
+            
             resolve();
           }
         );
@@ -161,6 +198,12 @@ export class APIServer {
   }
 
   async stop(): Promise<void> {
+    // Close WebSocket server first
+    if (this.wsServer) {
+      await this.wsServer.close();
+    }
+    
+    // Then close HTTP server
     if (this.server) {
       return new Promise((resolve) => {
         this.server!.close(() => {
@@ -188,23 +231,17 @@ export class APIServer {
   }
 
   // Method to emit events (called by monitoring system)
-  emitSuggestion(suggestion: Omit<any, 'id' | 'timestamp'>): void {
+  async emitSuggestion(suggestion: Omit<any, 'id' | 'timestamp'>): Promise<void> {
     const stored = this.suggestionStore.addSuggestion(suggestion);
-    
-    // Emit to WebSocket clients if available
-    const io = this.app.locals.io;
-    if (io) {
-      io.emit('suggestion.created', stored);
-    }
+    await this.eventBroadcaster.broadcastSuggestion(stored);
   }
 
-  emitEvent(event: Omit<any, 'id' | 'timestamp'>): void {
-    const stored = this.eventStore.addEvent(event);
-    
-    // Emit to WebSocket clients if available
-    const io = this.app.locals.io;
-    if (io) {
-      io.emit(event.type, stored);
-    }
+  async emitEvent(event: Omit<any, 'id' | 'timestamp'>): Promise<void> {
+    await this.eventBroadcaster.broadcastMonitoringEvent(event.type, event);
+  }
+
+  // Get WebSocket server for direct access if needed
+  getWebSocketServer(): WebSocketServer | null {
+    return this.wsServer;
   }
 }

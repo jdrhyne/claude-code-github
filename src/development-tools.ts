@@ -131,7 +131,11 @@ export class DevelopmentTools {
       // Initialize API server if enabled
       if (config.api_server?.enabled) {
         progress.start('Starting API server');
-        this.apiServer = new APIServer(config.api_server, this);
+        this.apiServer = new APIServer({
+          ...config.api_server,
+          websocket: config.websocket,
+          webhooks: config.webhooks
+        }, this);
         
         try {
           await this.apiServer.start();
@@ -139,12 +143,12 @@ export class DevelopmentTools {
           
           // Set up event forwarding from monitoring to API
           if (this.monitorManager) {
-            this.monitorManager.on('suggestion', (suggestion) => {
-              this.apiServer?.emitSuggestion(suggestion);
+            this.monitorManager.on('suggestion', async (suggestion) => {
+              await this.apiServer?.emitSuggestion(suggestion);
             });
             
-            this.monitorManager.on('monitoring-event', (event) => {
-              this.apiServer?.emitEvent(event);
+            this.monitorManager.on('monitoring-event', async (event) => {
+              await this.apiServer?.emitEvent(event);
             });
           }
         } catch (error: any) {
