@@ -25,6 +25,16 @@ async function main() {
   // Check for CLI flags
   const args = process.argv.slice(2);
   
+  // Check if running as a subcommand
+  const hasSubcommand = args.length > 0 && !args[0].startsWith('-');
+  
+  // If we have a subcommand, delegate to direct-cli
+  if (hasSubcommand) {
+    // Import and run the direct CLI dynamically
+    const { default: directCli } = await import('./cli/direct-cli.js');
+    return directCli();
+  }
+  
   // Detect MCP mode (no CLI args = MCP mode)
   const isMcpMode = args.length === 0;
   
@@ -44,7 +54,18 @@ claude-code-github v${version}
 An intelligent MCP server for Claude Code that monitors development patterns
 
 Usage:
-  npx @jdrhyne/claude-code-github [options]
+  npx @jdrhyne/claude-code-github [command] [options]
+
+Commands:
+  status              Show current project status
+  commit <message>    Create a commit with all current changes
+  branch <type> <name> Create a new branch with appropriate prefix
+  pr                  Create or manage pull requests
+  issue               Manage GitHub issues
+  release             Create and manage releases
+  quick <action>      Quick workflow actions (wip, fix, done, sync, update)
+  version <type>      Bump version (major, minor, patch)
+  changelog           Generate changelog from commits
 
 Options:
   -h, --help     Show this help message

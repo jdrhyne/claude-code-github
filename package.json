@@ -7,7 +7,8 @@
     "claude-code-github": "dist/index.js",
     "claude-code-notify": "bin/claude-code-notify",
     "claude-code-notify-desktop": "dist/cli/notify-desktop.js",
-    "claude-code-dashboard": "dist/cli/notify-dashboard.js"
+    "claude-code-dashboard": "dist/cli/notify-dashboard.js",
+    "claude-code-api": "dist/cli/api-server.js"
   },
   "scripts": {
     "build": "tsc",
@@ -56,6 +57,7 @@
     "cli-table3": "^0.6.5",
     "commander": "^14.0.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
@@ -65,11 +67,14 @@
     "keytar": "^7.9.0",
     "node-notifier": "^10.0.1",
     "octokit": "^3.1.2",
+    "ora": "^5.4.1",
     "simple-git": "^3.20.0",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "ws": "^8.16.0"
   },
   "devDependencies": {
+    "@types/blessed": "^0.1.25",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/js-yaml": "^4.0.8",
@@ -77,6 +82,7 @@
     "@types/node-notifier": "^8.0.5",
     "@types/socket.io": "^3.0.1",
     "@types/supertest": "^6.0.3",
+    "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
     "@vitest/coverage-v8": "^1.0.0",
