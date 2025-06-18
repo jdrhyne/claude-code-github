@@ -58,7 +58,7 @@ describe('Edge Cases and Error Handling', () => {
     });
 
     it('should handle project directory that does not exist', async () => {
-      fsMock.removeFile('/tmp/test-project');
+      fsMock.removeFile(testProjectPath);
       
       try {
         await client.callTool('development.status');

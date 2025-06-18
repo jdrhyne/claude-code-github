@@ -2,6 +2,8 @@ import { GitMock } from './git-mock.js';
 import { GitHubMock } from './github-mock.js';
 import { FileSystemMock } from './fs-mock.js';
 import { vi } from 'vitest';
+import * as os from 'os';
+import * as path from 'path';
 
 interface SharedMock {
   gitMock: GitMock;
@@ -43,7 +45,7 @@ export async function getSharedMock(): Promise<SharedMock> {
 
   // Ensure config file exists before any tests run
   fsMockInstance.mockConfigExists(true);
-  fsMockInstance.mockProjectDirectory('/tmp/test-project');
+  fsMockInstance.mockProjectDirectory(path.join(os.tmpdir(), 'claude-code-github-test', 'test-project'));
 
   sharedMock = {
     gitMock: gitMockInstance,

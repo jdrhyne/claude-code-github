@@ -19,6 +19,7 @@ export class FileSystemMock {
   }
 
   private getDefaultConfig(): string {
+    const testProjectPath = path.join(os.tmpdir(), 'claude-code-github-test', 'test-project');
     return `
 git_workflow:
   main_branch: main
@@ -31,7 +32,7 @@ git_workflow:
     refactor: refactor/
 
 projects:
-  - path: "/tmp/test-project"
+  - path: "${testProjectPath}"
     github_repo: "test-user/test-repo"
     reviewers:
       - "reviewer1"

@@ -2,10 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConfigManager } from '../config.js';
 import { getFileSystemMock } from './utils/persistent-mock.js';
 import { FileSystemMock } from './utils/fs-mock.js';
+import * as os from 'os';
+import * as path from 'path';
 
 describe('ConfigManager', () => {
   let configManager: ConfigManager;
   let fsMock: FileSystemMock;
+  const testProjectPath = path.join(os.tmpdir(), 'claude-code-github-test', 'test-project');
 
   beforeEach(() => {
     fsMock = getFileSystemMock();
@@ -18,7 +21,7 @@ describe('ConfigManager', () => {
   describe('loadConfig', () => {
     it('should load valid configuration', async () => {
       fsMock.mockConfigExists(true);
-      fsMock.addDirectory('/tmp/test-project');
+      fsMock.addDirectory(testProjectPath);
       
       const config = await configManager.loadConfig();
       
@@ -38,7 +41,7 @@ describe('ConfigManager', () => {
       expect(config).toHaveProperty('git_workflow');
       expect(config).toHaveProperty('projects');
       expect(config.projects).toHaveLength(1);
-      expect(config.projects[0].path).toBe('/tmp/test-project');
+      expect(config.projects[0].path).toBe(testProjectPath);
     });
 
     it('should validate configuration structure', async () => {
@@ -60,7 +63,7 @@ projects: []
       // Should return default config due to validation failure
       expect(config.git_workflow.main_branch).toBe('main');
       expect(config.projects).toHaveLength(1);
-      expect(config.projects[0].path).toBe('/tmp/test-project');
+      expect(config.projects[0].path).toBe(testProjectPath);
     });
 
     it('should validate project paths exist', async () => {
@@ -88,7 +91,7 @@ projects:
       // Should return default config due to validation failure
       expect(config.git_workflow.main_branch).toBe('main');
       expect(config.projects).toHaveLength(1);
-      expect(config.projects[0].path).toBe('/tmp/test-project');
+      expect(config.projects[0].path).toBe(testProjectPath);
     });
   });
 
@@ -96,7 +99,7 @@ projects:
     it('should reload configuration from file', async () => {
       // Start with default config
       fsMock.mockConfigExists(true);
-      fsMock.addDirectory('/tmp/test-project');
+      fsMock.addDirectory(testProjectPath);
       
       const config1 = await configManager.loadConfig();
       expect(config1.git_workflow.main_branch).toBe('main');
@@ -107,7 +110,7 @@ projects:
       // Still returns default config in test mode
       expect(config2.git_workflow.main_branch).toBe('main');
       expect(config2.projects).toHaveLength(1);
-      expect(config2.projects[0].path).toBe('/tmp/test-project');
+      expect(config2.projects[0].path).toBe(testProjectPath);
     });
   });
 });

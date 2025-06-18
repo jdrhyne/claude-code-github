@@ -30,7 +30,7 @@ export class ConfigManager {
   private createDefaultConfig(): Config {
     const projects = process.env.NODE_ENV === 'test' 
       ? [{
-          path: '/tmp/test-project',
+          path: path.join(os.tmpdir(), 'claude-code-github-test', 'test-project'),
           github_repo: 'test-user/test-repo',
           reviewers: ['reviewer1', 'reviewer2']
         }]

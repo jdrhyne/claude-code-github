@@ -3,12 +3,14 @@ import { GitManager } from '../git.js';
 import { getGitMock, getFileSystemMock } from './utils/persistent-mock.js';
 import { GitMock } from './utils/git-mock.js';
 import { FileSystemMock } from './utils/fs-mock.js';
+import * as os from 'os';
+import * as path from 'path';
 
 describe('GitManager', () => {
   let gitManager: GitManager;
   let gitMock: GitMock;
   let fsMock: FileSystemMock;
-  const testProjectPath = '/tmp/test-project';
+  const testProjectPath = path.join(os.tmpdir(), 'claude-code-github-test', 'test-project');
 
   beforeEach(() => {
     gitManager = new GitManager();

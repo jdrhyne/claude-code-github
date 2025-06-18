@@ -1,7 +1,7 @@
 import * as chokidar from 'chokidar';
 import * as path from 'path';
 import * as fs from 'fs';
-import ignore from 'ignore';
+import { default as ignore } from 'ignore';
 import { ProjectConfig } from './types.js';
 
 export interface FileChangeEvent {

@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { FileWatcher } from '../file-watcher.js';
 import { ProjectConfig } from '../types.js';
 import * as chokidar from 'chokidar';
@@ -10,7 +11,7 @@ vi.mock('chokidar');
 
 describe('FileWatcher gitignore support', () => {
   let fileWatcher: FileWatcher;
-  const testProjectPath = '/test/project';
+  const testProjectPath = path.join(os.tmpdir(), 'claude-code-github-test', 'test-project');
   const testProject: ProjectConfig = {
     path: testProjectPath,
     github_repo: 'test/repo'
@@ -66,7 +67,7 @@ coverage/
 
     // Get the ignored function from the mock call
     const watchCall = vi.mocked(chokidar.watch).mock.calls[0];
-    const options = watchCall[1];
+    const options = watchCall[1] as any;
     const ignoredFn = options.ignored as (filePath: string) => boolean;
 
     // Test that gitignore patterns are respected
@@ -86,9 +87,9 @@ coverage/
 
     fileWatcher.addProject(testProject);
 
-    const watchCall = chokidar.watch.mock.calls[0];
-    const options = watchCall[1];
-    const ignoredFn = options.ignored;
+    const watchCall = vi.mocked(chokidar.watch).mock.calls[0];
+    const options = watchCall[1] as any;
+    const ignoredFn = options.ignored as (filePath: string) => boolean;
 
     expect(ignoredFn(path.join(testProjectPath, '.git/config'))).toBe(true);
     expect(ignoredFn(path.join(testProjectPath, '.git/HEAD'))).toBe(true);
@@ -102,9 +103,9 @@ coverage/
       fileWatcher.addProject(testProject);
     }).not.toThrow();
 
-    const watchCall = chokidar.watch.mock.calls[0];
-    const options = watchCall[1];
-    const ignoredFn = options.ignored;
+    const watchCall = vi.mocked(chokidar.watch).mock.calls[0];
+    const options = watchCall[1] as any;
+    const ignoredFn = options.ignored as (filePath: string) => boolean;
 
     // Should still apply default patterns
     expect(ignoredFn(path.join(testProjectPath, 'node_modules/package.json'))).toBe(true);
@@ -135,9 +136,9 @@ coverage/
 
     fileWatcher.addProject(testProject);
 
-    const watchCall = chokidar.watch.mock.calls[0];
-    const options = watchCall[1];
-    const ignoredFn = options.ignored;
+    const watchCall = vi.mocked(chokidar.watch).mock.calls[0];
+    const options = watchCall[1] as any;
+    const ignoredFn = options.ignored as (filePath: string) => boolean;
 
     // Test both local and global patterns
     expect(ignoredFn(path.join(testProjectPath, 'node_modules/foo'))).toBe(true);

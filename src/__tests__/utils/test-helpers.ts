@@ -1,8 +1,10 @@
 import { getFileSystemMock, getGitMock, getGitHubMock } from './persistent-mock.js';
 import { DevelopmentStatus, FileChange } from '../../types.js';
+import * as os from 'os';
+import * as path from 'path';
 
 export function createTestProjectPath(): string {
-  return '/tmp/test-project';
+  return path.join(os.tmpdir(), 'claude-code-github-test', 'test-project');
 }
 
 export function createTestConfig(projectPath: string = createTestProjectPath()) {
