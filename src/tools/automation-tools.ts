@@ -193,12 +193,24 @@ export class AutomationTools extends EventEmitter {
     }
     
     // Update settings
-    config.automation.enabled = true;
-    config.automation.mode = mode as any;
-    
-    // Clear emergency stop if it was set
-    if (config.automation.safety) {
-      config.automation.safety.emergency_stop = false;
+    if (!config.automation) {
+      config.automation = {
+        enabled: true,
+        mode: mode as any,
+        llm: { provider: 'anthropic', model: 'claude-3-sonnet', temperature: 0.7 },
+        thresholds: { confidence: 0.7, auto_execute: 0.9, require_approval: 0.5 },
+        preferences: { commit_style: 'conventional', commit_frequency: 'moderate', risk_tolerance: 'medium' },
+        safety: { max_actions_per_hour: 10, require_tests_pass: false, emergency_stop: false },
+        learning: { enabled: true, store_feedback: true, adapt_to_patterns: true, preference_learning: true }
+      };
+    } else {
+      config.automation.enabled = true;
+      config.automation.mode = mode as any;
+      
+      // Clear emergency stop if it was set
+      if (config.automation.safety) {
+        config.automation.safety.emergency_stop = false;
+      }
     }
     
     // Save config
@@ -254,26 +266,28 @@ export class AutomationTools extends EventEmitter {
       config.automation = this.getDefaultAutomation();
     }
     
+    const automation = config.automation!; // Type assertion after null check
+    
     // Update thresholds
     if (params.thresholds) {
-      config.automation.thresholds = {
-        ...config.automation.thresholds,
+      automation.thresholds = {
+        ...automation.thresholds,
         ...params.thresholds
       };
     }
     
     // Update preferences
     if (params.preferences) {
-      config.automation.preferences = {
-        ...config.automation.preferences,
+      automation.preferences = {
+        ...automation.preferences,
         ...params.preferences
       };
     }
     
     // Update safety
     if (params.safety) {
-      config.automation.safety = {
-        ...config.automation.safety,
+      automation.safety = {
+        ...automation.safety,
         ...params.safety
       };
     }
@@ -286,9 +300,9 @@ export class AutomationTools extends EventEmitter {
       message: 'Automation configuration updated',
       updated: Object.keys(params),
       configuration: {
-        thresholds: config.automation.thresholds,
-        preferences: config.automation.preferences,
-        safety: config.automation.safety
+        thresholds: automation.thresholds,
+        preferences: automation.preferences,
+        safety: automation.safety
       }
     };
   }
@@ -301,9 +315,11 @@ export class AutomationTools extends EventEmitter {
       config.automation = this.getDefaultAutomation();
     }
     
+    const automation = config.automation!; // Type assertion after null check
+    
     // Update learning settings
-    config.automation.learning = {
-      ...config.automation.learning,
+    automation.learning = {
+      ...automation.learning,
       ...params
     };
     
@@ -313,7 +329,7 @@ export class AutomationTools extends EventEmitter {
     return {
       success: true,
       message: 'Learning configuration updated',
-      learning: config.automation.learning
+      learning: automation.learning
     };
   }
   

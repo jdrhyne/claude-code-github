@@ -1,13 +1,13 @@
 import { AutomationConfig } from '../../types.js';
-import { BaseLLMProvider } from './base-provider.js';
+import { BaseLLMProvider, LLMProviderConfig } from './base-provider.js';
 import { AnthropicProvider } from './anthropic-provider.js';
 import { OpenAIProvider } from './openai-provider.js';
 
 export class LLMProviderFactory {
   static create(config: AutomationConfig): BaseLLMProvider {
-    const llmConfig = {
-      model: config.llm.model,
-      temperature: config.llm.temperature,
+    const llmConfig: LLMProviderConfig = {
+      model: config.llm.model || 'claude-3-sonnet-20240229',
+      temperature: config.llm.temperature || 0.7,
       apiKey: config.llm.api_key_env ? process.env[config.llm.api_key_env] : undefined,
     };
     

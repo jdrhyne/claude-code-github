@@ -223,7 +223,7 @@ export class DevelopmentTools {
 
     // Get intelligent suggestions if suggestion engine is initialized
     if (this.suggestionEngine) {
-      const suggestions = this.suggestionEngine.analyzeSituation(project.path, status);
+      const suggestions = await this.suggestionEngine.analyzeSituation(project.path, status);
       const hints = this.suggestionEngine.getContextualHints(project.path);
       
       if (suggestions.length > 0) {

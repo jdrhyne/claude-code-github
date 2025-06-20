@@ -137,7 +137,7 @@ export class FeedbackTools extends EventEmitter {
             success_rate: `${(stats.successRate * 100).toFixed(1)}%`,
             common_corrections: (() => {
               const corrections: { pattern: string; count: number }[] = [];
-              stats.commonCorrections.forEach((count, pattern) => {
+              stats.commonCorrections.forEach((count: number, pattern: string) => {
                 corrections.push({ pattern, count });
               });
               return corrections;

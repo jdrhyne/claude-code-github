@@ -409,7 +409,7 @@ export class SuggestionEngine {
           uncommittedChanges: status.uncommitted_changes?.file_count || 0,
           lastCommitTime: context.lastCommitTime || new Date(),
           testStatus: 'unknown' as const,
-          buildStatus: 'unknown' as const
+          buildStatus: 'pending' as const
         },
         recentHistory: [],
         userPreferences: this.config.automation?.preferences || {

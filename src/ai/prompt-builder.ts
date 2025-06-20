@@ -195,8 +195,7 @@ Based on the user's preferences and current context, what action should be taken
         return 'Documentation updated';
       default:
         // For file changes with many files, describe as large changeset
-        if (event.type === MonitoringEventType.FILE_CHANGE && 
-            files && files.length > 5) {
+        if (files && files.length > 5) {
           return 'Large number of changes accumulated';
         }
         return event.type;

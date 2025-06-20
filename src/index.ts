@@ -118,6 +118,16 @@ Documentation:
       automationTools.setEventAggregator(eventAggregator);
     }
     
+    // Register automation tools
+    if (automationTools && automationTools.getTools) {
+      const tools = automationTools.getTools();
+      for (const tool of tools) {
+        server.registerTool(tool, async (params) => {
+          return await automationTools.handleToolCall(tool.name, params);
+        });
+      }
+    }
+    
     // Register cleanup handlers
     processManager.onCleanup(async () => {
       await devTools.close();
@@ -621,15 +631,6 @@ Documentation:
     }
   }
 
-  // Register automation tools
-  if (automationTools && automationTools.getTools) {
-    const tools = automationTools.getTools();
-    for (const tool of tools) {
-      server.registerTool(tool, async (params) => {
-        return await automationTools.handleToolCall(tool.name, params);
-      });
-    }
-  }
 
   // Process management handles all cleanup now
 
