@@ -42,7 +42,7 @@ describe('SuggestionEngine', () => {
   });
 
   describe('Protected branch warnings', () => {
-    it('should warn when working on protected branch with uncommitted changes', () => {
+    it('should warn when working on protected branch with uncommitted changes', async () => {
       const status: DevelopmentStatus = {
         branch: 'main',
         is_protected: true,
@@ -53,7 +53,7 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       expect(suggestions).toHaveLength(1);
       expect(suggestions[0]).toMatchObject({
@@ -64,20 +64,20 @@ describe('SuggestionEngine', () => {
       });
     });
 
-    it('should not warn on protected branch with no changes', () => {
+    it('should not warn on protected branch with no changes', async () => {
       const status: DevelopmentStatus = {
         branch: 'main',
         is_protected: true
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       expect(suggestions).toHaveLength(0);
     });
   });
 
   describe('Uncommitted changes suggestions', () => {
-    it('should suggest commit when 5+ files changed', () => {
+    it('should suggest commit when 5+ files changed', async () => {
       const status: DevelopmentStatus = {
         branch: 'feature/test',
         is_protected: false,
@@ -88,14 +88,14 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       const commitSuggestion = suggestions.find(s => s.type === 'commit');
       expect(commitSuggestion).toBeDefined();
       expect(commitSuggestion?.message).toContain('7 uncommitted files');
     });
 
-    it('should suggest splitting mixed changes', () => {
+    it('should suggest splitting mixed changes', async () => {
       const status: DevelopmentStatus = {
         branch: 'feature/test',
         is_protected: false,
@@ -110,7 +110,7 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       const mixedSuggestion = suggestions.find(s => 
         s.message.includes('mixed changes')
@@ -120,7 +120,7 @@ describe('SuggestionEngine', () => {
   });
 
   describe('Time-based suggestions', () => {
-    it('should suggest checkpoint after 2 hours of uncommitted work', () => {
+    it('should suggest checkpoint after 2 hours of uncommitted work', async () => {
       const projectPath = '/test/project';
       const status: DevelopmentStatus = {
         branch: 'feature/test',
@@ -133,14 +133,17 @@ describe('SuggestionEngine', () => {
       };
 
       // First call to set uncommitted start time
-      suggestionEngine.analyzeSituation(projectPath, status);
+      await suggestionEngine.analyzeSituation(projectPath, status);
 
       // Simulate 2.5 hours passing
       // Access private property for testing
-      const context = (suggestionEngine as unknown as { workContexts: Map<string, WorkContext> }).workContexts.get(projectPath);
-      context.uncommittedStartTime = new Date(Date.now() - 150 * 60 * 1000); // 150 minutes ago
+      const contexts = (suggestionEngine as unknown as { workContexts: Map<string, WorkContext> }).workContexts;
+      const context = contexts.get(projectPath);
+      if (context) {
+        context.uncommittedStartTime = new Date(Date.now() - 150 * 60 * 1000); // 150 minutes ago
+      }
 
-      const suggestions = suggestionEngine.analyzeSituation(projectPath, status);
+      const suggestions = await suggestionEngine.analyzeSituation(projectPath, status);
       
       const timeSuggestion = suggestions.find(s => 
         s.type === 'checkpoint' && s.priority === 'high'
@@ -151,7 +154,7 @@ describe('SuggestionEngine', () => {
   });
 
   describe('Change pattern detection', () => {
-    it('should recognize test and implementation changes', () => {
+    it('should recognize test and implementation changes', async () => {
       const status: DevelopmentStatus = {
         branch: 'feature/test',
         is_protected: false,
@@ -165,7 +168,7 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       const testSuggestion = suggestions.find(s => 
         s.message.includes('implementation and test')
@@ -173,7 +176,7 @@ describe('SuggestionEngine', () => {
       expect(testSuggestion).toBeDefined();
     });
 
-    it('should recognize documentation updates with code', () => {
+    it('should recognize documentation updates with code', async () => {
       const status: DevelopmentStatus = {
         branch: 'feature/test',
         is_protected: false,
@@ -187,7 +190,7 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       const docSuggestion = suggestions.find(s => 
         s.message.includes('Documentation')
@@ -197,7 +200,7 @@ describe('SuggestionEngine', () => {
   });
 
   describe('Branch suggestions', () => {
-    it('should suggest feature branch when adding components on main', () => {
+    it('should suggest feature branch when adding components on main', async () => {
       const status: DevelopmentStatus = {
         branch: 'main',
         is_protected: false,
@@ -210,7 +213,7 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       const branchSuggestion = suggestions.find(s => s.type === 'branch');
       expect(branchSuggestion).toBeDefined();
@@ -219,7 +222,7 @@ describe('SuggestionEngine', () => {
   });
 
   describe('PR readiness detection', () => {
-    it('should suggest PR when on feature branch with clean working directory', () => {
+    it('should suggest PR when on feature branch with clean working directory', async () => {
       const status: DevelopmentStatus = {
         branch: 'feature/awesome-feature',
         is_protected: false,
@@ -230,20 +233,20 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       const prSuggestion = suggestions.find(s => s.type === 'pr');
       expect(prSuggestion).toBeDefined();
       expect(prSuggestion?.action).toBe('dev_create_pull_request');
     });
 
-    it('should not suggest PR on main branch', () => {
+    it('should not suggest PR on main branch', async () => {
       const status: DevelopmentStatus = {
         branch: 'main',
         is_protected: true
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       const prSuggestion = suggestions.find(s => s.type === 'pr');
       expect(prSuggestion).toBeUndefined();
@@ -258,7 +261,7 @@ describe('SuggestionEngine', () => {
       expect(hints).toContain("Starting a new session? Run 'dev_status' to see your current state.");
     });
 
-    it('should provide hints after recent commit', () => {
+    it('should provide hints after recent commit', async () => {
       const projectPath = '/test/project';
       const status: DevelopmentStatus = {
         branch: 'feature/test',
@@ -271,7 +274,7 @@ describe('SuggestionEngine', () => {
       };
 
       // Simulate commit by having changes then no changes
-      suggestionEngine.analyzeSituation(projectPath, status);
+      await suggestionEngine.analyzeSituation(projectPath, status);
       
       const cleanStatus: DevelopmentStatus = {
         branch: 'feature/test',
@@ -287,7 +290,7 @@ describe('SuggestionEngine', () => {
   });
 
   describe('Priority sorting', () => {
-    it('should sort suggestions by priority', () => {
+    it('should sort suggestions by priority', async () => {
       const status: DevelopmentStatus = {
         branch: 'main',
         is_protected: true,
@@ -301,7 +304,7 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = suggestionEngine.analyzeSituation('/test/project', status);
+      const suggestions = await suggestionEngine.analyzeSituation('/test/project', status);
       
       // Should have multiple suggestions
       expect(suggestions.length).toBeGreaterThan(1);
@@ -320,7 +323,7 @@ describe('SuggestionEngine', () => {
   });
 
   describe('Configuration control', () => {
-    it('should disable all suggestions when globally disabled', () => {
+    it('should disable all suggestions when globally disabled', async () => {
       config.suggestions!.enabled = false;
       const localEngine = new SuggestionEngine(config);
       
@@ -334,11 +337,11 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      const suggestions = await localEngine.analyzeSituation('/test/project', status);
       expect(suggestions).toHaveLength(0);
     });
 
-    it('should disable protected branch warnings when configured', () => {
+    it('should disable protected branch warnings when configured', async () => {
       config.suggestions!.protected_branch_warnings = false;
       const localEngine = new SuggestionEngine(config);
       
@@ -352,12 +355,12 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      const suggestions = await localEngine.analyzeSituation('/test/project', status);
       const protectedBranchSuggestion = suggestions.find(s => s.type === 'warning');
       expect(protectedBranchSuggestion).toBeUndefined();
     });
 
-    it('should use custom thresholds for large changesets', () => {
+    it('should use custom thresholds for large changesets', async () => {
       config.suggestions!.large_changeset.threshold = 10;
       const localEngine = new SuggestionEngine(config);
       
@@ -371,12 +374,12 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      const suggestions = await localEngine.analyzeSituation('/test/project', status);
       const commitSuggestion = suggestions.find(s => s.type === 'commit');
       expect(commitSuggestion).toBeUndefined();
     });
 
-    it('should use custom time thresholds', () => {
+    it('should use custom time thresholds', async () => {
       config.suggestions!.time_reminders.warning_threshold_minutes = 30;
       config.suggestions!.time_reminders.reminder_threshold_minutes = 15;
       const localEngine = new SuggestionEngine(config);
@@ -393,18 +396,21 @@ describe('SuggestionEngine', () => {
       };
 
       // First call to set uncommitted start time
-      localEngine.analyzeSituation(projectPath, status);
+      await localEngine.analyzeSituation(projectPath, status);
 
       // Simulate 45 minutes passing (should trigger high priority warning with custom threshold)
-      const context = (localEngine as unknown as { workContexts: Map<string, WorkContext> }).workContexts.get(projectPath);
-      context!.uncommittedStartTime = new Date(Date.now() - 45 * 60 * 1000);
+      const contexts = (localEngine as unknown as { workContexts: Map<string, WorkContext> }).workContexts;
+      const context = contexts.get(projectPath);
+      if (context) {
+        context.uncommittedStartTime = new Date(Date.now() - 45 * 60 * 1000);
+      }
 
-      const suggestions = localEngine.analyzeSituation(projectPath, status);
+      const suggestions = await localEngine.analyzeSituation(projectPath, status);
       const timeSuggestion = suggestions.find(s => s.type === 'checkpoint' && s.priority === 'high');
       expect(timeSuggestion).toBeDefined();
     });
 
-    it('should support per-project overrides', () => {
+    it('should support per-project overrides', async () => {
       // Add a project with suggestions disabled
       config.projects = [{
         path: '/test/project',
@@ -425,11 +431,11 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      const suggestions = await localEngine.analyzeSituation('/test/project', status);
       expect(suggestions).toHaveLength(0);
     });
 
-    it('should use project-specific thresholds', () => {
+    it('should use project-specific thresholds', async () => {
       // Add a project with custom threshold
       config.projects = [{
         path: '/test/project',
@@ -452,7 +458,7 @@ describe('SuggestionEngine', () => {
         }
       };
 
-      const suggestions = localEngine.analyzeSituation('/test/project', status);
+      const suggestions = await localEngine.analyzeSituation('/test/project', status);
       const commitSuggestion = suggestions.find(s => s.type === 'commit');
       expect(commitSuggestion).toBeUndefined();
     });

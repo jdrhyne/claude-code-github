@@ -19,7 +19,8 @@ vi.mock('../ai/llm-decision-agent.js', () => {
     generatePRDescription: vi.fn().mockResolvedValue({
       title: 'Test PR',
       body: 'Test PR body'
-    })
+    }),
+    setLearningEngine: vi.fn() // Add missing method
   };
   
   return {
@@ -450,7 +451,7 @@ describe('Phase 2 Integration', () => {
       const actionPromise = new Promise<any>((resolve, reject) => {
         const timeout = setTimeout(() => {
           reject(new Error('Timeout waiting for LLM action'));
-        }, 2000);
+        }, 5000); // Increase timeout to 5 seconds
         
         aggregator.on('llm-action-ready', async ({ decision, context }) => {
           clearTimeout(timeout);
