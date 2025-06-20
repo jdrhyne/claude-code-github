@@ -223,7 +223,7 @@ export class DevelopmentTools {
 
     // Get intelligent suggestions if suggestion engine is initialized
     if (this.suggestionEngine) {
-      const suggestions = this.suggestionEngine.analyzeSituation(project.path, status);
+      const suggestions = await this.suggestionEngine.analyzeSituation(project.path, status);
       const hints = this.suggestionEngine.getContextualHints(project.path);
       
       if (suggestions.length > 0) {
@@ -1248,5 +1248,19 @@ export class DevelopmentTools {
     if (callbacks.onEvent) {
       this.monitorManager.on('monitoring-event', callbacks.onEvent);
     }
+  }
+  
+  /**
+   * Get the EventAggregator instance if monitoring is enabled
+   */
+  getEventAggregator() {
+    return this.monitorManager?.getEventAggregator();
+  }
+  
+  /**
+   * Get the ConfigManager instance
+   */
+  getConfigManager(): ConfigManager {
+    return this.configManager;
   }
 }

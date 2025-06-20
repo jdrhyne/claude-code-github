@@ -106,6 +106,51 @@ The `claude-code-github` server runs continuously in the background.
 2.  **Change Analysis:** When it detects changes, it prepares a detailed summary, including a file list, status (modified, added, etc.), and a text `diff` of the code changes.
 3.  **Passive Information Provider:** The server is passive. It does not trigger any actions on its own. It provides its analysis to Claude through the `dev_status` tool. All actions, such as creating a commit or a new branch, are initiated explicitly by the LLM agent using the provided tools.
 
+## Automation Features (NEW)
+
+The `claude-code-github` server now includes powerful LLM-based automation capabilities that can:
+- Learn from your development patterns
+- Suggest and execute Git actions autonomously
+- Adapt to your preferences through feedback
+- Operate in different modes based on your comfort level
+
+### Automation Modes
+
+1. **Off**: No automation (default)
+2. **Learning**: Observes your patterns without taking actions
+3. **Assisted**: Suggests actions but requires approval (recommended to start)
+4. **Autonomous**: Executes actions automatically with safety checks
+
+### Configuration
+
+Add the following to your `config.yml` to enable automation:
+
+```yaml
+automation:
+  enabled: true
+  mode: assisted  # Start with assisted mode
+  
+  llm:
+    provider: anthropic
+    model: claude-3-sonnet-20240229
+    api_key_env: ANTHROPIC_API_KEY
+  
+  thresholds:
+    confidence: 0.7      # Minimum confidence to suggest
+    auto_execute: 0.9    # Minimum confidence for autonomous execution
+    require_approval: 0.5 # Below this, don't even suggest
+  
+  safety:
+    max_actions_per_hour: 10
+    require_tests_pass: true
+    emergency_stop: false
+  
+  learning:
+    enabled: true
+    store_feedback: true
+    adapt_to_patterns: true
+```
+
 ## Tools Exposed to Claude
 
 The server provides the following tools for Claude to use:
@@ -148,6 +193,60 @@ The server provides the following tools for Claude to use:
     *Claude, make a checkpoint with the message "WIP: setting up the database models".*
 
   * **Commit Message Formatting:** For any tool accepting a `message` parameter, the server will preserve all formatting provided by Claude (including Markdown like lists with `*` or `-`) and pass it directly to the `git commit` command.
+
+### Automation Management Tools
+
+  * **`dev_automation_status`**
+    Get the current automation status and configuration.
+    
+    *Claude, show me the automation status.*
+
+  * **`dev_automation_enable(mode: string)`**
+    Enable automation with specified mode: 'learning', 'assisted', or 'autonomous'.
+    
+    *Claude, enable automation in assisted mode.*
+
+  * **`dev_automation_disable(emergency?: boolean)`**
+    Disable automation, optionally with emergency stop.
+    
+    *Claude, disable automation immediately.*
+
+  * **`dev_automation_configure(settings)`**
+    Update automation configuration settings for thresholds, preferences, or safety.
+    
+    *Claude, set the confidence threshold to 0.8.*
+
+  * **`dev_automation_learning(settings)`**
+    Configure learning system settings.
+    
+    *Claude, enable preference learning.*
+
+### Feedback Tools
+
+  * **`dev_feedback_approve(decision_id: string, reason?: string)`**
+    Approve an LLM decision.
+    
+    *Claude, approve decision abc123.*
+
+  * **`dev_feedback_reject(decision_id: string, reason?: string)`**
+    Reject an LLM decision.
+    
+    *Claude, reject that decision - too risky.*
+
+  * **`dev_feedback_correct(decision_id: string, corrected_action: string, reason?: string)`**
+    Correct an LLM decision with the preferred action.
+    
+    *Claude, correct that to create a branch instead.*
+
+  * **`dev_feedback_stats(project_path?: string)`**
+    Get learning statistics for the current project.
+    
+    *Claude, show me the feedback statistics.*
+
+  * **`dev_preferences(project_path: string)`**
+    Get learned preferences for the current project.
+    
+    *Claude, what preferences have you learned?*
 
 ## Safeguards
 

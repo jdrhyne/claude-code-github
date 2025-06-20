@@ -10,6 +10,8 @@ import { ProcessManager } from './process-manager.js';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { MonitoringSuggestion, AggregatedMilestone } from './monitoring/types.js';
+import { FeedbackTools } from './tools/feedback-tools.js';
+import { AutomationTools } from './tools/automation-tools.js';
 
 // Read version from package.json at build/compile time
 let version = '1.1.1'; // fallback
@@ -72,10 +74,15 @@ Documentation:
   const server = new EnhancedMcpServer();
   const devTools = new DevelopmentTools();
   const processManager = new ProcessManager();
+  const feedbackTools = new FeedbackTools();
 
   try {
     // Initialize development tools and get config
     const config = await devTools.initialize();
+    
+    // Initialize automation tools
+    const configManager = devTools.getConfigManager();
+    const automationTools = new AutomationTools(configManager);
     
     // Initialize process management with first project
     if (config.projects.length > 0) {
@@ -96,6 +103,30 @@ Documentation:
     server.onConversationMessage((params) => {
       devTools.processConversationMessage(params.message, params.role as 'user' | 'assistant');
     });
+    
+    // Initialize feedback tools if automation and learning are enabled
+    const eventAggregator = devTools.getEventAggregator();
+    if (eventAggregator && config.automation?.enabled && config.automation?.learning?.enabled) {
+      const feedbackHandlers = eventAggregator.getFeedbackHandlers();
+      if (feedbackHandlers) {
+        feedbackTools.setFeedbackHandlers(feedbackHandlers);
+      }
+    }
+    
+    // Set event aggregator on automation tools
+    if (eventAggregator) {
+      automationTools.setEventAggregator(eventAggregator);
+    }
+    
+    // Register automation tools
+    if (automationTools && automationTools.getTools) {
+      const tools = automationTools.getTools();
+      for (const tool of tools) {
+        server.registerTool(tool, async (params) => {
+          return await automationTools.handleToolCall(tool.name, params);
+        });
+      }
+    }
     
     // Register cleanup handlers
     processManager.onCleanup(async () => {
@@ -589,6 +620,17 @@ Documentation:
   server.registerTool(monitoringStatusTool, async () => {
     return await devTools.getMonitoringStatus();
   });
+
+  // Register feedback tools if they are initialized
+  if (feedbackTools && feedbackTools.getTools) {
+    const tools = feedbackTools.getTools();
+    for (const tool of tools) {
+      server.registerTool(tool, async (params) => {
+        return await feedbackTools.handleToolCall(tool.name, params);
+      });
+    }
+  }
+
 
   // Process management handles all cleanup now
 
