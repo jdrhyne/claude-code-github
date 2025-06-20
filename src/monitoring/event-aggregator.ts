@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { MonitoringEvent, MonitoringEventType, AggregatedMilestone, MonitoringSuggestion } from './types.js';
-import { Config, LLMDecision, DecisionContext } from '../types.js';
+import { Config, DecisionContext } from '../types.js';
 import { LLMDecisionAgent } from '../ai/llm-decision-agent.js';
 import { GitManager } from '../git.js';
 import { FeedbackStore } from '../learning/feedback-store.js';

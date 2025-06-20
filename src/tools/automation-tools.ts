@@ -118,15 +118,16 @@ export class AutomationTools extends EventEmitter {
   }
   
   async handleToolCall(toolName: string, params: any): Promise<any> {
-    const config = await this.configManager.loadConfig();
+    await this.configManager.loadConfig();
     
     switch (toolName) {
-      case 'dev_automation_status':
+      case 'dev_automation_status': {
         const statusData = await this.getAutomationStatus();
         return {
           ...statusData,
           display: StatusDisplay.showAutomationStatus(statusData)
         };
+      }
         
       case 'dev_automation_enable':
         return await this.enableAutomation(params.mode);

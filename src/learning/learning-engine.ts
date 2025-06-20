@@ -85,7 +85,7 @@ export class LearningEngine {
     context: DecisionContext,
     feedback: UserFeedback
   ): Promise<void> {
-    const feedbackId = await this.feedbackStore.recordFeedback(
+    await this.feedbackStore.recordFeedback(
       decision,
       context,
       feedback

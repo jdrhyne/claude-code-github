@@ -124,7 +124,7 @@ export class FeedbackTools extends EventEmitter {
           params.reason
         );
         
-      case 'dev_feedback_stats':
+      case 'dev_feedback_stats': {
         const stats = await this.feedbackHandlers.getStats(params.project_path);
         return {
           success: true,
@@ -145,8 +145,9 @@ export class FeedbackTools extends EventEmitter {
             preference_patterns: stats.preferencePatterns
           }
         };
+      }
         
-      case 'dev_preferences':
+      case 'dev_preferences': {
         const preferences = await this.feedbackHandlers.getLearnedPreferences(
           params.project_path
         );
@@ -154,6 +155,7 @@ export class FeedbackTools extends EventEmitter {
           success: true,
           preferences
         };
+      }
         
       default:
         throw new Error(`Unknown feedback tool: ${toolName}`);

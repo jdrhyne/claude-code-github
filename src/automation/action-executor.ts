@@ -3,8 +3,6 @@ import { LLMDecision, DecisionContext, Config } from '../types.js';
 import { MonitoringEvent, MonitoringEventType } from '../monitoring/types.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 
 const execAsync = promisify(exec);
 
@@ -290,19 +288,19 @@ export class ActionExecutor extends EventEmitter {
   }
   
   // Stub methods for message generation - these would use the LLM
-  private async generateCommitMessage(context: DecisionContext): Promise<string> {
+  private async generateCommitMessage(_context: DecisionContext): Promise<string> {
     return 'feat: automated commit by LLM';
   }
   
-  private async generateBranchName(context: DecisionContext): Promise<string> {
+  private async generateBranchName(_context: DecisionContext): Promise<string> {
     return `feature/auto-${Date.now()}`;
   }
   
-  private async generatePRTitle(context: DecisionContext): Promise<string> {
+  private async generatePRTitle(_context: DecisionContext): Promise<string> {
     return 'Automated PR by LLM';
   }
   
-  private async generatePRBody(context: DecisionContext): Promise<string> {
+  private async generatePRBody(_context: DecisionContext): Promise<string> {
     return 'This PR was automatically created by the LLM automation system.';
   }
 }

@@ -2,7 +2,7 @@ import { EventEmitter } from 'events';
 import { FeedbackStore, UserFeedback, ActionOutcome } from './feedback-store.js';
 import { LearningEngine } from './learning-engine.js';
 import { LLMDecision, DecisionContext } from '../types.js';
-import { MonitoringEvent, MonitoringEventType } from '../monitoring/types.js';
+import { MonitoringEventType } from '../monitoring/types.js';
 
 export interface FeedbackRequest {
   decisionId: string;
