@@ -128,6 +128,44 @@ export class ConfigManager {
         enabled: false,
         endpoints: []
       },
+      automation: {
+        enabled: false,
+        mode: 'off',
+        llm: {
+          provider: 'anthropic',
+          model: 'claude-3-sonnet-20240229',
+          temperature: 0.3,
+          api_key_env: 'ANTHROPIC_API_KEY'
+        },
+        thresholds: {
+          confidence: 0.8,
+          auto_execute: 0.95,
+          require_approval: 0.6
+        },
+        preferences: {
+          commit_style: 'conventional',
+          commit_frequency: 'moderate',
+          working_hours: {
+            start: '09:00',
+            end: '18:00',
+            timezone: 'America/New_York'
+          },
+          risk_tolerance: 'medium'
+        },
+        safety: {
+          max_actions_per_hour: 10,
+          protected_files: ['**/*.env', '**/secrets/*', '**/.env.*'],
+          require_tests_pass: true,
+          pause_on_errors: true,
+          emergency_stop: false
+        },
+        learning: {
+          enabled: true,
+          store_feedback: true,
+          adapt_to_patterns: true,
+          preference_learning: true
+        }
+      },
       projects
     };
   }
@@ -210,6 +248,52 @@ project_discovery:
   auto_detect_github_repo: true # Automatically detect GitHub repository from git remote
   max_depth: 3                  # Maximum directory depth to scan
 
+# LLM-based automation configuration
+automation:
+  enabled: false                # Master switch for automation features
+  mode: off                     # off, learning, assisted, or autonomous
+  
+  # LLM provider configuration
+  llm:
+    provider: anthropic         # anthropic, openai, or local
+    model: claude-3-sonnet-20240229
+    temperature: 0.3            # Lower = more consistent, higher = more creative
+    api_key_env: ANTHROPIC_API_KEY  # Environment variable for API key
+  
+  # Decision thresholds
+  thresholds:
+    confidence: 0.8             # Minimum confidence for suggestions
+    auto_execute: 0.95          # Confidence required for autonomous execution
+    require_approval: 0.6       # Below this always requires approval
+  
+  # User preferences for automation
+  preferences:
+    commit_style: conventional  # conventional, descriptive, or custom
+    commit_frequency: moderate  # aggressive, moderate, or conservative
+    working_hours:
+      start: "09:00"
+      end: "18:00"
+      timezone: "America/New_York"
+    risk_tolerance: medium      # low, medium, or high
+  
+  # Safety settings
+  safety:
+    max_actions_per_hour: 10
+    protected_files:            # Files that require manual approval
+      - "**/*.env"
+      - "**/secrets/*"
+      - "**/.env.*"
+    require_tests_pass: true
+    pause_on_errors: true
+    emergency_stop: false       # Set to true to disable all automation
+  
+  # Learning system configuration
+  learning:
+    enabled: true               # Learn from user behavior
+    store_feedback: true        # Store decision feedback
+    adapt_to_patterns: true     # Adapt to user patterns
+    preference_learning: true   # Learn user preferences
+
 # A list of projects for the server to monitor.
 # Use absolute paths.
 projects: []
@@ -261,6 +345,21 @@ projects: []
       }
     }
 
+    return config;
+  }
+
+  private resolveEnvironmentVariables(config: Config): Config {
+    // Resolve API key from environment if specified
+    if (config.automation?.llm?.api_key_env) {
+      const apiKey = process.env[config.automation.llm.api_key_env];
+      if (!apiKey && config.automation.enabled) {
+        if (process.env.MCP_MODE !== 'true') {
+          console.error(chalk.yellow(`\n⚠️  Environment variable ${config.automation.llm.api_key_env} not set`));
+          console.error(chalk.gray('Automation features will not work without an API key.'));
+        }
+      }
+    }
+    
     return config;
   }
 
@@ -328,6 +427,9 @@ projects: []
         // Run project discovery after validation
         this.config = await this.discoverProjects(this.config);
       }
+      
+      // Resolve environment variables
+      this.config = this.resolveEnvironmentVariables(this.config);
       
       return this.config;
     } catch (error) {

@@ -93,6 +93,45 @@ export interface WorkspacePathConfig {
   github_repo_detection?: 'from_remote' | 'from_folder_name';
 }
 
+export interface AutomationConfig {
+  enabled: boolean;
+  mode: 'off' | 'learning' | 'assisted' | 'autonomous';
+  llm: {
+    provider: 'anthropic' | 'openai' | 'local';
+    model?: string;
+    temperature?: number;
+    api_key_env?: string;
+  };
+  thresholds: {
+    confidence: number;
+    auto_execute: number;
+    require_approval: number;
+  };
+  preferences: {
+    commit_style: 'conventional' | 'descriptive' | 'custom';
+    commit_frequency: 'aggressive' | 'moderate' | 'conservative';
+    working_hours?: {
+      start: string;
+      end: string;
+      timezone: string;
+    };
+    risk_tolerance: 'low' | 'medium' | 'high';
+  };
+  safety: {
+    max_actions_per_hour: number;
+    protected_files?: string[];
+    require_tests_pass?: boolean;
+    pause_on_errors?: boolean;
+    emergency_stop?: boolean;
+  };
+  learning: {
+    enabled: boolean;
+    store_feedback: boolean;
+    adapt_to_patterns: boolean;
+    preference_learning: boolean;
+  };
+}
+
 export interface Config {
   git_workflow: GitWorkflowConfig;
   suggestions?: SuggestionConfig;
@@ -103,6 +142,7 @@ export interface Config {
   api_server?: import('./api/types.js').APIConfig;
   websocket?: import('./api/types.js').WebSocketConfig;
   webhooks?: import('./api/types.js').WebhookConfig;
+  automation?: AutomationConfig;
 }
 
 // Re-export API types for convenience
@@ -351,4 +391,65 @@ export interface ChangelogEntry {
   features: string[];
   fixes: string[];
   other: string[];
+}
+
+// Automation Types
+export interface LLMDecision {
+  action: string;
+  confidence: number;
+  reasoning: string;
+  requiresApproval: boolean;
+  alternativeActions?: string[];
+  riskAssessment?: RiskAssessment;
+}
+
+export interface DecisionContext {
+  currentEvent: import('./monitoring/types.js').MonitoringEvent;
+  projectState: ProjectState;
+  recentHistory: import('./monitoring/types.js').MonitoringEvent[];
+  userPreferences: AutomationConfig['preferences'];
+  possibleActions: string[];
+  riskFactors?: RiskAssessment;
+  timeContext?: TimeContext;
+}
+
+export interface ProjectState {
+  branch: string;
+  isProtected: boolean;
+  uncommittedChanges: number;
+  lastCommitTime: Date;
+  testStatus?: 'passing' | 'failing' | 'unknown';
+  buildStatus?: 'success' | 'failure' | 'pending';
+}
+
+export interface RiskAssessment {
+  score: number;
+  factors: string[];
+  level: 'low' | 'medium' | 'high' | 'critical';
+  requiresApproval: boolean;
+}
+
+export interface TimeContext {
+  currentTime: Date;
+  isWorkingHours: boolean;
+  lastUserActivity: Date;
+  dayOfWeek: string;
+}
+
+export interface AutomationFeedback {
+  decisionId: string;
+  originalDecision: LLMDecision;
+  userAction: string;
+  userComment?: string;
+  timestamp: Date;
+  context: DecisionContext;
+  outcome: 'accepted' | 'modified' | 'rejected';
+}
+
+export interface LearnedPreference {
+  pattern: string;
+  preference: string;
+  confidence: number;
+  examples: number;
+  lastUpdated: Date;
 }

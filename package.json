@@ -48,6 +48,7 @@
     "url": "https://github.com/jdrhyne/claude-code-github/issues"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
     "blessed": "^0.1.81",
     "chalk": "^4.1.2",
     "chokidar": "^3.5.3",
@@ -63,9 +64,12 @@
     "keytar": "^7.9.0",
     "node-notifier": "^10.0.1",
     "octokit": "^3.1.2",
+    "openai": "^4.47.0",
     "simple-git": "^3.20.0",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1"
+    "socket.io-client": "^4.8.1",
+    "sqlite3": "^5.1.7",
+    "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
