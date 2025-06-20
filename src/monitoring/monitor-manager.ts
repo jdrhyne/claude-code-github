@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { FileWatcher, FileChangeEvent } from '../file-watcher.js';
 import { GitManager } from '../git.js';
-import { ProjectConfig } from '../types.js';
+import { ProjectConfig, Config } from '../types.js';
 import { ConversationMonitor } from './conversation-monitor.js';
 import { EventAggregator } from './event-aggregator.js';
 import { MonitoringEvent, MonitoringEventType } from './types.js';
@@ -10,6 +10,7 @@ export interface MonitorManagerOptions {
   fileWatcher: FileWatcher;
   gitManager: GitManager;
   projects: ProjectConfig[];
+  config?: Config;
 }
 
 export class MonitorManager extends EventEmitter {
@@ -20,13 +21,15 @@ export class MonitorManager extends EventEmitter {
   private projects: Map<string, ProjectConfig> = new Map();
   private monitoringIntervals: Map<string, NodeJS.Timeout> = new Map();
   private lastGitStates: Map<string, string> = new Map();
+  private config?: Config;
 
   constructor(options: MonitorManagerOptions) {
     super();
     this.fileWatcher = options.fileWatcher;
     this.gitManager = options.gitManager;
+    this.config = options.config;
     this.conversationMonitor = new ConversationMonitor();
-    this.eventAggregator = new EventAggregator();
+    this.eventAggregator = new EventAggregator(this.gitManager);
 
     // Store projects
     options.projects.forEach(project => {
@@ -35,6 +38,13 @@ export class MonitorManager extends EventEmitter {
 
     this.setupEventListeners();
     this.startMonitoring();
+    
+    // Initialize EventAggregator with config if available
+    if (this.config) {
+      this.eventAggregator.initialize(this.config).catch(error => {
+        console.error('Failed to initialize EventAggregator:', error);
+      });
+    }
   }
 
   /**

@@ -1,4 +1,6 @@
-import { DevelopmentStatus, Config, SuggestionConfig } from './types.js';
+import { DevelopmentStatus, Config, SuggestionConfig, LLMDecision } from './types.js';
+import { LLMDecisionAgent } from './ai/llm-decision-agent.js';
+import { MonitoringEvent, MonitoringEventType } from './monitoring/types.js';
 
 export interface Suggestion {
   type: 'commit' | 'branch' | 'checkpoint' | 'pr' | 'warning';
@@ -6,6 +8,8 @@ export interface Suggestion {
   message: string;
   action?: string;
   reason?: string;
+  fromLLM?: boolean;
+  confidence?: number;
 }
 
 export interface WorkContext {
@@ -18,8 +22,26 @@ export interface WorkContext {
 
 export class SuggestionEngine {
   private workContexts = new Map<string, WorkContext>();
+  private llmAgent?: LLMDecisionAgent;
+  private llmInitialized = false;
   
-  constructor(private config: Config) {}
+  constructor(private config: Config) {
+    // Don't initialize async in constructor
+  }
+  
+  private async initializeLLM(): Promise<void> {
+    if (this.llmInitialized) return;
+    
+    if (this.config.automation?.enabled && this.config.automation.mode !== 'off') {
+      try {
+        this.llmAgent = new LLMDecisionAgent(this.config.automation);
+        await this.llmAgent.initialize();
+        this.llmInitialized = true;
+      } catch (error) {
+        console.error('Failed to initialize LLM for suggestions:', error);
+      }
+    }
+  }
 
   /**
    * Get effective suggestion configuration for a project
@@ -74,7 +96,10 @@ export class SuggestionEngine {
   /**
    * Analyze the current state and provide intelligent suggestions
    */
-  analyzeSituation(projectPath: string, status: DevelopmentStatus): Suggestion[] {
+  async analyzeSituation(projectPath: string, status: DevelopmentStatus): Promise<Suggestion[]> {
+    // Ensure LLM is initialized
+    await this.initializeLLM();
+    
     const suggestionConfig = this.getEffectiveConfig(projectPath);
     
     // If suggestions are disabled globally for this project, return empty
@@ -88,7 +113,13 @@ export class SuggestionEngine {
     // Update context with current status
     this.updateContext(projectPath, status);
     
-    // Check various conditions and add suggestions based on configuration
+    // If LLM is enabled, try to get LLM suggestions first
+    if (this.llmAgent && this.config.automation?.mode !== 'off') {
+      const llmSuggestions = await this.getLLMSuggestions(projectPath, status, context);
+      suggestions.push(...llmSuggestions);
+    }
+    
+    // Always include rule-based suggestions as fallback or complement
     if (suggestionConfig.protected_branch_warnings) {
       suggestions.push(...this.checkProtectedBranch(status));
     }
@@ -113,10 +144,17 @@ export class SuggestionEngine {
       suggestions.push(...this.checkPRReadiness(status));
     }
     
-    // Sort by priority
-    return suggestions.sort((a, b) => {
+    // Remove duplicate suggestions (prefer LLM suggestions)
+    const uniqueSuggestions = this.deduplicateSuggestions(suggestions);
+    
+    // Sort by priority and confidence
+    return uniqueSuggestions.sort((a, b) => {
       const priorityOrder = { high: 0, medium: 1, low: 2 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
+      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+      if (priorityDiff !== 0) return priorityDiff;
+      
+      // If same priority, prefer higher confidence
+      return (b.confidence || 0) - (a.confidence || 0);
     });
   }
 
@@ -335,5 +373,132 @@ export class SuggestionEngine {
     }
     
     return hints;
+  }
+  
+  /**
+   * Get suggestions from LLM based on current context
+   */
+  private async getLLMSuggestions(
+    projectPath: string, 
+    status: DevelopmentStatus, 
+    context: WorkContext
+  ): Promise<Suggestion[]> {
+    if (!this.llmAgent) {
+      return [];
+    }
+    
+    try {
+      // Create a synthetic event for LLM analysis
+      const event: MonitoringEvent = {
+        type: MonitoringEventType.FILE_CHANGE,
+        timestamp: new Date(),
+        projectPath,
+        data: {
+          status,
+          context,
+          fileCount: status.uncommitted_changes?.file_count || 0
+        }
+      };
+      
+      // Build context for decision
+      const decisionContext = {
+        currentEvent: event,
+        projectState: {
+          branch: status.branch,
+          isProtected: status.is_protected,
+          uncommittedChanges: status.uncommitted_changes?.file_count || 0,
+          lastCommitTime: context.lastCommitTime || new Date(),
+          testStatus: 'unknown' as const,
+          buildStatus: 'unknown' as const
+        },
+        recentHistory: [],
+        userPreferences: this.config.automation?.preferences || {
+          commit_style: 'conventional',
+          commit_frequency: 'moderate',
+          risk_tolerance: 'medium'
+        },
+        possibleActions: ['commit', 'branch', 'pr', 'wait', 'suggest'],
+        timeContext: {
+          currentTime: new Date(),
+          isWorkingHours: true,
+          lastUserActivity: new Date(),
+          dayOfWeek: new Date().toLocaleDateString('en-US', { weekday: 'long' })
+        }
+      };
+      
+      // Get LLM decision
+      const decision = await this.llmAgent.makeDecision(decisionContext);
+      
+      // Convert decision to suggestion
+      if (decision.action !== 'wait') {
+        return [{
+          type: this.mapDecisionToSuggestionType(decision.action),
+          priority: decision.confidence > 0.8 ? 'high' : decision.confidence > 0.5 ? 'medium' : 'low',
+          message: decision.reasoning,
+          action: this.mapDecisionToAction(decision.action),
+          reason: `AI confidence: ${(decision.confidence * 100).toFixed(0)}%`,
+          fromLLM: true,
+          confidence: decision.confidence
+        }];
+      }
+      
+    } catch (error) {
+      console.error('Error getting LLM suggestions:', error);
+    }
+    
+    return [];
+  }
+  
+  /**
+   * Map LLM decision action to suggestion type
+   */
+  private mapDecisionToSuggestionType(action: string): Suggestion['type'] {
+    const mapping: Record<string, Suggestion['type']> = {
+      'commit': 'commit',
+      'branch': 'branch',
+      'pr': 'pr',
+      'checkpoint': 'checkpoint',
+      'suggest': 'warning'
+    };
+    return mapping[action] || 'warning';
+  }
+  
+  /**
+   * Map LLM decision action to dev action
+   */
+  private mapDecisionToAction(action: string): string | undefined {
+    const mapping: Record<string, string> = {
+      'commit': 'dev_checkpoint',
+      'branch': 'dev_create_branch',
+      'pr': 'dev_create_pull_request'
+    };
+    return mapping[action];
+  }
+  
+  /**
+   * Remove duplicate suggestions, preferring LLM suggestions
+   */
+  private deduplicateSuggestions(suggestions: Suggestion[]): Suggestion[] {
+    const seen = new Map<string, Suggestion>();
+    
+    // Process LLM suggestions first (they have priority)
+    for (const suggestion of suggestions) {
+      if (suggestion.fromLLM) {
+        const key = `${suggestion.type}-${suggestion.action}`;
+        seen.set(key, suggestion);
+      }
+    }
+    
+    // Then process rule-based suggestions
+    for (const suggestion of suggestions) {
+      if (!suggestion.fromLLM) {
+        const key = `${suggestion.type}-${suggestion.action}`;
+        if (!seen.has(key)) {
+          seen.set(key, suggestion);
+        }
+      }
+    }
+    
+    return Array.from(seen.values());
   }
 }

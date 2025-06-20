@@ -28,7 +28,15 @@ export enum MonitoringEventType {
   // Conversation events
   FILES_MENTIONED = 'files_mentioned',
   COMMAND_EXECUTED = 'command_executed',
-  ERROR_DISCUSSED = 'error_discussed'
+  ERROR_DISCUSSED = 'error_discussed',
+  
+  // LLM automation events
+  LLM_DECISION_REQUESTED = 'llm_decision_requested',
+  LLM_DECISION_MADE = 'llm_decision_made',
+  LLM_ACTION_EXECUTED = 'llm_action_executed',
+  LLM_ACTION_FAILED = 'llm_action_failed',
+  LLM_APPROVAL_REQUIRED = 'llm_approval_required',
+  LLM_FEEDBACK_RECEIVED = 'llm_feedback_received'
 }
 
 export interface MonitoringEvent {

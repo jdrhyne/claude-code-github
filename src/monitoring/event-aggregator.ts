@@ -1,5 +1,8 @@
 import { EventEmitter } from 'events';
 import { MonitoringEvent, MonitoringEventType, AggregatedMilestone, MonitoringSuggestion } from './types.js';
+import { Config, LLMDecision, DecisionContext } from '../types.js';
+import { LLMDecisionAgent } from '../ai/llm-decision-agent.js';
+import { GitManager } from '../git.js';
 
 export class EventAggregator extends EventEmitter {
   private events: MonitoringEvent[] = [];
@@ -7,9 +10,31 @@ export class EventAggregator extends EventEmitter {
   private readonly MILESTONE_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
   private readonly SUGGESTION_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
   private lastSuggestions: Map<string, Date> = new Map();
+  private llmAgent?: LLMDecisionAgent;
+  private config?: Config;
+  private processingDecision = false;
+  private gitManager?: GitManager;
 
-  constructor() {
+  constructor(gitManager?: GitManager) {
     super();
+    this.gitManager = gitManager;
+  }
+  
+  /**
+   * Initialize with config to enable LLM integration
+   */
+  async initialize(config: Config): Promise<void> {
+    this.config = config;
+    
+    if (config.automation?.enabled && config.automation.mode !== 'off') {
+      try {
+        this.llmAgent = new LLMDecisionAgent(config.automation);
+        await this.llmAgent.initialize();
+      } catch (error) {
+        console.error('Failed to initialize LLM agent:', error);
+        // Continue without LLM if initialization fails
+      }
+    }
   }
 
   /**
@@ -28,6 +53,13 @@ export class EventAggregator extends EventEmitter {
 
     // Generate suggestions
     this.generateSuggestions(event);
+    
+    // Process with LLM if enabled
+    if (this.llmAgent && this.config?.automation?.enabled && !this.processingDecision) {
+      this.processWithLLM(event).catch(error => {
+        console.error('Error processing event with LLM:', error);
+      });
+    }
   }
 
   /**
@@ -236,5 +268,173 @@ export class EventAggregator extends EventEmitter {
     this.events = [];
     this.lastSuggestions.clear();
     this.removeAllListeners();
+  }
+  
+  /**
+   * Process event with LLM for intelligent decision making
+   */
+  private async processWithLLM(event: MonitoringEvent): Promise<void> {
+    if (!this.llmAgent || this.processingDecision) {
+      return;
+    }
+    
+    // Skip certain event types that don't need LLM processing
+    const skipEventTypes = [
+      MonitoringEventType.LLM_DECISION_REQUESTED,
+      MonitoringEventType.LLM_DECISION_MADE,
+      MonitoringEventType.LLM_ACTION_EXECUTED,
+      MonitoringEventType.LLM_ACTION_FAILED,
+      MonitoringEventType.LLM_APPROVAL_REQUIRED,
+      MonitoringEventType.LLM_FEEDBACK_RECEIVED
+    ];
+    
+    if (skipEventTypes.includes(event.type)) {
+      return;
+    }
+    
+    try {
+      this.processingDecision = true;
+      
+      // Emit that we're requesting an LLM decision
+      this.addEvent({
+        type: MonitoringEventType.LLM_DECISION_REQUESTED,
+        timestamp: new Date(),
+        projectPath: event.projectPath,
+        data: { triggerEvent: event }
+      });
+      
+      // Build context for LLM
+      const context = await this.buildDecisionContext(event);
+      
+      // Get LLM decision
+      const decision = await this.llmAgent.makeDecision(context);
+      
+      // Emit the decision
+      this.addEvent({
+        type: MonitoringEventType.LLM_DECISION_MADE,
+        timestamp: new Date(),
+        projectPath: event.projectPath,
+        data: { decision, context }
+      });
+      
+      // Handle the decision
+      if (decision.requiresApproval) {
+        this.emit('llm-approval-required', { decision, context });
+        this.addEvent({
+          type: MonitoringEventType.LLM_APPROVAL_REQUIRED,
+          timestamp: new Date(),
+          projectPath: event.projectPath,
+          data: { decision, reason: decision.reasoning }
+        });
+      } else if (decision.confidence >= (this.config?.automation?.thresholds.auto_execute || 0.95)) {
+        this.emit('llm-action-ready', { decision, context });
+      }
+      
+    } finally {
+      this.processingDecision = false;
+    }
+  }
+  
+  /**
+   * Build context for LLM decision making
+   */
+  private async buildDecisionContext(event: MonitoringEvent): Promise<DecisionContext> {
+    // Get project state (this would need to be implemented based on your git integration)
+    const projectState = await this.getProjectState(event.projectPath);
+    
+    return {
+      currentEvent: event,
+      projectState,
+      recentHistory: this.events
+        .filter(e => e.projectPath === event.projectPath)
+        .slice(-10),
+      userPreferences: this.config?.automation?.preferences || {
+        commit_style: 'conventional',
+        commit_frequency: 'moderate',
+        risk_tolerance: 'medium'
+      },
+      possibleActions: ['commit', 'branch', 'pr', 'stash', 'wait', 'suggest'],
+      timeContext: {
+        currentTime: new Date(),
+        isWorkingHours: this.isWorkingHours(),
+        lastUserActivity: new Date(), // This would need to track actual user activity
+        dayOfWeek: new Date().toLocaleDateString('en-US', { weekday: 'long' })
+      }
+    };
+  }
+  
+  /**
+   * Get project state from git
+   */
+  private async getProjectState(projectPath: string): Promise<any> {
+    const branch = await this.getBranchName(projectPath);
+    const isProtected = this.config?.git_workflow.protected_branches.includes(branch) || false;
+    
+    let uncommittedChanges = 0;
+    let lastCommitTime = new Date();
+    
+    // Use GitManager if available
+    if (this.gitManager) {
+      try {
+        const changes = await this.gitManager.getUncommittedChanges(projectPath);
+        uncommittedChanges = changes?.file_count || 0;
+        
+        const commits = await this.gitManager.getRecentCommits(projectPath, 1);
+        if (commits.length > 0 && commits[0].date) {
+          lastCommitTime = new Date(commits[0].date);
+        }
+      } catch (error) {
+        // Fallback to defaults if GitManager fails
+      }
+    }
+    
+    return {
+      branch,
+      isProtected,
+      uncommittedChanges,
+      lastCommitTime,
+      testStatus: 'unknown' as const,
+      buildStatus: 'unknown' as const
+    };
+  }
+  
+  /**
+   * Get branch name (simple implementation)
+   */
+  private async getBranchName(projectPath: string): Promise<string> {
+    // Use GitManager if available
+    if (this.gitManager) {
+      try {
+        return await this.gitManager.getCurrentBranch(projectPath);
+      } catch {
+        // Fallback to direct git command
+      }
+    }
+    
+    try {
+      const { execSync } = await import('child_process');
+      const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+        cwd: projectPath,
+        encoding: 'utf8'
+      }).trim();
+      return branch;
+    } catch {
+      return 'main';
+    }
+  }
+  
+  /**
+   * Check if current time is within working hours
+   */
+  private isWorkingHours(): boolean {
+    if (!this.config?.automation?.preferences.working_hours) {
+      return true;
+    }
+    
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5);
+    const { start, end } = this.config.automation.preferences.working_hours;
+    
+    return currentTime >= start && currentTime <= end;
   }
 }
