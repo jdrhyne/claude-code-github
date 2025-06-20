@@ -429,6 +429,12 @@ export class SuggestionEngine {
       // Get LLM decision
       const decision = await this.llmAgent.makeDecision(decisionContext);
       
+      // Guard against undefined decision
+      if (!decision || typeof decision !== 'object') {
+        console.error('LLM returned invalid decision');
+        return [];
+      }
+      
       // Convert decision to suggestion
       if (decision.action !== 'wait') {
         return [{

@@ -280,7 +280,7 @@ describe('SuggestionEngine', () => {
         branch: 'feature/test',
         is_protected: false
       };
-      suggestionEngine.analyzeSituation(projectPath, cleanStatus);
+      await suggestionEngine.analyzeSituation(projectPath, cleanStatus);
 
       const hints = suggestionEngine.getContextualHints(projectPath);
       

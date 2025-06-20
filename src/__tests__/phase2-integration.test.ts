@@ -6,27 +6,31 @@ import { MonitoringEvent, MonitoringEventType } from '../monitoring/types.js';
 import { Config, LLMDecision } from '../types.js';
 
 // Mock the LLM agent module before any imports that use it
-vi.mock('../ai/llm-decision-agent.js', () => {
-  const mockAgent = {
-    initialize: vi.fn().mockResolvedValue(undefined),
-    makeDecision: vi.fn().mockResolvedValue({
-      action: 'commit',
-      confidence: 0.85,
-      reasoning: 'Time to commit changes',
-      requiresApproval: false
-    }),
-    generateCommitMessage: vi.fn().mockResolvedValue('feat: test commit'),
-    generatePRDescription: vi.fn().mockResolvedValue({
-      title: 'Test PR',
-      body: 'Test PR body'
-    }),
-    setLearningEngine: vi.fn() // Add missing method
-  };
-  
-  return {
-    LLMDecisionAgent: vi.fn(() => mockAgent)
-  };
-});
+const mockLLMAgent = {
+  initialize: vi.fn().mockResolvedValue(undefined),
+  makeDecision: vi.fn().mockResolvedValue({
+    action: 'commit',
+    confidence: 0.85,
+    reasoning: 'Time to commit changes',
+    requiresApproval: false
+  }),
+  generateCommitMessage: vi.fn().mockResolvedValue('feat: test commit'),
+  generatePRDescription: vi.fn().mockResolvedValue({
+    title: 'Test PR',
+    body: 'Test PR body'
+  }),
+  setLearningEngine: vi.fn(),
+  assessRisk: vi.fn().mockResolvedValue({
+    score: 0.2,
+    factors: [],
+    level: 'low',
+    requiresApproval: false
+  })
+};
+
+vi.mock('../ai/llm-decision-agent.js', () => ({
+  LLMDecisionAgent: vi.fn(() => mockLLMAgent)
+}));
 
 // Mock child_process
 vi.mock('child_process', () => ({
@@ -228,6 +232,14 @@ describe('Phase 2 Integration', () => {
 
   describe('SuggestionEngine LLM Mode', () => {
     it('should generate LLM-based suggestions when enabled', async () => {
+      // Mock makeDecision to return a non-wait action
+      mockLLMAgent.makeDecision.mockResolvedValueOnce({
+        action: 'commit',
+        confidence: 0.85,
+        reasoning: 'Time to commit changes',
+        requiresApproval: false
+      });
+      
       // Create a new suggestion engine to ensure fresh initialization
       const engine = new SuggestionEngine(config);
       
@@ -241,9 +253,7 @@ describe('Phase 2 Integration', () => {
         }
       };
       
-      // Wait a bit for async initialization
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
+      // Trigger LLM initialization by calling analyzeSituation
       const suggestions = await engine.analyzeSituation('/test/project', status);
       
       // Should have at least one LLM suggestion
@@ -438,8 +448,17 @@ describe('Phase 2 Integration', () => {
 
   describe('End-to-End Flow', () => {
     it('should process event through LLM and execute action', async () => {
-      // Set mode to autonomous for auto-execution
+      // Set mode to autonomous for auto-execution with lower threshold
       config.automation!.mode = 'autonomous';
+      config.automation!.thresholds.auto_execute = 0.8; // Lower threshold to match mock confidence
+      
+      // Mock makeDecision to return a high confidence decision
+      mockLLMAgent.makeDecision.mockResolvedValueOnce({
+        action: 'commit',
+        confidence: 0.95, // High confidence for auto-execution
+        reasoning: 'Feature complete, time to commit',
+        requiresApproval: false
+      });
       
       // Create fresh instances
       const aggregator = new EventAggregator(mockGitManager as any);
@@ -451,7 +470,7 @@ describe('Phase 2 Integration', () => {
       const actionPromise = new Promise<any>((resolve, reject) => {
         const timeout = setTimeout(() => {
           reject(new Error('Timeout waiting for LLM action'));
-        }, 5000); // Increase timeout to 5 seconds
+        }, 2000);
         
         aggregator.on('llm-action-ready', async ({ decision, context }) => {
           clearTimeout(timeout);
@@ -466,12 +485,16 @@ describe('Phase 2 Integration', () => {
         });
       });
       
-      // Trigger event
+      // Trigger event with a delay to ensure initialization
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       const event: MonitoringEvent = {
         type: MonitoringEventType.FEATURE_COMPLETE,
         timestamp: new Date(),
         projectPath: '/test/project',
-        data: {}
+        data: {
+          files: ['src/feature.ts']
+        }
       };
       
       aggregator.addEvent(event);

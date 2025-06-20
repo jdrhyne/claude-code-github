@@ -339,6 +339,12 @@ export class EventAggregator extends EventEmitter {
       // Get LLM decision
       const decision = await this.llmAgent.makeDecision(context);
       
+      // Guard against undefined decision
+      if (!decision || typeof decision !== 'object') {
+        console.error('LLM returned invalid decision');
+        return;
+      }
+      
       // Emit the decision
       this.addEvent({
         type: MonitoringEventType.LLM_DECISION_MADE,
@@ -356,7 +362,7 @@ export class EventAggregator extends EventEmitter {
       }
       
       // Handle the decision
-      if (decision.requiresApproval) {
+      if (decision && decision.requiresApproval) {
         this.emit('llm-approval-required', { decision, context, decisionId });
         this.addEvent({
           type: MonitoringEventType.LLM_APPROVAL_REQUIRED,
