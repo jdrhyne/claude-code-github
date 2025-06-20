@@ -130,7 +130,7 @@ export class LLMDecisionAgent {
     }
     
     // Check if we're in working hours
-    const timeContext = await this.getTimeContext();
+    const timeContext = context.timeContext || await this.getTimeContext();
     if (!timeContext.isWorkingHours && this.config.preferences.working_hours) {
       decision.requiresApproval = true;
       decision.reasoning += ' (Outside working hours)';
@@ -144,11 +144,19 @@ export class LLMDecisionAgent {
     
     // Check if tests are passing (if required)
     if (this.config.safety.require_tests_pass) {
-      const testsPass = await this.checkTestStatus();
-      if (!testsPass) {
+      // First check project state if available
+      if (context.projectState.testStatus === 'failing') {
         decision.requiresApproval = true;
         decision.reasoning += ' (Tests not passing)';
+      } else if (context.projectState.testStatus === 'unknown') {
+        // Only run actual test command if status is unknown
+        const testsPass = await this.checkTestStatus();
+        if (!testsPass) {
+          decision.requiresApproval = true;
+          decision.reasoning += ' (Tests not passing)';
+        }
       }
+      // If testStatus is 'passing', no action needed
     }
     
     // Emergency stop check
@@ -189,8 +197,10 @@ export class LLMDecisionAgent {
     // Check if any changed files match protected patterns
     // This is a simplified check - in production, use proper glob matching
     const event = context.currentEvent;
-    if ('files' in event && Array.isArray(event.files)) {
-      for (const file of event.files) {
+    const files = (event as any).files || (event.data?.files as string[]);
+    
+    if (files && Array.isArray(files)) {
+      for (const file of files) {
         for (const pattern of this.config.safety.protected_files) {
           if (this.matchesPattern(file, pattern)) {
             return true;

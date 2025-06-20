@@ -177,20 +177,28 @@ Based on the user's preferences and current context, what action should be taken
   }
   
   private getEventDescription(event: MonitoringEvent): string {
+    // Handle files from either event.files or event.data.files
+    const files = (event as any).files || (event.data?.files as string[]);
+    
     switch (event.type) {
       case MonitoringEventType.FILE_CHANGE:
-        return `Files changed: ${event.files?.length || 0}`;
+        return `Files changed: ${files?.length || 0}`;
       case MonitoringEventType.FEATURE_COMPLETE:
         return 'Feature appears to be complete';
       case MonitoringEventType.TESTS_PASSING:
         return 'All tests are passing';
       case MonitoringEventType.TESTS_FAILING:
         return 'Tests are failing';
-      case MonitoringEventType.LARGE_CHANGESET:
-        return 'Large number of changes accumulated';
-      case MonitoringEventType.LONG_RUNNING_WORK:
-        return 'Work has been ongoing for extended period';
+      case MonitoringEventType.REFACTOR_COMPLETE:
+        return 'Refactoring completed';
+      case MonitoringEventType.DOCS_UPDATED:
+        return 'Documentation updated';
       default:
+        // For file changes with many files, describe as large changeset
+        if (event.type === MonitoringEventType.FILE_CHANGE && 
+            files && files.length > 5) {
+          return 'Large number of changes accumulated';
+        }
         return event.type;
     }
   }
