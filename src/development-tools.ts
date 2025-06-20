@@ -1249,4 +1249,11 @@ export class DevelopmentTools {
       this.monitorManager.on('monitoring-event', callbacks.onEvent);
     }
   }
+  
+  /**
+   * Get the EventAggregator instance if monitoring is enabled
+   */
+  getEventAggregator() {
+    return this.monitorManager?.getEventAggregator();
+  }
 }

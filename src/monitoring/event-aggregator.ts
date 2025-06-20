@@ -3,6 +3,9 @@ import { MonitoringEvent, MonitoringEventType, AggregatedMilestone, MonitoringSu
 import { Config, LLMDecision, DecisionContext } from '../types.js';
 import { LLMDecisionAgent } from '../ai/llm-decision-agent.js';
 import { GitManager } from '../git.js';
+import { FeedbackStore } from '../learning/feedback-store.js';
+import { LearningEngine } from '../learning/learning-engine.js';
+import { FeedbackHandlers } from '../learning/feedback-handlers.js';
 
 export class EventAggregator extends EventEmitter {
   private events: MonitoringEvent[] = [];
@@ -14,6 +17,8 @@ export class EventAggregator extends EventEmitter {
   private config?: Config;
   private processingDecision = false;
   private gitManager?: GitManager;
+  private feedbackHandlers?: FeedbackHandlers;
+  private decisionCounter = 0;
 
   constructor(gitManager?: GitManager) {
     super();
@@ -28,8 +33,26 @@ export class EventAggregator extends EventEmitter {
     
     if (config.automation?.enabled && config.automation.mode !== 'off') {
       try {
+        // Initialize LLM agent
         this.llmAgent = new LLMDecisionAgent(config.automation);
         await this.llmAgent.initialize();
+        
+        // Initialize learning system if enabled
+        if (config.automation.learning?.enabled) {
+          const dataDir = config.dataDir || '~/.claude-code-github';
+          const feedbackStore = new FeedbackStore(dataDir);
+          await feedbackStore.initialize();
+          
+          const learningEngine = new LearningEngine(feedbackStore, config.automation);
+          this.llmAgent.setLearningEngine(learningEngine);
+          
+          this.feedbackHandlers = new FeedbackHandlers(feedbackStore, learningEngine);
+          
+          // Listen for feedback events
+          this.feedbackHandlers.on('feedback-recorded', (event) => {
+            this.addEvent(event);
+          });
+        }
       } catch (error) {
         console.error('Failed to initialize LLM agent:', error);
         // Continue without LLM if initialization fails
@@ -260,6 +283,13 @@ export class EventAggregator extends EventEmitter {
   getRecentEvents(count: number = 10): MonitoringEvent[] {
     return this.events.slice(-count);
   }
+  
+  /**
+   * Get feedback handlers for external access
+   */
+  getFeedbackHandlers(): FeedbackHandlers | undefined {
+    return this.feedbackHandlers;
+  }
 
   /**
    * Clear all events
@@ -317,17 +347,25 @@ export class EventAggregator extends EventEmitter {
         data: { decision, context }
       });
       
+      // Generate decision ID for tracking
+      const decisionId = `decision-${Date.now()}-${++this.decisionCounter}`;
+      
+      // Register decision for feedback tracking
+      if (this.feedbackHandlers) {
+        this.feedbackHandlers.registerDecision(decisionId, decision, context);
+      }
+      
       // Handle the decision
       if (decision.requiresApproval) {
-        this.emit('llm-approval-required', { decision, context });
+        this.emit('llm-approval-required', { decision, context, decisionId });
         this.addEvent({
           type: MonitoringEventType.LLM_APPROVAL_REQUIRED,
           timestamp: new Date(),
           projectPath: event.projectPath,
-          data: { decision, reason: decision.reasoning }
+          data: { decision, reason: decision.reasoning, decisionId }
         });
       } else if (decision.confidence >= (this.config?.automation?.thresholds.auto_execute || 0.95)) {
-        this.emit('llm-action-ready', { decision, context });
+        this.emit('llm-action-ready', { decision, context, decisionId });
       }
       
     } finally {

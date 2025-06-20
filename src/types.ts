@@ -143,6 +143,7 @@ export interface Config {
   websocket?: import('./api/types.js').WebSocketConfig;
   webhooks?: import('./api/types.js').WebhookConfig;
   automation?: AutomationConfig;
+  dataDir?: string; // Directory for storing learning data
 }
 
 // Re-export API types for convenience

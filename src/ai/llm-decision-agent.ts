@@ -10,6 +10,7 @@ import { MonitoringEvent } from '../monitoring/types.js';
 import { BaseLLMProvider, LLMMessage } from './providers/base-provider.js';
 import { LLMProviderFactory } from './providers/provider-factory.js';
 import { PromptBuilder } from './prompt-builder.js';
+import { LearningEngine, LearningInsights } from '../learning/learning-engine.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -19,11 +20,20 @@ export class LLMDecisionAgent {
   private provider: BaseLLMProvider;
   private config: AutomationConfig;
   private promptBuilder: PromptBuilder;
+  private learningEngine?: LearningEngine;
   
   constructor(config: AutomationConfig) {
     this.config = config;
     this.provider = LLMProviderFactory.create(config);
     this.promptBuilder = new PromptBuilder(config);
+  }
+  
+  /**
+   * Set learning engine for decision improvement
+   */
+  setLearningEngine(learningEngine: LearningEngine): void {
+    this.learningEngine = learningEngine;
+    learningEngine.setLLMAgent(this);
   }
   
   async initialize(): Promise<void> {
@@ -42,7 +52,34 @@ export class LLMDecisionAgent {
       const response = await this.provider.complete(messages);
       
       // Parse the decision
-      const decision = this.provider.parseDecision(response.content);
+      let decision = this.provider.parseDecision(response.content);
+      
+      // Apply learning insights if available
+      if (this.learningEngine && this.config.learning?.enabled) {
+        const insights = await this.learningEngine.analyzeDecision(decision, context);
+        
+        // If learning suggests not to proceed, return a wait decision
+        if (!insights.shouldProceed) {
+          return {
+            action: 'wait',
+            confidence: 0.2,
+            reasoning: `Learning system suggests waiting: ${insights.reasoning.join('; ')}`,
+            requiresApproval: true
+          };
+        }
+        
+        // Apply adjustments from learning
+        if (insights.adjustedDecision) {
+          decision = {
+            ...decision,
+            ...insights.adjustedDecision,
+            reasoning: `${decision.reasoning} (Learning: ${insights.reasoning.join('; ')})`
+          };
+        }
+        
+        // Adjust confidence based on historical data
+        decision.confidence = await this.learningEngine.adjustConfidence(decision, context);
+      }
       
       // Apply safety checks
       const safeDecision = await this.applySafetyChecks(decision, context);

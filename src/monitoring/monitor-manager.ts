@@ -226,4 +226,11 @@ export class MonitorManager extends EventEmitter {
       lastEvents: this.eventAggregator.getRecentEvents(10)
     };
   }
+  
+  /**
+   * Get the event aggregator instance
+   */
+  getEventAggregator(): EventAggregator {
+    return this.eventAggregator;
+  }
 }
