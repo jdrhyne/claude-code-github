@@ -363,6 +363,28 @@ projects: []
     return config;
   }
 
+  async saveConfig(config: Config): Promise<void> {
+    // Validate the config before saving
+    const validationResult = await this.validator.validateConfig(config);
+    if (!validationResult.valid) {
+      throw new Error(`Invalid configuration: ${validationResult.errors[0].message}`);
+    }
+    
+    // Convert to YAML
+    const yamlContent = yaml.dump(config, {
+      indent: 2,
+      quotingType: '"',
+      forceQuotes: false,
+      lineWidth: -1
+    });
+    
+    // Write to file
+    fs.writeFileSync(this.configPath, yamlContent, 'utf8');
+    
+    // Update cached config
+    this.config = config;
+  }
+
   async loadConfig(): Promise<Config> {
     if (this.config) {
       return this.config;

@@ -11,6 +11,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { MonitoringSuggestion, AggregatedMilestone } from './monitoring/types.js';
 import { FeedbackTools } from './tools/feedback-tools.js';
+import { AutomationTools } from './tools/automation-tools.js';
 
 // Read version from package.json at build/compile time
 let version = '1.1.1'; // fallback
@@ -79,6 +80,10 @@ Documentation:
     // Initialize development tools and get config
     const config = await devTools.initialize();
     
+    // Initialize automation tools
+    const configManager = devTools.getConfigManager();
+    const automationTools = new AutomationTools(configManager);
+    
     // Initialize process management with first project
     if (config.projects.length > 0) {
       await processManager.initialize(config.projects[0].path);
@@ -106,6 +111,11 @@ Documentation:
       if (feedbackHandlers) {
         feedbackTools.setFeedbackHandlers(feedbackHandlers);
       }
+    }
+    
+    // Set event aggregator on automation tools
+    if (eventAggregator) {
+      automationTools.setEventAggregator(eventAggregator);
     }
     
     // Register cleanup handlers
@@ -607,6 +617,16 @@ Documentation:
     for (const tool of tools) {
       server.registerTool(tool, async (params) => {
         return await feedbackTools.handleToolCall(tool.name, params);
+      });
+    }
+  }
+
+  // Register automation tools
+  if (automationTools && automationTools.getTools) {
+    const tools = automationTools.getTools();
+    for (const tool of tools) {
+      server.registerTool(tool, async (params) => {
+        return await automationTools.handleToolCall(tool.name, params);
       });
     }
   }

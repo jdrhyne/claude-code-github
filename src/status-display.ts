@@ -2,6 +2,75 @@ import chalk from 'chalk';
 import { PushResult } from './types.js';
 
 export class StatusDisplay {
+  static showAutomationStatus(status: any): string {
+    const lines: string[] = [];
+    
+    lines.push(chalk.bold('🤖 Automation Status'));
+    lines.push(chalk.gray('─'.repeat(40)));
+    
+    // Overall status
+    const statusIcon = status.enabled ? '✅' : '❌';
+    const statusColor = status.enabled ? chalk.green : chalk.red;
+    lines.push(`${statusIcon} Status: ${statusColor(status.enabled ? 'Enabled' : 'Disabled')}`);
+    
+    if (status.enabled) {
+      // Mode
+      const modeColors: Record<string, any> = {
+        'off': chalk.gray,
+        'learning': chalk.blue,
+        'assisted': chalk.yellow,
+        'autonomous': chalk.green
+      };
+      const modeColor = modeColors[status.mode] || chalk.white;
+      lines.push(`📋 Mode: ${modeColor(status.mode)}`);
+      
+      // Configuration details
+      lines.push(chalk.bold('\n⚙️  Configuration'));
+      
+      // LLM
+      lines.push(chalk.gray('  LLM:'));
+      lines.push(`    Provider: ${status.configuration.llm.provider}`);
+      lines.push(`    Model: ${status.configuration.llm.model}`);
+      lines.push(`    API Key: ${status.configuration.llm.api_key_configured ? chalk.green('✓ Configured') : chalk.red('✗ Not configured')}`);
+      
+      // Thresholds
+      lines.push(chalk.gray('  Thresholds:'));
+      lines.push(`    Confidence: ${(status.configuration.thresholds.confidence * 100).toFixed(0)}%`);
+      lines.push(`    Auto-execute: ${(status.configuration.thresholds.auto_execute * 100).toFixed(0)}%`);
+      lines.push(`    Require approval: ${(status.configuration.thresholds.require_approval * 100).toFixed(0)}%`);
+      
+      // Safety
+      lines.push(chalk.gray('  Safety:'));
+      lines.push(`    Max actions/hour: ${status.configuration.safety.max_actions_per_hour}`);
+      lines.push(`    Require tests pass: ${status.configuration.safety.require_tests_pass ? 'Yes' : 'No'}`);
+      lines.push(`    Emergency stop: ${status.configuration.safety.emergency_stop ? chalk.red('ACTIVE') : 'Off'}`);
+      
+      // Learning
+      lines.push(chalk.gray('  Learning:'));
+      lines.push(`    Enabled: ${status.configuration.learning.enabled ? 'Yes' : 'No'}`);
+      lines.push(`    Store feedback: ${status.configuration.learning.store_feedback ? 'Yes' : 'No'}`);
+      lines.push(`    Adapt to patterns: ${status.configuration.learning.adapt_to_patterns ? 'Yes' : 'No'}`);
+      
+      // Runtime status
+      if (status.runtime && Object.keys(status.runtime).length > 0) {
+        lines.push(chalk.bold('\n🚀 Runtime Status'));
+        lines.push(`  LLM initialized: ${status.runtime.llm_initialized ? chalk.green('✓') : chalk.red('✗')}`);
+        lines.push(`  Learning active: ${status.runtime.learning_active ? chalk.green('✓') : chalk.red('✗')}`);
+        lines.push(`  Mode active: ${status.runtime.mode_active ? chalk.green('✓') : chalk.red('✗')}`);
+      }
+      
+      // Warnings
+      if (status.warnings && status.warnings.length > 0) {
+        lines.push(chalk.bold('\n⚠️  Warnings'));
+        status.warnings.forEach((warning: string) => {
+          lines.push(chalk.yellow(`  • ${warning}`));
+        });
+      }
+    }
+    
+    return lines.join('\n');
+  }
+  
   static showPushResult(result: PushResult): string {
     const lines: string[] = [];
     

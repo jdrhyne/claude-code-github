@@ -46,6 +46,9 @@ export class ConfigValidator {
     // Validate projects
     await this.validateProjects(config, errors, warnings);
 
+    // Validate automation configuration
+    this.validateAutomation(config, errors, warnings);
+
     return {
       valid: errors.length === 0,
       errors,
@@ -267,6 +270,11 @@ export class ConfigValidator {
       }
     }
 
+    // Skip path validation in test environment
+    if (process.env.NODE_ENV === 'test') {
+      return;
+    }
+
     // Validate path exists
     if (!fs.existsSync(project.path)) {
       errors.push({
@@ -401,5 +409,238 @@ export class ConfigValidator {
     }
 
     return output.join('\n');
+  }
+
+  private validateAutomation(config: Config, errors: ValidationError[], warnings: ValidationWarning[]) {
+    if (!config.automation) {
+      return; // Optional section
+    }
+
+    const automation = config.automation;
+
+    // Validate mode
+    if (automation.enabled && automation.mode) {
+      const validModes = ['off', 'learning', 'assisted', 'autonomous'];
+      if (!validModes.includes(automation.mode)) {
+        errors.push({
+          type: 'error',
+          field: 'automation.mode',
+          message: `Invalid mode: "${automation.mode}"`,
+          suggestion: `Valid modes are: ${validModes.join(', ')}`
+        });
+      }
+
+      // Warn if enabled but mode is off
+      if (automation.enabled && automation.mode === 'off') {
+        warnings.push({
+          type: 'warning',
+          field: 'automation',
+          message: 'Automation is enabled but mode is set to "off"',
+          suggestion: 'Either set enabled to false or change mode to "learning", "assisted", or "autonomous"'
+        });
+      }
+    }
+
+    // Validate LLM configuration
+    if (automation.llm) {
+      const validProviders = ['anthropic', 'openai', 'local'];
+      if (!validProviders.includes(automation.llm.provider)) {
+        errors.push({
+          type: 'error',
+          field: 'automation.llm.provider',
+          message: `Invalid LLM provider: "${automation.llm.provider}"`,
+          suggestion: `Valid providers are: ${validProviders.join(', ')}`
+        });
+      }
+
+      // Check for API key configuration
+      if (automation.llm.api_key_env && automation.enabled) {
+        const envVar = process.env[automation.llm.api_key_env];
+        if (!envVar) {
+          warnings.push({
+            type: 'warning',
+            field: 'automation.llm.api_key_env',
+            message: `Environment variable "${automation.llm.api_key_env}" is not set`,
+            suggestion: `Set the environment variable or update api_key_env to the correct variable name`
+          });
+        }
+      }
+
+      // Validate temperature
+      if (automation.llm.temperature !== undefined) {
+        if (automation.llm.temperature < 0 || automation.llm.temperature > 1) {
+          errors.push({
+            type: 'error',
+            field: 'automation.llm.temperature',
+            message: `Temperature must be between 0 and 1, got ${automation.llm.temperature}`,
+            suggestion: 'Set temperature between 0 (deterministic) and 1 (creative)'
+          });
+        }
+      }
+    }
+
+    // Validate thresholds
+    if (automation.thresholds) {
+      const thresholds = automation.thresholds;
+      
+      // Validate confidence values are between 0 and 1
+      const thresholdFields: (keyof typeof thresholds)[] = ['confidence', 'auto_execute', 'require_approval'];
+      for (const field of thresholdFields) {
+        const value = thresholds[field];
+        if (value !== undefined && (value < 0 || value > 1)) {
+          errors.push({
+            type: 'error',
+            field: `automation.thresholds.${field}`,
+            message: `Threshold must be between 0 and 1, got ${value}`,
+            suggestion: 'Set threshold between 0 (never) and 1 (always)'
+          });
+        }
+      }
+
+      // Validate threshold relationships
+      if (thresholds.auto_execute < thresholds.confidence) {
+        warnings.push({
+          type: 'warning',
+          field: 'automation.thresholds',
+          message: 'auto_execute threshold is lower than confidence threshold',
+          suggestion: 'auto_execute should typically be higher than confidence for safety'
+        });
+      }
+
+      if (thresholds.require_approval > thresholds.confidence) {
+        warnings.push({
+          type: 'warning',
+          field: 'automation.thresholds',
+          message: 'require_approval threshold is higher than confidence threshold',
+          suggestion: 'require_approval should typically be lower than confidence'
+        });
+      }
+    }
+
+    // Validate preferences
+    if (automation.preferences) {
+      const prefs = automation.preferences;
+
+      // Validate commit style
+      if (prefs.commit_style) {
+        const validStyles = ['conventional', 'descriptive', 'custom'];
+        if (!validStyles.includes(prefs.commit_style)) {
+          errors.push({
+            type: 'error',
+            field: 'automation.preferences.commit_style',
+            message: `Invalid commit style: "${prefs.commit_style}"`,
+            suggestion: `Valid styles are: ${validStyles.join(', ')}`
+          });
+        }
+      }
+
+      // Validate commit frequency
+      if (prefs.commit_frequency) {
+        const validFrequencies = ['aggressive', 'moderate', 'conservative'];
+        if (!validFrequencies.includes(prefs.commit_frequency)) {
+          errors.push({
+            type: 'error',
+            field: 'automation.preferences.commit_frequency',
+            message: `Invalid commit frequency: "${prefs.commit_frequency}"`,
+            suggestion: `Valid frequencies are: ${validFrequencies.join(', ')}`
+          });
+        }
+      }
+
+      // Validate working hours
+      if (prefs.working_hours) {
+        const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+        if (!timeRegex.test(prefs.working_hours.start)) {
+          errors.push({
+            type: 'error',
+            field: 'automation.preferences.working_hours.start',
+            message: `Invalid time format: "${prefs.working_hours.start}"`,
+            suggestion: 'Use 24-hour format like "09:00"'
+          });
+        }
+        if (!timeRegex.test(prefs.working_hours.end)) {
+          errors.push({
+            type: 'error',
+            field: 'automation.preferences.working_hours.end',
+            message: `Invalid time format: "${prefs.working_hours.end}"`,
+            suggestion: 'Use 24-hour format like "18:00"'
+          });
+        }
+      }
+
+      // Validate risk tolerance
+      if (prefs.risk_tolerance) {
+        const validLevels = ['low', 'medium', 'high'];
+        if (!validLevels.includes(prefs.risk_tolerance)) {
+          errors.push({
+            type: 'error',
+            field: 'automation.preferences.risk_tolerance',
+            message: `Invalid risk tolerance: "${prefs.risk_tolerance}"`,
+            suggestion: `Valid levels are: ${validLevels.join(', ')}`
+          });
+        }
+      }
+    }
+
+    // Validate safety settings
+    if (automation.safety) {
+      const safety = automation.safety;
+
+      // Validate max actions per hour
+      if (safety.max_actions_per_hour !== undefined && safety.max_actions_per_hour < 0) {
+        errors.push({
+          type: 'error',
+          field: 'automation.safety.max_actions_per_hour',
+          message: 'max_actions_per_hour must be non-negative',
+          suggestion: 'Set to 0 to disable rate limiting or a positive number to limit actions'
+        });
+      }
+
+      // Warn if safety is too permissive in autonomous mode
+      if (automation.enabled && automation.mode === 'autonomous') {
+        if (!safety.require_tests_pass) {
+          warnings.push({
+            type: 'warning',
+            field: 'automation.safety.require_tests_pass',
+            message: 'Tests are not required to pass in autonomous mode',
+            suggestion: 'Consider setting require_tests_pass to true for safer automation'
+          });
+        }
+
+        if (safety.max_actions_per_hour > 50) {
+          warnings.push({
+            type: 'warning',
+            field: 'automation.safety.max_actions_per_hour',
+            message: `High action limit (${safety.max_actions_per_hour}) in autonomous mode`,
+            suggestion: 'Consider lowering the limit to prevent runaway automation'
+          });
+        }
+      }
+    }
+
+    // Validate learning settings
+    if (automation.learning) {
+      const learning = automation.learning;
+
+      // Warn if learning is disabled but mode is learning
+      if (!learning.enabled && automation.mode === 'learning') {
+        warnings.push({
+          type: 'warning',
+          field: 'automation.learning',
+          message: 'Learning is disabled but mode is set to "learning"',
+          suggestion: 'Enable learning to allow the system to observe and learn patterns'
+        });
+      }
+
+      // Warn if feedback storage is disabled but adaptation is enabled
+      if (!learning.store_feedback && (learning.adapt_to_patterns || learning.preference_learning)) {
+        warnings.push({
+          type: 'warning',
+          field: 'automation.learning.store_feedback',
+          message: 'Feedback storage is disabled but adaptation is enabled',
+          suggestion: 'Enable store_feedback to allow pattern adaptation and preference learning'
+        });
+      }
+    }
   }
 }

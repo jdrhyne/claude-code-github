@@ -1,0 +1,166 @@
+# claude-code-github Configuration Example
+# This file demonstrates all available configuration options
+
+# Git workflow settings
+git_workflow:
+  main_branch: main
+  protected_branches:
+    - main
+    - develop
+    - release/*
+  branch_prefixes:
+    feature: feature/
+    bugfix: bugfix/
+    refactor: refactor/
+  auto_push:
+    feature_branches: true
+    main_branch: false
+    confirm_before_push: true
+
+# Automation settings for LLM-powered autonomous agent
+automation:
+  # Enable/disable the autonomous agent
+  enabled: false
+  
+  # Operation mode:
+  # - 'off': No automation
+  # - 'learning': Observe and learn patterns only
+  # - 'assisted': Suggest actions but require approval
+  # - 'autonomous': Execute actions automatically (with safety checks)
+  mode: assisted
+  
+  # LLM configuration
+  llm:
+    provider: anthropic  # Options: anthropic, openai, local
+    model: claude-3-sonnet-20240229
+    temperature: 0.3
+    api_key_env: ANTHROPIC_API_KEY  # Environment variable name
+  
+  # Decision thresholds
+  thresholds:
+    confidence: 0.7        # Minimum confidence to suggest action
+    auto_execute: 0.9      # Minimum confidence for autonomous execution
+    require_approval: 0.5  # Below this, don't even suggest
+  
+  # User preferences for automation
+  preferences:
+    commit_style: conventional  # conventional, descriptive, custom
+    commit_frequency: moderate  # aggressive, moderate, conservative
+    working_hours:
+      start: "09:00"
+      end: "18:00"
+      timezone: "America/New_York"
+    risk_tolerance: medium  # low, medium, high
+  
+  # Safety settings
+  safety:
+    max_actions_per_hour: 10
+    protected_files:
+      - "*.env"
+      - "secrets/*"
+      - "config/*.yml"
+    require_tests_pass: true
+    pause_on_errors: true
+    emergency_stop: false  # Set to true to disable all automation
+  
+  # Learning system configuration
+  learning:
+    enabled: true
+    store_feedback: true      # Store user feedback on decisions
+    adapt_to_patterns: true   # Learn from user behavior
+    preference_learning: true # Adapt preferences based on feedback
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  conversation_tracking: true
+  auto_suggestions: true
+  commit_threshold: 10  # Suggest commit after N changes
+  release_threshold:
+    features: 5
+    bugfixes: 10
+  notification_style: inline  # inline, summary, none
+  learning_mode: true  # Enable learning from user actions
+
+# Suggestion settings
+suggestions:
+  enabled: true
+  protected_branch_warnings: true
+  time_reminders:
+    enabled: true
+    warning_threshold_minutes: 30
+    reminder_threshold_minutes: 60
+  large_changeset:
+    enabled: true
+    threshold: 20
+  pattern_recognition: true
+  pr_suggestions: true
+  change_pattern_suggestions: true
+  branch_suggestions: true
+
+# Project configurations
+projects:
+  - path: "/Users/username/projects/my-app"
+    github_repo: "username/my-app"
+    reviewers:
+      - "reviewer1"
+      - "reviewer2"
+    # Project-specific suggestion overrides
+    suggestions:
+      commit_threshold: 5  # More frequent commits for this project
+
+  - path: "/Users/username/projects/another-app"
+    github_repo: "username/another-app"
+
+# Workspace monitoring for automatic project discovery
+workspace_monitoring:
+  enabled: true
+  workspaces:
+    - path: "/Users/username/projects"
+      auto_detect: true
+      inherit_settings: true
+      cache_discovery: true
+      github_repo_detection: from_remote
+
+# API server configuration (optional)
+api_server:
+  enabled: false
+  host: localhost
+  port: 3001
+  auth:
+    enabled: true
+    token_expiry: 86400  # 24 hours in seconds
+  cors:
+    enabled: true
+    origins:
+      - "http://localhost:3000"
+      - "https://myapp.com"
+  rate_limit:
+    enabled: true
+    window_ms: 60000  # 1 minute
+    max_requests: 100
+
+# WebSocket configuration (optional)
+websocket:
+  enabled: false
+  port: 3002
+  heartbeat_interval: 30000  # 30 seconds
+
+# Webhook configuration (optional)
+webhooks:
+  enabled: false
+  endpoints:
+    - url: "https://api.myapp.com/webhooks/git-events"
+      events:
+        - commit
+        - branch_created
+        - pr_created
+      headers:
+        Authorization: "Bearer $WEBHOOK_TOKEN"
+    - url: "https://slack.com/api/webhooks/xxx"
+      events:
+        - milestone_reached
+        - release_ready
+
+# Data directory for storing learning data and feedback
+dataDir: "~/.config/claude-code-github/data"

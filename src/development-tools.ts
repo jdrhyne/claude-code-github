@@ -1256,4 +1256,11 @@ export class DevelopmentTools {
   getEventAggregator() {
     return this.monitorManager?.getEventAggregator();
   }
+  
+  /**
+   * Get the ConfigManager instance
+   */
+  getConfigManager(): ConfigManager {
+    return this.configManager;
+  }
 }
