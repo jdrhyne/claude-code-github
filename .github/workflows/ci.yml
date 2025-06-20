@@ -30,6 +30,13 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    # Fix for Rollup optional dependencies issue on Linux
+    - name: Fix Rollup native dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        npm install @rollup/rollup-linux-x64-gnu --save-optional
+        npm install @rollup/rollup-linux-x64-musl --save-optional
+
     - name: Run linter
       run: npm run lint
 
@@ -72,6 +79,12 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+
+    # Fix for Rollup optional dependencies issue on Linux
+    - name: Fix Rollup native dependencies
+      run: |
+        npm install @rollup/rollup-linux-x64-gnu --save-optional
+        npm install @rollup/rollup-linux-x64-musl --save-optional
 
     - name: Build
       run: npm run build
@@ -127,6 +140,12 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+
+    # Fix for Rollup optional dependencies issue on Linux
+    - name: Fix Rollup native dependencies
+      run: |
+        npm install @rollup/rollup-linux-x64-gnu --save-optional
+        npm install @rollup/rollup-linux-x64-musl --save-optional
 
     - name: Build
       run: npm run build
