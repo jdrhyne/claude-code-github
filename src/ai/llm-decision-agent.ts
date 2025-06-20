@@ -6,11 +6,10 @@ import {
   RiskAssessment,
   TimeContext
 } from '../types.js';
-import { MonitoringEvent } from '../monitoring/types.js';
-import { BaseLLMProvider, LLMMessage } from './providers/base-provider.js';
+import { BaseLLMProvider } from './providers/base-provider.js';
 import { LLMProviderFactory } from './providers/provider-factory.js';
 import { PromptBuilder } from './prompt-builder.js';
-import { LearningEngine, LearningInsights } from '../learning/learning-engine.js';
+import { LearningEngine } from '../learning/learning-engine.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 

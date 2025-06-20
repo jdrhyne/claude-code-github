@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { FeedbackStore, UserFeedback, FeedbackEntry } from '../learning/feedback-store.js';
+import { FeedbackStore, UserFeedback } from '../learning/feedback-store.js';
 import { LearningEngine } from '../learning/learning-engine.js';
 import { FeedbackHandlers } from '../learning/feedback-handlers.js';
 import { LLMDecision, DecisionContext, AutomationConfig } from '../types.js';

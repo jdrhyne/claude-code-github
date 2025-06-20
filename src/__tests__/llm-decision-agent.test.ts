@@ -28,9 +28,9 @@ vi.mock('../ai/providers/provider-factory.js', () => ({
 
 // Mock util.promisify
 vi.mock('util', () => ({
-  promisify: vi.fn((fn) => {
+  promisify: vi.fn((_fn) => {
     // Return a promisified version of exec
-    return (cmd: string, opts?: any) => {
+    return (cmd: string, _opts?: any) => {
       return new Promise((resolve, reject) => {
         if (cmd === 'npm test') {
           resolve({ stdout: 'Tests passed', stderr: '' });

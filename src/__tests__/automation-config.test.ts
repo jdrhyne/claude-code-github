@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ConfigValidator } from '../validation.js';
-import { AutomationConfig, Config } from '../types.js';
+import { Config } from '../types.js';
 import { AutomationTools } from '../tools/automation-tools.js';
 import { ConfigManager } from '../config.js';
 import * as fs from 'fs/promises';
@@ -219,7 +219,6 @@ describe('Automation Configuration Validation', () => {
 
 describe('Automation Tools', () => {
   let tempDir: string;
-  let configPath: string;
   let automationTools: AutomationTools;
   let configManager: ConfigManager;
   
@@ -233,7 +232,6 @@ describe('Automation Tools', () => {
     // Create config directory
     const configDir = path.join(tempDir, '.config', 'claude-code-github');
     await fs.mkdir(configDir, { recursive: true });
-    configPath = path.join(configDir, 'config.yml');
     
     // Create test project directory
     const testProjectPath = path.join(tempDir, 'test-project');

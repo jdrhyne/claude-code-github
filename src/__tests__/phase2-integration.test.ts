@@ -3,7 +3,7 @@ import { EventAggregator } from '../monitoring/event-aggregator.js';
 import { SuggestionEngine } from '../suggestion-engine.js';
 import { ActionExecutor } from '../automation/action-executor.js';
 import { MonitoringEvent, MonitoringEventType } from '../monitoring/types.js';
-import { Config, AutomationConfig, LLMDecision } from '../types.js';
+import { Config, LLMDecision } from '../types.js';
 
 // Mock the LLM agent module before any imports that use it
 vi.mock('../ai/llm-decision-agent.js', () => {
