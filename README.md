@@ -29,12 +29,23 @@ Let Claude handle your Git workflow with **intelligent automation**:
 - 🗣️ **Natural Commands**: "Claude, create a feature branch and commit my changes"
 - 📝 **Workflow Automation**: "Claude, open a draft pull request for my current work"
 - 🔍 **Intelligent Status**: "Claude, what's the status of my current project?"
+- 🖥️ **Real-Time Monitoring**: Watch agent decisions in beautiful terminal dashboards
+
+**NEW:** Monitor autonomous agent activity with real-time dashboards:
+```bash
+# Launch interactive monitoring dashboard
+npx @jdrhyne/claude-code-github monitor
+
+# Stream events to console
+npx @jdrhyne/claude-code-github stream
+```
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Configuration](#configuration)
   - [Intelligent Suggestions](#intelligent-suggestions)
+- [Agent Monitoring](#agent-monitoring)
 - [Usage Examples](#usage-examples)
 - [Available Tools](#available-tools)
 - [Troubleshooting](#troubleshooting)

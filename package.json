@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
+    "@types/blessed": "^0.1.25",
     "blessed": "^0.1.81",
     "chalk": "^4.1.2",
     "chokidar": "^3.5.3",

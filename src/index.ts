@@ -12,6 +12,8 @@ import { join } from 'path';
 import { MonitoringSuggestion, AggregatedMilestone } from './monitoring/types.js';
 import { FeedbackTools } from './tools/feedback-tools.js';
 import { AutomationTools } from './tools/automation-tools.js';
+import { MonitorCli, isMonitorMode, getMonitorMode } from './cli/monitor-cli.js';
+import { agentEvents } from './monitoring/agent-events.js';
 
 // Read version from package.json at build/compile time
 let version = '1.1.1'; // fallback
@@ -26,6 +28,16 @@ try {
 async function main() {
   // Check for CLI flags
   const args = process.argv.slice(2);
+  
+  // Check if running in monitor mode
+  if (isMonitorMode()) {
+    const monitorCli = new MonitorCli(agentEvents);
+    const mode = getMonitorMode();
+    if (mode) {
+      await monitorCli.launchMonitor({ mode });
+      return;
+    }
+  }
   
   // Detect MCP mode (no CLI args = MCP mode)
   const isMcpMode = args.length === 0;
@@ -46,13 +58,30 @@ claude-code-github v${version}
 An intelligent MCP server for Claude Code that monitors development patterns
 
 Usage:
-  npx @jdrhyne/claude-code-github [options]
+  npx @jdrhyne/claude-code-github [command] [options]
+
+Commands:
+  monitor        Launch real-time agent monitoring dashboard
+  dashboard      Launch interactive dashboard with full controls  
+  stream         Stream agent events to console (minimal output)
 
 Options:
   -h, --help     Show this help message
   -v, --version  Show version number
   -s, --setup    Run interactive setup wizard
   -k, --api-keys Manage API keys for LLM providers
+
+Monitor Options:
+  -p, --project <path>     Monitor specific project path
+  -r, --refresh-rate <ms>  Dashboard refresh rate (default: 1000)
+  -c, --compact            Use compact display mode
+  --no-color               Disable colored output
+  -f, --filter <types>     Filter events by type (comma-separated)
+
+Examples:
+  npx @jdrhyne/claude-code-github monitor
+  npx @jdrhyne/claude-code-github dashboard --project ./my-app
+  npx @jdrhyne/claude-code-github stream --filter analyzing,suggesting
 
 MCP Server Mode:
   When run without arguments, starts as an MCP server for Claude Code.
