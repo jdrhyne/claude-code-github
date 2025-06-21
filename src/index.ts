@@ -52,6 +52,7 @@ Options:
   -h, --help     Show this help message
   -v, --version  Show version number
   -s, --setup    Run interactive setup wizard
+  -k, --api-keys Manage API keys for LLM providers
 
 MCP Server Mode:
   When run without arguments, starts as an MCP server for Claude Code.
@@ -68,6 +69,12 @@ Documentation:
   if (args.includes('--setup') || args.includes('-s')) {
     const wizard = new SetupWizard();
     await wizard.run();
+    process.exit(0);
+  }
+  
+  if (args.includes('--api-keys') || args.includes('-k')) {
+    const { APIKeyManager } = await import('./cli/api-key-manager.js');
+    await APIKeyManager.setupAPIKeys();
     process.exit(0);
   }
 

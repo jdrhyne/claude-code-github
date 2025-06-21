@@ -16,14 +16,13 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 export class LLMDecisionAgent {
-  private provider: BaseLLMProvider;
+  private provider!: BaseLLMProvider;
   private config: AutomationConfig;
   private promptBuilder: PromptBuilder;
   private learningEngine?: LearningEngine;
   
   constructor(config: AutomationConfig) {
     this.config = config;
-    this.provider = LLMProviderFactory.create(config);
     this.promptBuilder = new PromptBuilder(config);
   }
   
@@ -36,6 +35,9 @@ export class LLMDecisionAgent {
   }
   
   async initialize(): Promise<void> {
+    // Create provider asynchronously to load API key from keychain
+    this.provider = await LLMProviderFactory.create(this.config);
+    
     const isValid = await LLMProviderFactory.validateProvider(this.provider);
     if (!isValid) {
       throw new Error('Failed to initialize LLM provider');

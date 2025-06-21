@@ -2,13 +2,17 @@ import { AutomationConfig } from '../../types.js';
 import { BaseLLMProvider, LLMProviderConfig } from './base-provider.js';
 import { AnthropicProvider } from './anthropic-provider.js';
 import { OpenAIProvider } from './openai-provider.js';
+import { APIKeyManager } from '../../cli/api-key-manager.js';
 
 export class LLMProviderFactory {
-  static create(config: AutomationConfig): BaseLLMProvider {
+  static async create(config: AutomationConfig): Promise<BaseLLMProvider> {
+    // Get API key from keychain first, then fall back to env var
+    const apiKey = await APIKeyManager.getEffectiveAPIKey(config.llm.provider as 'anthropic' | 'openai');
+    
     const llmConfig: LLMProviderConfig = {
       model: config.llm.model || 'claude-3-sonnet-20240229',
       temperature: config.llm.temperature || 0.7,
-      apiKey: config.llm.api_key_env ? process.env[config.llm.api_key_env] : undefined,
+      apiKey: apiKey,
     };
     
     switch (config.llm.provider) {
