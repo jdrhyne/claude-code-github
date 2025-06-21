@@ -1,5 +1,4 @@
 import * as keytar from 'keytar';
-import { ConfigManager } from '../config.js';
 import readline from 'readline';
 import chalk from 'chalk';
 
