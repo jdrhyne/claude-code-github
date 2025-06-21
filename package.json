@@ -1,6 +1,6 @@
 {
   "name": "@jdrhyne/claude-code-github",
-  "version": "2.1.0-beta.1",
+  "version": "2.1.0",
   "description": "An intelligent MCP server for Claude Code that monitors your development patterns and automates Git workflows with smart suggestions",
   "main": "dist/index.js",
   "bin": {
