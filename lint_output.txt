@@ -1,0 +1,137 @@
+
+> @jdrhyne/claude-code-github@2.1.0 lint
+> eslint src/**/*.ts
+
+
+/Users/admin/Projects/claude-code-github/src/ai/llm-decision-agent.ts
+  238:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/ai/prompt-builder.ts
+  181:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/api/server.ts
+   28:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  234:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  239:31  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/api/types.ts
+   73:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   82:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   93:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  114:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/automation/action-executor.ts
+  19:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/cli/monitor-cli.ts
+  190:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/learning/feedback-handlers.ts
+   10:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   16:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  230:78  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  237:61  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/learning/feedback-store.ts
+  334:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/learning/learning-engine.ts
+   23:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:12  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  400:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/monitoring/agent-events.ts
+  65:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  81:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/monitoring/agent-integration.ts
+   82:36  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   90:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  153:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  172:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  200:44  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  220:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  247:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  276:38  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  296:70  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/monitoring/agent-monitor.ts
+   47:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   49:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   51:24  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:21  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/monitoring/event-aggregator.ts
+  413:63  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/tools/automation-tools.ts
+  120:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  187:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:23  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  208:40  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  232:65  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  261:45  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  261:59  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  310:43  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  310:57  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  336:35  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  371:41  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/tools/feedback-tools.ts
+  102:50  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  102:64  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/types/blessed.d.ts
+   5:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   9:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:53  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:47  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:51  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/webhooks/manager.ts
+   10:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   28:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   29:18  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  216:13  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  218:14  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  222:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  224:32  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/websocket/client-connection.ts
+  39:42  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  56:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/websocket/event-broadcaster.ts
+   9:9   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:39  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:54  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/admin/Projects/claude-code-github/src/websocket/server.ts
+  128:80  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:25  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:73  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  197:87  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  227:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  242:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  264:55  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:22  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 90 problems (0 errors, 90 warnings)
+

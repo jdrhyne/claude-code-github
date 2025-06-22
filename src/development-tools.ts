@@ -3,7 +3,7 @@ import { Config } from './types.js';
 import { GitManager } from './git.js';
 import { GitHubManager } from './github.js';
 import { FileWatcher } from './file-watcher.js';
-import { WorkspaceMonitor, WorkspaceProject } from './workspace-monitor.js';
+import { WorkspaceMonitor } from './workspace-monitor.js';
 import { APIServer } from './api/server.js';
 import { 
   DevelopmentStatus, 
