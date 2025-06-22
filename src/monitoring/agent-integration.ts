@@ -273,7 +273,7 @@ export class AgentIntegration {
   /**
    * Determine appropriate action based on analysis
    */
-  private determineAction(analysis: any): {
+  private determineAction(_analysis: any): {
     type: 'commit' | 'branch' | 'pr' | 'push' | 'warning';
     description: string;
     command: string;
