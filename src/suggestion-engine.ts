@@ -1,4 +1,4 @@
-import { DevelopmentStatus, Config, SuggestionConfig, LLMDecision } from './types.js';
+import { DevelopmentStatus, Config, SuggestionConfig } from './types.js';
 import { LLMDecisionAgent } from './ai/llm-decision-agent.js';
 import { MonitoringEvent, MonitoringEventType } from './monitoring/types.js';
 

@@ -168,31 +168,31 @@ describe('AI Providers', () => {
   });
 
   describe('LLMProviderFactory', () => {
-    it('should create Anthropic provider', () => {
-      const provider = LLMProviderFactory.create(mockConfig);
+    it('should create Anthropic provider', async () => {
+      const provider = await LLMProviderFactory.create(mockConfig);
       expect(provider).toBeInstanceOf(AnthropicProvider);
     });
 
-    it('should create OpenAI provider', () => {
+    it('should create OpenAI provider', async () => {
       const openAIConfig = {
         ...mockConfig,
         llm: { ...mockConfig.llm, provider: 'openai' as const }
       };
-      const provider = LLMProviderFactory.create(openAIConfig);
+      const provider = await LLMProviderFactory.create(openAIConfig);
       expect(provider).toBeInstanceOf(OpenAIProvider);
     });
 
-    it('should throw error for unsupported provider', () => {
+    it('should throw error for unsupported provider', async () => {
       const localConfig = {
         ...mockConfig,
         llm: { ...mockConfig.llm, provider: 'local' as const }
       };
       
-      expect(() => LLMProviderFactory.create(localConfig)).toThrow('Local LLM provider not yet implemented');
+      await expect(LLMProviderFactory.create(localConfig)).rejects.toThrow('Local LLM provider not yet implemented');
     });
 
     it('should validate provider availability', async () => {
-      const provider = LLMProviderFactory.create(mockConfig);
+      const provider = await LLMProviderFactory.create(mockConfig);
       const isValid = await LLMProviderFactory.validateProvider(provider);
       expect(isValid).toBe(true);
     });

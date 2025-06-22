@@ -183,8 +183,8 @@ export class ConversationMonitor extends EventEmitter {
     // Common file patterns
     const filePatterns = [
       /(?:file|created|modified|updated|deleted)\s+`([^`]+)`/gi,
-      /(?:in|at|from)\s+([\\/\w\\-\\.]+\\.\\w+)/gi,
-      /([\\/\w\\-\\.]+\\.\\w+)(?:\s+(?:file|was|is))/gi
+      /(?:in|at|from)\s+([\\/\w\-\\.]+\\.\\w+)/gi,
+      /([\\/\w\-\\.]+\\.\\w+)(?:\s+(?:file|was|is))/gi
     ];
 
     for (const pattern of filePatterns) {

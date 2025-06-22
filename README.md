@@ -29,12 +29,23 @@ Let Claude handle your Git workflow with **intelligent automation**:
 - 🗣️ **Natural Commands**: "Claude, create a feature branch and commit my changes"
 - 📝 **Workflow Automation**: "Claude, open a draft pull request for my current work"
 - 🔍 **Intelligent Status**: "Claude, what's the status of my current project?"
+- 🖥️ **Real-Time Monitoring**: Watch agent decisions in beautiful terminal dashboards
+
+**NEW:** Monitor autonomous agent activity with real-time dashboards:
+```bash
+# Launch interactive monitoring dashboard
+npx @jdrhyne/claude-code-github monitor
+
+# Stream events to console
+npx @jdrhyne/claude-code-github stream
+```
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Configuration](#configuration)
   - [Intelligent Suggestions](#intelligent-suggestions)
+- [Agent Monitoring](#agent-monitoring)
 - [Usage Examples](#usage-examples)
 - [Available Tools](#available-tools)
 - [Troubleshooting](#troubleshooting)
@@ -298,6 +309,86 @@ claude mcp add claude-code-github npx -- -y @jdrhyne/claude-code-github@latest
 # Verify it's working (run in a Git repository)
 claude-code "What's the status of my current project?"
 ```
+
+## Agent Monitoring
+
+### 🖥️ **Real-Time Monitoring Dashboard**
+
+Monitor autonomous agent activities with beautiful terminal interfaces:
+
+```bash
+# Launch interactive dashboard
+npx @jdrhyne/claude-code-github monitor
+
+# Full-featured dashboard with controls
+npx @jdrhyne/claude-code-github dashboard
+
+# Minimal console streaming
+npx @jdrhyne/claude-code-github stream
+```
+
+### 📊 **Dashboard Features**
+
+- **Live Activity Feed** - Real-time stream of agent decisions with confidence levels
+- **Decision Trees** - Visual representation of agent reasoning and logic
+- **Interactive Controls** - Pause, resume, filter, and configure monitoring
+- **Performance Stats** - Success rates, response times, and learning metrics
+
+### 🎯 **Monitor Events**
+
+Watch the agent's thought process in real-time:
+
+```
+🤖 Agent Stream │ my-app │ assisted mode
+├─ 14:24:15 🔍 Scanning project for changes...
+├─ 14:24:16 📁 Found 3 modified files
+├─ 14:24:17 🧠 Analyzing change pattern...
+│  ├─ Theme: Authentication feature
+│  ├─ Quality: High cohesion
+│  └─ Risk: Low (tests included)
+├─ 14:24:18 💡 SUGGESTION: Create feature branch (87%)
+└─ 14:24:25 ✅ User approved - executing...
+```
+
+### ⚡ **Event Types**
+
+| Icon | Event | Description |
+|------|-------|-------------|
+| 🔍 | Scanning | Looking for changes |
+| 🧠 | Analyzing | Processing detected changes |
+| 💡 | Suggesting | Making recommendations |
+| ⚡ | Executing | Performing actions |
+| 📚 | Learning | Adapting from feedback |
+
+### 🎛️ **Interactive Controls**
+
+**Dashboard Mode:**
+- `[p]` or `[space]` - Pause/Resume
+- `[c]` - Clear logs  
+- `[r]` - Refresh
+- `[h]` - Help
+- `[q]` - Quit
+
+**Stream Mode:**
+- `Ctrl+C` - Stop streaming
+
+### 📡 **Advanced Monitoring**
+
+```bash
+# Monitor specific project
+npx @jdrhyne/claude-code-github monitor --project ./my-app
+
+# Filter events by type
+npx @jdrhyne/claude-code-github stream --filter analyzing,suggesting
+
+# Custom refresh rate
+npx @jdrhyne/claude-code-github dashboard --refresh-rate 500
+
+# No colors (for CI/logging)
+npx @jdrhyne/claude-code-github stream --no-color
+```
+
+For complete monitoring documentation, see [Agent Monitoring Guide](docs/AGENT_MONITORING.md).
 
 ## Usage Examples
 
