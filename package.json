@@ -48,7 +48,7 @@
     "url": "https://github.com/jdrhyne/claude-code-github/issues"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.24.0",
+    "@anthropic-ai/sdk": "^0.54.0",
     "@types/blessed": "^0.1.25",
     "blessed": "^0.1.81",
     "chalk": "^4.1.2",
