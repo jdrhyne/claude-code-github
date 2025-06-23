@@ -79,7 +79,7 @@ export class WorkspaceMonitor extends EventEmitter {
         persistent: true,
         ignoreInitial: true,
         depth: 1,
-        ignored: /(^|[\/\\])\../, // Ignore dotfiles
+        ignored: /(^|[/\\])\../, // Ignore dotfiles
         followSymlinks: false
       });
 
@@ -108,7 +108,7 @@ export class WorkspaceMonitor extends EventEmitter {
    * Stop monitoring all workspaces
    */
   async stop(): Promise<void> {
-    for (const [_, watcher] of this.watchers) {
+    for (const watcher of this.watchers.values()) {
       await watcher.close();
     }
     this.watchers.clear();

@@ -17,7 +17,7 @@
     "test:e2e:local": "npm run build && cross-env NODE_ENV=test vitest run --config vitest.config.e2e.ts",
     "test:coverage": "npm run build && cross-env NODE_ENV=test vitest --coverage --config vitest.config.unit.ts",
     "test:watch": "cross-env NODE_ENV=test vitest --watch",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
