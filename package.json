@@ -65,7 +65,7 @@
     "keytar": "^7.9.0",
     "node-notifier": "^10.0.1",
     "octokit": "^3.1.2",
-    "openai": "^4.47.0",
+    "openai": "^5.6.0",
     "simple-git": "^3.20.0",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
