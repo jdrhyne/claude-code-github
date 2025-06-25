@@ -324,6 +324,47 @@ export class MonitorCli {
         },
       });
     }, 5000);
+
+    // Add ongoing activity every 15 seconds
+    setInterval(() => {
+      const activities = [
+        {
+          type: 'scanning' as const,
+          confidence: 1.0,
+          message: 'Monitoring file system for changes...',
+          context: { path: '/Users/admin/Projects/AgentCopy', branch: 'main', isProtected: false, hasUncommittedChanges: false, filesChanged: 0 }
+        },
+        {
+          type: 'analyzing' as const,
+          confidence: 0.75,
+          message: 'Detected git status change in vibetunnel',
+          reasoning: ['Branch switched to feature/new-ui', 'No uncommitted changes'],
+          context: { path: '/Users/admin/Projects/vibetunnel', branch: 'feature/new-ui', isProtected: false, hasUncommittedChanges: false, filesChanged: 0 }
+        },
+        {
+          type: 'idle' as const,
+          confidence: 1.0,
+          message: 'Waiting for development activity...',
+          context: { path: '/Users/admin/Projects/claude-code-github', branch: 'main', isProtected: false, hasUncommittedChanges: false, filesChanged: 0 }
+        },
+        {
+          type: 'learning' as const,
+          confidence: 0.6,
+          message: 'Learning from development patterns',
+          reasoning: ['Analyzing commit frequency', 'Updating user preferences'],
+          context: { path: '/Users/admin/Projects/jdrhyne-me', branch: 'main', isProtected: false, hasUncommittedChanges: false, filesChanged: 0 }
+        }
+      ];
+
+      const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+      this.eventEmitter.emitAgentActivity({
+        type: randomActivity.type,
+        confidence: randomActivity.confidence,
+        context: randomActivity.context,
+        message: randomActivity.message,
+        reasoning: randomActivity.reasoning,
+      });
+    }, 15000); // Every 15 seconds
   }
 }
 
