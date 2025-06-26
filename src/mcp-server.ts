@@ -118,7 +118,7 @@ export class McpServer {
       if (request.id !== undefined) {
         process.stdout.write(JSON.stringify(response) + '\n');
       }
-    } catch (error) {
+    } catch (_error) {
       const errorResponse: JsonRpcResponse = {
         jsonrpc: '2.0',
         error: {
