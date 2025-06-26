@@ -7,6 +7,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-06-27
+
+### 🏗️ Major Architecture Improvements - Domain-Driven Design
+
+This release introduces a comprehensive Domain-Driven Design (DDD) architecture that fundamentally improves code organization, maintainability, and extensibility while maintaining full backward compatibility.
+
+### ✨ Added
+
+- **🏗️ Domain-Driven Design Architecture** - Complete DDD implementation with bounded contexts
+  - Bounded contexts for git-operations with clear separation of concerns
+  - Command/Query Responsibility Segregation (CQRS) pattern
+  - Event-driven architecture with domain events and event bus
+  - Type-safe value objects for branch names, commit messages, and repository IDs
+  - Repository aggregate with proper domain logic encapsulation
+  - Comprehensive domain error types and Result pattern
+
+- **📊 Enhanced Monitoring & Analytics** - Improved development insights
+  - Real-time agent monitoring system with beautiful terminal dashboards
+  - Performance monitoring for all domain operations
+  - Event aggregation for better pattern recognition
+  - Learning system with feedback store for adaptive behavior
+  - Preference pattern analysis (time patterns, branch naming, commit frequency)
+
+- **🛠️ Migration Support** - Seamless transition to new architecture
+  - Parallel adapter for running old and new implementations side by side
+  - Feature flags for gradual rollout of DDD features
+  - Enhanced MCP server with DDD integration
+  - Full backward compatibility with existing tools
+
+### 🔧 Enhanced
+
+- **Type Safety** - Comprehensive TypeScript improvements
+  - Updated to TypeScript ESLint v8.34.1
+  - Added @modelcontextprotocol/sdk dependency
+  - Better type inference throughout the codebase
+  - Type-safe command and query buses
+
+- **Security** - Critical vulnerability fixes
+  - Fixed type confusion vulnerability in query parameter handling
+  - Implemented comprehensive type-safe query parameter extraction
+  - Added proper validation for all user inputs
+  - Enhanced error boundaries to prevent information leakage
+
+- **Performance** - Optimizations across the board
+  - Better caching strategies for repository instances
+  - Improved event handling with in-memory event bus
+  - Reduced memory footprint through proper object lifecycle management
+  - Optimized Git operations with lazy loading
+
+### 🐛 Fixed
+
+- **ESLint Compliance** - Resolved all linting errors
+  - Fixed unused variable errors by renaming to `_error` where appropriate
+  - Resolved undefined variable references in error handlers
+  - Corrected parameter usage in test files
+
+- **TypeScript Compilation** - Fixed all compilation errors
+  - Added missing @modelcontextprotocol/sdk module dependency
+  - Fixed Command/Query interface implementations in DDD layer
+  - Resolved GitManager API mismatches with wrapper methods
+  - Fixed Express.js ParsedQs type handling issues
+
+- **API Compatibility** - Maintained backward compatibility
+  - Added missing methods to GitManager (status, checkoutBranch, etc.)
+  - Fixed ConfigManager getProjects() method
+  - Ensured all existing tools continue to work
+
+### 📚 Documentation
+
+- **Architecture Documentation** - Comprehensive DDD guides
+  - DOMAIN_DRIVEN_DESIGN.md - Complete DDD implementation guide
+  - BOUNDED_CONTEXTS_DIAGRAM.md - Visual architecture representation
+  - DDD_IMPLEMENTATION_PLAN.md - Detailed implementation roadmap
+  - DDD_MIGRATION_STATUS.md - Migration progress tracking
+
+- **Monitoring Guides** - Enhanced monitoring documentation
+  - MONITORING_PROJECTS_GUIDE.md - Project monitoring setup
+  - PRODUCTION_MONITORING.md - Production deployment guide
+  - QUICK_START_MONITORING.md - Quick monitoring setup
+  - AGENT_MONITORING.md - Agent activity monitoring
+
+### 🔄 Dependencies Updated
+
+- `@typescript-eslint/eslint-plugin`: 8.20.0 → 8.34.1
+- `@typescript-eslint/parser`: 8.20.0 → 8.34.1
+- `@anthropic-ai/sdk`: 0.24.3 → 0.54.0
+- `openai`: 4.104.0 → 5.6.0
+- `commander`: 13.1.0 → 14.0.0
+- `express-rate-limit`: 7.5.0 → 7.5.1
+- Added `@modelcontextprotocol/sdk`: ^1.13.1
+
+### 🎯 Migration Guide
+
+This release maintains full backward compatibility. To leverage new DDD features:
+
+1. Update to v2.2.0: `npm install @jdrhyne/claude-code-github@2.2.0`
+2. Existing configurations continue to work without changes
+3. New DDD features are available through the enhanced API
+4. Enable monitoring features in your config for additional insights
+
+### 🔮 Future Deprecations
+
+The following will be deprecated in v3.0.0:
+- Direct GitManager access (use DDD commands instead)
+- Legacy error types (use domain errors)
+- Non-typed command parameters (use typed commands)
+
+## [2.1.0] - 2025-06-20
+
+### Added
+- Agent monitoring system foundation
+- WebSocket support for real-time updates
+- Enhanced project discovery features
+- Improved workspace monitoring capabilities
+
+### Changed
+- Updated dependency versions for security
+- Improved performance of file watching
+- Enhanced error handling in Git operations
+
+### Fixed
+- Process management issues with zombie processes
+- Memory leaks in long-running operations
+- Race conditions in concurrent file operations
+
 ## [2.0.0] - 2025-06-16
 
 ### 🚀 Major Release - API & Real-time Notification Architecture
@@ -388,7 +513,9 @@ This release transforms claude-code-github from a simple MCP server into a compr
 ### Fixed
 - Package name and installation commands alignment
 
-[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/jdrhyne/claude-code-github/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/jdrhyne/claude-code-github/compare/v2.1.0...v2.2.0
+[2.1.0]: https://github.com/jdrhyne/claude-code-github/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/jdrhyne/claude-code-github/compare/v1.2.0...v2.0.0
 [1.2.0]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.5...v1.2.0
 [1.1.5]: https://github.com/jdrhyne/claude-code-github/compare/v1.1.4...v1.1.5

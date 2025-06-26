@@ -4,6 +4,8 @@
 
 An **intelligent MCP server** for Claude Code that monitors your development patterns and automates Git workflows with smart suggestions.
 
+**🎉 NEW in v2.2.0**: Domain-Driven Design architecture, enhanced security, and improved TypeScript support!
+
 [![npm version](https://img.shields.io/npm/v/@jdrhyne/claude-code-github.svg)](https://www.npmjs.com/package/@jdrhyne/claude-code-github)
 [![npm downloads](https://img.shields.io/npm/dt/@jdrhyne/claude-code-github.svg)](https://www.npmjs.com/package/@jdrhyne/claude-code-github)
 [![CI](https://github.com/jdrhyne/claude-code-github/actions/workflows/ci.yml/badge.svg)](https://github.com/jdrhyne/claude-code-github/actions/workflows/ci.yml)
@@ -42,6 +44,7 @@ npx @jdrhyne/claude-code-github stream
 
 ## Table of Contents
 
+- [What's New in v2.2.0](#whats-new-in-v220)
 - [Installation](#installation)
 - [Configuration](#configuration)
   - [Intelligent Suggestions](#intelligent-suggestions)
@@ -50,6 +53,26 @@ npx @jdrhyne/claude-code-github stream
 - [Available Tools](#available-tools)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
+- [Upgrading from v2.1.0](#upgrading-from-v210)
+
+## What's New in v2.2.0
+
+### 🏗️ **Domain-Driven Design Architecture**
+- Complete bounded contexts implementation for better code organization
+- CQRS pattern for clean separation of commands and queries
+- Event-driven architecture with domain events
+- Type-safe value objects and aggregates
+
+### 🛡️ **Enhanced Security**
+- Fixed type confusion vulnerability in query parameter handling
+- Comprehensive type-safe query parameter extraction
+- Improved input validation across all endpoints
+
+### 📊 **Better Developer Experience**
+- Updated to TypeScript ESLint v8 for better code quality
+- Improved error messages and debugging
+- Enhanced performance monitoring
+- Full backward compatibility
 
 ## Key Features
 
@@ -559,6 +582,35 @@ npm run lint     # Lint code
 npm run typecheck # Type checking
 ```
 
+## Upgrading from v2.1.0
+
+Upgrading to v2.2.0 is seamless with no breaking changes:
+
+```bash
+# Update to latest version
+npm install -g @jdrhyne/claude-code-github@latest
+
+# Or with npx (recommended)
+npx @jdrhyne/claude-code-github@latest
+```
+
+### What's Improved
+
+1. **Better Performance**: DDD architecture provides faster response times
+2. **Enhanced Security**: Type-safe query handling prevents vulnerabilities  
+3. **Improved Reliability**: Better error handling and recovery
+4. **Richer Features**: More intelligent suggestions and monitoring
+
+### Optional New Features
+
+After upgrading, you can optionally enable:
+- Enhanced monitoring dashboards
+- Learning system for adaptive behavior
+- Performance analytics
+- Advanced error reporting
+
+See the [v2.2.0 Changelog](CHANGELOG_v2.2.0.md) for complete details.
+
 ## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
@@ -578,4 +630,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 ---
 
 **Made with ❤️ for developers who want to focus on code, not Git workflows.**
-test change for suggestions
