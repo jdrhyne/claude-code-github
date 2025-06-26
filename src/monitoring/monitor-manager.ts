@@ -178,7 +178,7 @@ export class MonitorManager extends EventEmitter {
         this.eventAggregator.addEvent(event);
         this.emit('monitoring-event', event);
       }
-    } catch (_error) {
+    } catch (error) {
       console.error(`Error checking Git state for ${projectPath}:`, error);
     }
   }

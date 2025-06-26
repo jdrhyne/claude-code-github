@@ -37,7 +37,7 @@ export class SuggestionEngine {
         this.llmAgent = new LLMDecisionAgent(this.config.automation);
         await this.llmAgent.initialize();
         this.llmInitialized = true;
-      } catch (_error) {
+      } catch (error) {
         console.error('Failed to initialize LLM for suggestions:', error);
       }
     }
@@ -448,7 +448,7 @@ export class SuggestionEngine {
         }];
       }
       
-    } catch (_error) {
+    } catch (error) {
       console.error('Error getting LLM suggestions:', error);
     }
     

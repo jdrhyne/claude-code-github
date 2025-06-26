@@ -101,7 +101,7 @@ export class ParallelRunAdapter {
       const result = await fn();
       console.log(`[Legacy] ${operation} completed in ${Date.now() - startTime}ms`);
       return result;
-    } catch (_error) {
+    } catch (error) {
       console.error(`[Legacy] ${operation} failed:`, error);
       throw error;
     }
@@ -116,7 +116,7 @@ export class ParallelRunAdapter {
       const result = await fn();
       console.log(`[DDD] ${operation} completed in ${Date.now() - startTime}ms`);
       return result;
-    } catch (_error) {
+    } catch (error) {
       console.error(`[DDD] ${operation} failed:`, error);
       throw error;
     }

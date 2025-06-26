@@ -339,7 +339,7 @@ projects: []
           projects: mergedProjects
         };
       }
-    } catch (_error) {
+    } catch (error) {
       if (process.env.MCP_MODE !== 'true') {
         console.error(chalk.yellow(`\n⚠️  Error during project discovery: ${error instanceof Error ? error.message : String(error)}`));
       }
@@ -454,7 +454,7 @@ projects: []
       this.config = this.resolveEnvironmentVariables(this.config);
       
       return this.config;
-    } catch (_error) {
+    } catch (error) {
       if (process.env.MCP_MODE !== 'true') {
         if (error instanceof yaml.YAMLException) {
           console.error(chalk.red(`\n❌ Invalid YAML in configuration file:`));

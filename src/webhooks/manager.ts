@@ -179,7 +179,7 @@ export class WebhookManager extends EventEmitter {
       } else {
         throw new Error(`HTTP ${response.statusCode}: ${response.body}`);
       }
-    } catch (_error) {
+    } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       delivery.error = errorMessage;
 

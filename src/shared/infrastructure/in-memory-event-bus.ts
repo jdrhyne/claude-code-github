@@ -15,7 +15,7 @@ export class InMemoryEventBus implements EventBus {
       for (const handler of handlers) {
         try {
           await handler(event);
-        } catch (_error) {
+        } catch (error) {
           console.error(`Error handling event ${event.eventType}:`, error);
         }
       }
@@ -24,7 +24,7 @@ export class InMemoryEventBus implements EventBus {
       for (const handler of this.allHandlers) {
         try {
           await handler(event);
-        } catch (_error) {
+        } catch (error) {
           console.error(`Error handling event ${event.eventType} in all-handler:`, error);
         }
       }

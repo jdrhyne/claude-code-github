@@ -92,7 +92,7 @@ export class FileWatcher {
       try {
         const gitignoreContent = fs.readFileSync(gitignorePath, 'utf8');
         ig.add(gitignoreContent);
-      } catch (_error) {
+      } catch (error) {
         // File might have been deleted between check and read, or no permission
         // This is not critical, we can continue without gitignore
         if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
@@ -107,14 +107,14 @@ export class FileWatcher {
         try {
           const globalGitignoreContent = fs.readFileSync(globalGitignorePath, 'utf8');
           ig.add(globalGitignoreContent);
-        } catch (_error) {
+        } catch (error) {
           // Global gitignore is optional, ignore if not found
           if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
             console.error(`Warning: Could not read global .gitignore file: ${error}`);
           }
         }
       }
-    } catch (_error) {
+    } catch (error) {
       console.error('Error loading gitignore:', error);
     }
     
@@ -172,7 +172,7 @@ export class FileWatcher {
     for (const listener of this.changeListeners) {
       try {
         listener(event);
-      } catch (_error) {
+      } catch (error) {
         console.error('Error in file change listener:', error);
       }
     }

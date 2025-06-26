@@ -53,7 +53,7 @@ export class EventAggregator extends EventEmitter {
             this.addEvent(event);
           });
         }
-      } catch (_error) {
+      } catch (error) {
         console.error('Failed to initialize LLM agent:', error);
         // Continue without LLM if initialization fails
       }

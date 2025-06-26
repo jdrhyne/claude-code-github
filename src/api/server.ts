@@ -173,7 +173,7 @@ export class APIServer {
                 );
                 
                 console.log(`[WebSocket] Server initialized on ${this.config.websocket.namespace || '/socket.io'}`);
-              } catch (_error) {
+              } catch (error) {
                 console.error('[WebSocket] Failed to initialize:', error);
                 // Don't fail startup - WebSocket is optional
               }
@@ -191,7 +191,7 @@ export class APIServer {
           }
           reject(error);
         });
-      } catch (_error) {
+      } catch (error) {
         reject(error);
       }
     });

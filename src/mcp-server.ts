@@ -47,7 +47,7 @@ export class McpServer {
             }
           ]
         };
-      } catch (_error) {
+      } catch (error) {
         throw new Error(`Tool execution failed: ${error instanceof Error ? error.message : String(error)}`);
       }
     });
@@ -74,7 +74,7 @@ export class McpServer {
         result,
         id: id ?? null
       };
-    } catch (_error) {
+    } catch (error) {
       const errorResponse = formatJsonRpcError(error instanceof Error ? error : new Error(String(error)));
 
       return {
@@ -118,7 +118,7 @@ export class McpServer {
       if (request.id !== undefined) {
         process.stdout.write(JSON.stringify(response) + '\n');
       }
-    } catch (_error) {
+    } catch (error) {
       const errorResponse: JsonRpcResponse = {
         jsonrpc: '2.0',
         error: {

@@ -86,7 +86,7 @@ export class ActionExecutor extends EventEmitter {
       
       return result;
       
-    } catch (_error) {
+    } catch (error) {
       const result: ActionResult = {
         success: false,
         action: decision.action,
@@ -129,7 +129,7 @@ export class ActionExecutor extends EventEmitter {
           rollbackCommand: 'git reset --soft HEAD~1'
         }
       };
-    } catch (_error) {
+    } catch (error) {
       return {
         success: false,
         action: 'commit',
@@ -164,7 +164,7 @@ export class ActionExecutor extends EventEmitter {
           rollbackCommand: `git checkout ${context.projectState.branch} && git branch -d ${branchName}`
         }
       };
-    } catch (_error) {
+    } catch (error) {
       return {
         success: false,
         action: 'branch',
@@ -197,7 +197,7 @@ export class ActionExecutor extends EventEmitter {
         action: 'pr',
         output: stdout
       };
-    } catch (_error) {
+    } catch (error) {
       return {
         success: false,
         action: 'pr',
@@ -227,7 +227,7 @@ export class ActionExecutor extends EventEmitter {
           rollbackCommand: 'git stash pop'
         }
       };
-    } catch (_error) {
+    } catch (error) {
       return {
         success: false,
         action: 'stash',
@@ -255,7 +255,7 @@ export class ActionExecutor extends EventEmitter {
       
       this.emit('rollback-complete', actionResult);
       return true;
-    } catch (_error) {
+    } catch (error) {
       this.emit('rollback-failed', { actionResult, error });
       return false;
     }

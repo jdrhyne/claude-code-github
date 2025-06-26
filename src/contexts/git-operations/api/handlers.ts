@@ -29,7 +29,7 @@ export class GitOperationsHandlers {
           hasUncommittedChanges: !repo.uncommittedChanges.isEmpty()
         }))
       });
-    } catch (_error) {
+    } catch (error) {
       next(error);
     }
   };
@@ -71,7 +71,7 @@ export class GitOperationsHandlers {
       }
 
       res.json(response);
-    } catch (_error) {
+    } catch (error) {
       next(error);
     }
   };
@@ -107,7 +107,7 @@ export class GitOperationsHandlers {
           name: result.value.branchName,
           createdAt: result.value.createdAt
         });
-    } catch (_error) {
+    } catch (error) {
       next(error);
     }
   };
@@ -141,7 +141,7 @@ export class GitOperationsHandlers {
         hash: result.value.hash,
         createdAt: result.value.createdAt
       });
-    } catch (_error) {
+    } catch (error) {
       next(error);
     }
   };

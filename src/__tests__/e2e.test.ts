@@ -159,7 +159,7 @@ describe('E2E MCP Server Tests', () => {
           message: 'test'
         });
         expect.fail('Should have thrown an error');
-      } catch (_error) {
+      } catch (error) {
         expect((error as Error).message).toContain('protected branch');
       }
     });
@@ -207,7 +207,7 @@ describe('E2E MCP Server Tests', () => {
           body: 'Test'
         });
         expect.fail('Should have thrown an error');
-      } catch (_error) {
+      } catch (error) {
         expect((error as Error).message).toContain('protected branch');
       }
     });
@@ -238,7 +238,7 @@ describe('E2E MCP Server Tests', () => {
           message: 'test commit'
         });
         expect.fail('Should have thrown an error');
-      } catch (_error) {
+      } catch (error) {
         expect((error as Error).message).toContain('No changes to commit');
       }
     });
@@ -252,7 +252,7 @@ describe('E2E MCP Server Tests', () => {
           message: 'test commit'
         });
         expect.fail('Should have thrown an error');
-      } catch (_error) {
+      } catch (error) {
         expect((error as Error).message).toContain('protected branch');
       }
     });
@@ -270,7 +270,7 @@ describe('E2E MCP Server Tests', () => {
           // missing type and message
         });
         expect.fail('Should have thrown an error');
-      } catch (_error) {
+      } catch (error) {
         expect(error).toBeTruthy();
       }
     });
@@ -279,7 +279,7 @@ describe('E2E MCP Server Tests', () => {
       try {
         await client.callTool('development.invalid_tool');
         expect.fail('Should have thrown an error');
-      } catch (_error) {
+      } catch (error) {
         expect((error as Error).message).toContain('Unknown tool');
       }
     });

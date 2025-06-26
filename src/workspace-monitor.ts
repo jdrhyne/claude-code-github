@@ -134,7 +134,7 @@ export class WorkspaceMonitor extends EventEmitter {
           }
         }
       }
-    } catch (_error) {
+    } catch (error) {
       console.error(`Error scanning workspace ${workspace.path}:`, error);
     }
   }
@@ -177,7 +177,7 @@ export class WorkspaceMonitor extends EventEmitter {
       if (workspace.cache_discovery) {
         this.saveCache();
       }
-    } catch (_error) {
+    } catch (error) {
       console.error(`Error detecting project at ${projectPath}:`, error);
     }
   }
@@ -273,7 +273,7 @@ export class WorkspaceMonitor extends EventEmitter {
           this.discoveredProjects.set(project.path, loadedProject);
         }
       }
-    } catch (_error) {
+    } catch (error) {
       console.error('Error loading workspace cache:', error);
     }
   }
@@ -291,7 +291,7 @@ export class WorkspaceMonitor extends EventEmitter {
       }
       
       fs.writeFileSync(this.cacheFile, JSON.stringify(projects, null, 2));
-    } catch (_error) {
+    } catch (error) {
       console.error('Error saving workspace cache:', error);
     }
   }

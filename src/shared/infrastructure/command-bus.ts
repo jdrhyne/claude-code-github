@@ -59,7 +59,7 @@ export class InMemoryCommandBus implements CommandBus {
 
     try {
       return await handler.handle(command);
-    } catch (_error) {
+    } catch (error) {
       return Result.fail(
         `Command execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

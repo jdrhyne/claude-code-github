@@ -60,7 +60,7 @@ export class QueryBus {
 
     try {
       return await handler.handle(query);
-    } catch (_error) {
+    } catch (error) {
       return Result.fail(
         `Query execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -143,7 +143,7 @@ export function QueryHandlerMethod<TQuery extends Query, TResult>() {
       try {
         const result = await originalMethod.call(this, query);
         return result;
-      } catch (_error) {
+      } catch (error) {
         return Result.fail(
           `Query handler error: ${error instanceof Error ? error.message : 'Unknown error'}`
         );

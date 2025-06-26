@@ -360,7 +360,7 @@ export class ConfigValidator {
           suggestion: 'Run the setup wizard to configure a new token, or create one at https://github.com/settings/tokens/new'
         });
       }
-    } catch (_error) {
+    } catch (error) {
       if (error instanceof Error && error.message.includes('ENOTFOUND')) {
         errors.push({
           type: 'error',

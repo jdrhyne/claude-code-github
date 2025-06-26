@@ -86,7 +86,7 @@ export class LLMDecisionAgent {
       const safeDecision = await this.applySafetyChecks(decision, context);
       
       return safeDecision;
-    } catch (_error) {
+    } catch (error) {
       console.error('Error making LLM decision:', error);
       // Return a safe default decision
       return {

@@ -71,7 +71,7 @@ export class FeedbackStore {
       if (this.cache.size > this.MAX_ENTRIES) {
         await this.trimOldEntries();
       }
-    } catch (_error) {
+    } catch (error) {
       console.error('Failed to initialize feedback store:', error);
     }
   }
@@ -352,7 +352,7 @@ export class FeedbackStore {
         JSON.stringify(entries, null, 2),
         'utf8'
       );
-    } catch (_error) {
+    } catch (error) {
       console.error('Failed to save feedback data:', error);
     }
   }
