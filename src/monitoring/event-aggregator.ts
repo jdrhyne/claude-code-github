@@ -427,7 +427,7 @@ export class EventAggregator extends EventEmitter {
         if (commits.length > 0 && commits[0].date) {
           lastCommitTime = new Date(commits[0].date);
         }
-      } catch (error) {
+      } catch (_error) {
         // Fallback to defaults if GitManager fails
       }
     }

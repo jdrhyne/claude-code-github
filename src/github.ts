@@ -69,7 +69,7 @@ export class GitHubManager {
       const octokit = await this.getOctokit();
       await octokit.rest.users.getAuthenticated();
       return true;
-    } catch (error) {
+    } catch (_error) {
       await keytar.deletePassword(GitHubManager.SERVICE_NAME, GitHubManager.ACCOUNT_NAME);
       this.octokit = null;
       return false;
@@ -166,7 +166,7 @@ export class GitHubManager {
         url: run.html_url,
         status: run.status || undefined
       }));
-    } catch (error) {
+    } catch (_error) {
       // Non-critical - return empty array if we can't get workflow runs
       return [];
     }
@@ -228,7 +228,7 @@ export class GitHubManager {
           } else if (states.length > 0) {
             reviewStatus = 'reviewed';
           }
-        } catch (error) {
+        } catch (_error) {
           // Ignore review fetch errors
         }
 
@@ -248,7 +248,7 @@ export class GitHubManager {
       return prs
         .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
         .map(result => result.value);
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -286,7 +286,7 @@ export class GitHubManager {
           labels: (issue.labels || []).map(l => typeof l === 'string' ? l : l.name || ''),
           url: issue.html_url
         }));
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -660,7 +660,7 @@ export class GitHubManager {
           download_url: asset.browser_download_url
         }))
       };
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

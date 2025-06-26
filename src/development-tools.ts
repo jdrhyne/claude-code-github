@@ -963,7 +963,7 @@ export class DevelopmentTools {
         const { execSync } = await import('child_process');
         execSync('npm install --package-lock-only', { cwd: project.path, stdio: 'ignore' });
         filesUpdated.push('package-lock.json');
-      } catch (error) {
+      } catch (_error) {
         // package-lock.json doesn't exist or npm failed, continue
       }
       

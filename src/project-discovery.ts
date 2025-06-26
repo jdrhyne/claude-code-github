@@ -142,7 +142,7 @@ export class ProjectDiscovery {
         const subProjects = await this.scanDirectory(fullPath, depth + 1);
         projects.push(...subProjects);
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore permission errors and continue scanning
     }
 
@@ -195,7 +195,7 @@ export class ProjectDiscovery {
       }
 
       return project;
-    } catch (error) {
+    } catch (_error) {
       // Not a valid git repository
       return null;
     }

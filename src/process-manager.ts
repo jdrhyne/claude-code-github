@@ -140,7 +140,7 @@ export class ProcessManager {
         await this.removeLockFile();
         return false;
       }
-    } catch (error) {
+    } catch (_error) {
       // Lock file doesn't exist or is invalid
       return false;
     }
@@ -202,7 +202,7 @@ export class ProcessManager {
             await fs.unlink(lockPath);
             console.log(`Cleaned up stale lock file: ${file}`);
           }
-        } catch (error) {
+        } catch (_error) {
           // Invalid lock file, remove it
           await fs.unlink(lockPath);
         }

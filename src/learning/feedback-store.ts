@@ -335,7 +335,7 @@ export class FeedbackStore {
         ...e,
         timestamp: new Date(e.timestamp)
       }));
-    } catch (error) {
+    } catch (_error) {
       // File doesn't exist yet
       return [];
     }

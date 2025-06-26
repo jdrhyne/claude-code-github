@@ -35,7 +35,10 @@ export function authMiddleware(config?: AuthConfig) {
       }
     } else if (config.type === 'api_key') {
       // Check X-API-Key header or query param
-      providedToken = req.headers['x-api-key'] as string || req.query.api_key as string;
+      // Type-safe query parameter extraction
+      const apiKeyParam = req.query.api_key;
+      const apiKeyFromQuery = typeof apiKeyParam === 'string' ? apiKeyParam : undefined;
+      providedToken = req.headers['x-api-key'] as string || apiKeyFromQuery;
     }
 
     if (!providedToken) {

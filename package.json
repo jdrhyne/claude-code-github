@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0",
+    "@modelcontextprotocol/sdk": "^1.13.1",
     "@types/blessed": "^0.1.25",
     "blessed": "^0.1.81",
     "chalk": "^4.1.2",
@@ -80,8 +81,8 @@
     "@types/node-notifier": "^8.0.5",
     "@types/socket.io": "^3.0.1",
     "@types/supertest": "^6.0.3",
-    "@typescript-eslint/eslint-plugin": "^6.13.0",
-    "@typescript-eslint/parser": "^6.13.0",
+    "@typescript-eslint/eslint-plugin": "^8.34.1",
+    "@typescript-eslint/parser": "^8.34.1",
     "@vitest/coverage-v8": "^1.0.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.54.0",
