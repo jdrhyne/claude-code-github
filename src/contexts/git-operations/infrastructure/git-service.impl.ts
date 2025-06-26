@@ -10,11 +10,11 @@ export class GitServiceImpl implements GitService {
   constructor(private readonly gitManager: GitManager) {}
 
   async createBranch(repoPath: string, branchName: string): Promise<void> {
-    await this.gitManager.checkoutBranch(repoPath, branchName, true);
+    await this.gitManager.createBranch(repoPath, branchName);
   }
 
   async checkoutBranch(repoPath: string, branchName: string): Promise<void> {
-    await this.gitManager.checkoutBranch(repoPath, branchName, false);
+    await this.gitManager.checkoutBranch(repoPath, branchName);
   }
 
   async stageAll(repoPath: string): Promise<void> {
@@ -22,15 +22,15 @@ export class GitServiceImpl implements GitService {
   }
 
   async commit(repoPath: string, message: string): Promise<string> {
-    const result = await this.gitManager.commit(repoPath, message);
-    // Extract commit hash from result
-    const match = result.match(/\[[\w-]+ ([\w]+)\]/);
-    return match ? match[1] : 'unknown';
+    await this.gitManager.commit(repoPath, message);
+    // Get latest commit hash
+    const commits = await this.gitManager.getRecentCommits(repoPath, 1);
+    return commits.length > 0 ? commits[0].hash : 'unknown';
   }
 
   async getCurrentBranch(repoPath: string): Promise<string> {
     const status = await this.gitManager.status(repoPath);
-    return status.current;
+    return status.current || 'main';
   }
 
   async getUncommittedChanges(repoPath: string): Promise<Changes> {
@@ -131,7 +131,10 @@ export class GitServiceImpl implements GitService {
   }
 
   async push(repoPath: string, branch: string, setUpstream?: boolean): Promise<void> {
-    const args = setUpstream ? ['-u', 'origin', branch] : ['origin', branch];
-    await this.gitManager.push(repoPath, args);
+    if (setUpstream) {
+      await this.gitManager.push(repoPath, 'origin', branch, ['-u']);
+    } else {
+      await this.gitManager.push(repoPath, 'origin', branch);
+    }
   }
 }

@@ -404,4 +404,48 @@ export class GitManager {
     const git = this.getGit(projectPath);
     await git.add(files);
   }
+
+  // Wrapper methods for compatibility with git-service implementation
+  async status(projectPath: string) {
+    const git = this.getGit(projectPath);
+    return git.status();
+  }
+
+  async checkoutBranch(projectPath: string, branchName: string): Promise<void> {
+    const git = this.getGit(projectPath);
+    await git.checkout(branchName);
+  }
+
+  async add(projectPath: string, files?: string | string[]): Promise<void> {
+    const git = this.getGit(projectPath);
+    if (files) {
+      await git.add(files);
+    } else {
+      await git.add('.');
+    }
+  }
+
+  async commit(projectPath: string, message: string): Promise<void> {
+    const git = this.getGit(projectPath);
+    await git.commit(message);
+  }
+
+  async log(projectPath: string, options?: any) {
+    const git = this.getGit(projectPath);
+    return git.log(options);
+  }
+
+  async branch(projectPath: string, options?: any) {
+    const git = this.getGit(projectPath);
+    return git.branch(options);
+  }
+
+  async push(projectPath: string, remote?: string, branch?: string, options?: any): Promise<void> {
+    const git = this.getGit(projectPath);
+    if (remote && branch) {
+      await git.push(remote, branch, options);
+    } else {
+      await git.push(options);
+    }
+  }
 }

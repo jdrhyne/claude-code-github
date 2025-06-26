@@ -5,6 +5,8 @@ import { RepositoryStatus, CommitInfo } from '../../domain/types.js';
  * Query to get repository status
  */
 export class GetRepositoryStatusQuery implements Query {
+  readonly _queryBrand?: undefined;
+
   constructor(
     public readonly repositoryId: string,
     public readonly includeOptions?: {

@@ -483,4 +483,9 @@ projects: []
     this.config = null;
     return this.loadConfig();
   }
+
+  async getProjects() {
+    const config = await this.loadConfig();
+    return config.projects;
+  }
 }

@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.54.0",
+    "@modelcontextprotocol/sdk": "^1.13.1",
     "@types/blessed": "^0.1.25",
     "blessed": "^0.1.81",
     "chalk": "^4.1.2",

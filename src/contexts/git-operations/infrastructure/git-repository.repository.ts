@@ -29,8 +29,8 @@ export class GitRepositoryRepositoryImpl implements GitRepositoryRepository {
     }
 
     // Load from config
-    const projects = await this.configManager.getProjects();
-    const project = projects.find(p => p.path === id);
+    const config = await this.configManager.loadConfig();
+    const project = config.projects.find(p => p.path === id);
     
     if (!project) {
       return null;
@@ -45,12 +45,12 @@ export class GitRepositoryRepositoryImpl implements GitRepositoryRepository {
       id: project.path,
       path: project.path,
       config: {
-        mainBranch: project.git_workflow?.main_branch || 'main',
-        protectedBranches: project.git_workflow?.protected_branches || ['main'],
+        mainBranch: config.git_workflow?.main_branch || 'main',
+        protectedBranches: config.git_workflow?.protected_branches || ['main'],
         remoteName: 'origin',
         remoteUrl: project.github_repo
       },
-      currentBranch: status.current
+      currentBranch: status.current || undefined
     });
 
     if (repoResult.isFailure) {
@@ -74,9 +74,9 @@ export class GitRepositoryRepositoryImpl implements GitRepositoryRepository {
       const branchResult = Branch.fromPersistence({
         name: branchName,
         type: branchType,
-        baseBranch: project.git_workflow?.main_branch || 'main',
+        baseBranch: config.git_workflow?.main_branch || 'main',
         createdAt: new Date(), // Would get from Git log in real implementation
-        isProtected: project.git_workflow?.protected_branches?.includes(branchName) || false
+        isProtected: config.git_workflow?.protected_branches?.includes(branchName) || false
       });
 
       if (branchResult.isSuccess) {
