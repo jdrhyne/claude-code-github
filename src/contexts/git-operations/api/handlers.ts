@@ -40,11 +40,11 @@ export class GitOperationsHandlers {
   getRepositoryStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { repoId } = req.params;
-      // Safely handle include parameter - can be string or array
+      // Zen approach: Type-safe query parameter extraction
       const includeParam = req.query.include;
       const include: string[] = Array.isArray(includeParam) 
-        ? includeParam 
-        : includeParam 
+        ? includeParam.filter((item): item is string => typeof item === 'string')
+        : typeof includeParam === 'string' 
           ? [includeParam] 
           : [];
       

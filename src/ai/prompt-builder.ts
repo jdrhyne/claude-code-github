@@ -177,8 +177,11 @@ Based on the user's preferences and current context, what action should be taken
   }
   
   private getEventDescription(event: MonitoringEvent): string {
-    // Handle files from either event.files or event.data.files
-    const files = (event as any).files || (event.data?.files as string[]);
+    // Handle files from either event.files or event.data.files - type-safe extraction
+    const filesParam = (event as any).files || event.data?.files;
+    const files: string[] = Array.isArray(filesParam) 
+      ? filesParam.filter((item): item is string => typeof item === 'string')
+      : [];
     
     switch (event.type) {
       case MonitoringEventType.FILE_CHANGE:

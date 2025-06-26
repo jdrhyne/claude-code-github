@@ -235,7 +235,11 @@ export class LLMDecisionAgent {
     // Check if any changed files match protected patterns
     // This is a simplified check - in production, use proper glob matching
     const event = context.currentEvent;
-    const files = (event as any).files || (event.data?.files as string[]);
+    // Type-safe file extraction
+    const filesParam = (event as any).files || event.data?.files;
+    const files: string[] = Array.isArray(filesParam) 
+      ? filesParam.filter((item): item is string => typeof item === 'string')
+      : [];
     
     if (files && Array.isArray(files)) {
       for (const file of files) {
