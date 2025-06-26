@@ -1,0 +1,894 @@
+openapi: 3.0.3
+info:
+  title: Claude-Code-GitHub API
+  description: Domain-driven API for Git workflow automation
+  version: 2.0.0
+  contact:
+    name: API Support
+    email: api@claude-code-github.dev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api/v2
+    description: Local development
+  - url: https://api.claude-code-github.dev/v2
+    description: Production
+
+security:
+  - bearerAuth: []
+  - apiKey: []
+
+tags:
+  - name: git-operations
+    description: Local Git repository operations
+  - name: github-integration
+    description: GitHub API operations
+  - name: project-management
+    description: Project state and configuration
+  - name: automation
+    description: AI-driven automation features
+  - name: monitoring
+    description: Event monitoring and insights
+
+paths:
+  # Git Operations Context
+  /git/repositories:
+    get:
+      tags: [git-operations]
+      summary: List configured repositories
+      operationId: listRepositories
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        200:
+          description: List of repositories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Repository'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /git/repositories/{repoId}/status:
+    get:
+      tags: [git-operations]
+      summary: Get repository status
+      operationId: getRepositoryStatus
+      parameters:
+        - $ref: '#/components/parameters/RepoIdParam'
+        - name: include
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [changes, branches, remotes, stash]
+          style: form
+          explode: false
+      responses:
+        200:
+          description: Repository status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryStatus'
+        404:
+          $ref: '#/components/responses/NotFoundError'
+
+  /git/repositories/{repoId}/branches:
+    post:
+      tags: [git-operations]
+      summary: Create a new branch
+      operationId: createBranch
+      parameters:
+        - $ref: '#/components/parameters/RepoIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBranchRequest'
+      responses:
+        201:
+          description: Branch created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL of created branch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Branch'
+        400:
+          $ref: '#/components/responses/ValidationError'
+        409:
+          $ref: '#/components/responses/ConflictError'
+
+  /git/repositories/{repoId}/commits:
+    post:
+      tags: [git-operations]
+      summary: Create a commit
+      operationId: createCommit
+      parameters:
+        - $ref: '#/components/parameters/RepoIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommitRequest'
+      responses:
+        201:
+          description: Commit created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Commit'
+
+  # GitHub Integration Context
+  /github/projects/{projectId}/pull-requests:
+    get:
+      tags: [github-integration]
+      summary: List pull requests
+      operationId: listPullRequests
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, all]
+            default: open
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [created, updated, popularity]
+            default: created
+      responses:
+        200:
+          description: List of pull requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PullRequest'
+
+    post:
+      tags: [github-integration]
+      summary: Create pull request
+      operationId: createPullRequest
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePullRequestRequest'
+      responses:
+        201:
+          description: Pull request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PullRequest'
+        422:
+          $ref: '#/components/responses/UnprocessableError'
+
+  /github/projects/{projectId}/issues:
+    get:
+      tags: [github-integration]
+      summary: List issues
+      operationId: listIssues
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [open, closed, all]
+        - name: labels
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+      responses:
+        200:
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Issue'
+
+  # Project Management Context
+  /projects/{projectId}/state:
+    get:
+      tags: [project-management]
+      summary: Get project state
+      operationId: getProjectState
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+      responses:
+        200:
+          description: Current project state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectState'
+          headers:
+            ETag:
+              schema:
+                type: string
+              description: State version for optimistic concurrency
+    
+    patch:
+      tags: [project-management]
+      summary: Update project state
+      operationId: updateProjectState
+      parameters:
+        - $ref: '#/components/parameters/ProjectIdParam'
+        - name: If-Match
+          in: header
+          required: true
+          schema:
+            type: string
+          description: ETag for optimistic concurrency control
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateUpdate'
+      responses:
+        200:
+          description: State updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectState'
+        409:
+          $ref: '#/components/responses/ConflictError'
+
+  # Automation Context
+  /automation/decisions:
+    post:
+      tags: [automation]
+      summary: Request automation decision
+      operationId: requestDecision
+      x-rate-limit:
+        max: 10
+        window: 60
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+      responses:
+        200:
+          description: Decision made
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Decision'
+        202:
+          description: Decision pending (requires approval)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingDecision'
+        429:
+          $ref: '#/components/responses/RateLimitError'
+
+  /automation/decisions/{decisionId}/feedback:
+    post:
+      tags: [automation]
+      summary: Provide feedback on decision
+      operationId: provideFeedback
+      parameters:
+        - name: decisionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Feedback'
+      responses:
+        204:
+          description: Feedback recorded
+        404:
+          $ref: '#/components/responses/NotFoundError'
+
+  # Monitoring Context
+  /monitoring/events:
+    get:
+      tags: [monitoring]
+      summary: Query monitoring events
+      operationId: queryEvents
+      parameters:
+        - name: start
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: type
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/EventType'
+        - name: projectId
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MonitoringEvent'
+                  summary:
+                    $ref: '#/components/schemas/EventSummary'
+
+  /monitoring/insights:
+    get:
+      tags: [monitoring]
+      summary: Get monitoring insights
+      operationId: getInsights
+      parameters:
+        - name: projectId
+          in: query
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [hour, day, week, month]
+            default: day
+      responses:
+        200:
+          description: Monitoring insights
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonitoringInsights'
+
+  # WebSocket endpoint for real-time updates
+  /ws:
+    get:
+      tags: [monitoring]
+      summary: WebSocket connection for real-time events
+      description: |
+        Establish WebSocket connection for real-time event streaming.
+        
+        Authentication: Send token in first message
+        ```json
+        {
+          "type": "auth",
+          "token": "Bearer <token>"
+        }
+        ```
+        
+        Subscribe to events:
+        ```json
+        {
+          "type": "subscribe",
+          "events": ["decision.made", "state.changed"],
+          "projects": ["project-id-1", "project-id-2"]
+        }
+        ```
+      responses:
+        101:
+          description: Switching Protocols
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  parameters:
+    RepoIdParam:
+      name: repoId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Repository identifier
+    
+    ProjectIdParam:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Project identifier
+    
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  schemas:
+    # Git Operations Schemas
+    Repository:
+      type: object
+      required: [id, path, mainBranch]
+      properties:
+        id:
+          type: string
+        path:
+          type: string
+        mainBranch:
+          type: string
+        protectedBranches:
+          type: array
+          items:
+            type: string
+        remote:
+          $ref: '#/components/schemas/RemoteInfo'
+
+    RepositoryStatus:
+      type: object
+      required: [branch, isProtected, uncommittedChanges]
+      properties:
+        branch:
+          type: string
+        isProtected:
+          type: boolean
+        uncommittedChanges:
+          $ref: '#/components/schemas/UncommittedChanges'
+        lastCommit:
+          $ref: '#/components/schemas/CommitInfo'
+        branches:
+          type: array
+          items:
+            $ref: '#/components/schemas/BranchInfo'
+
+    CreateBranchRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+          pattern: '^[a-zA-Z0-9-_/]+$'
+        type:
+          type: string
+          enum: [feature, bugfix, refactor, hotfix]
+        commitMessage:
+          type: string
+          minLength: 10
+        baseBranch:
+          type: string
+
+    Branch:
+      type: object
+      required: [name, type, createdAt]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        commit:
+          type: string
+
+    # GitHub Integration Schemas
+    PullRequest:
+      type: object
+      required: [id, number, title, state]
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        state:
+          type: string
+          enum: [open, closed, merged]
+        draft:
+          type: boolean
+        author:
+          $ref: '#/components/schemas/User'
+        reviewers:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        labels:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePullRequestRequest:
+      type: object
+      required: [title, body]
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 256
+        body:
+          type: string
+          minLength: 10
+        baseBranch:
+          type: string
+          default: main
+        draft:
+          type: boolean
+          default: true
+        reviewers:
+          type: array
+          items:
+            type: string
+        labels:
+          type: array
+          items:
+            type: string
+
+    # Project Management Schemas
+    ProjectState:
+      type: object
+      required: [id, version, data]
+      properties:
+        id:
+          type: string
+        version:
+          type: string
+        data:
+          type: object
+          properties:
+            currentBranch:
+              type: string
+            lastActivity:
+              type: string
+              format: date-time
+            uncommittedFiles:
+              type: integer
+            automationMode:
+              type: string
+              enum: [off, learning, assisted, autonomous]
+            activeSuggestions:
+              type: array
+              items:
+                $ref: '#/components/schemas/Suggestion'
+
+    StateUpdate:
+      type: object
+      required: [changes]
+      properties:
+        changes:
+          type: array
+          items:
+            type: object
+            required: [type, payload]
+            properties:
+              type:
+                type: string
+                enum: [BRANCH_CHANGED, FILES_MODIFIED, AUTOMATION_MODE_CHANGED]
+              payload:
+                type: object
+
+    # Automation Schemas
+    DecisionRequest:
+      type: object
+      required: [context]
+      properties:
+        context:
+          $ref: '#/components/schemas/DecisionContext'
+        options:
+          type: object
+          properties:
+            requireApproval:
+              type: boolean
+            maxRisk:
+              type: number
+              minimum: 0
+              maximum: 1
+
+    DecisionContext:
+      type: object
+      required: [projectId, state, trigger]
+      properties:
+        projectId:
+          type: string
+        state:
+          $ref: '#/components/schemas/ProjectState'
+        trigger:
+          type: object
+          properties:
+            type:
+              type: string
+              enum: [file_change, time_based, user_request]
+            details:
+              type: object
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoricalAction'
+
+    Decision:
+      type: object
+      required: [id, action, confidence, reasoning]
+      properties:
+        id:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [commit, create_branch, create_pr, wait, suggest]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+        reasoning:
+          type: string
+        risk:
+          $ref: '#/components/schemas/RiskAssessment'
+        requiresApproval:
+          type: boolean
+        params:
+          type: object
+
+    Feedback:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [approve, reject, correct]
+        reason:
+          type: string
+        correctedAction:
+          type: string
+
+    # Monitoring Schemas
+    MonitoringEvent:
+      type: object
+      required: [id, timestamp, type, source]
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          $ref: '#/components/schemas/EventType'
+        source:
+          type: string
+        projectId:
+          type: string
+        data:
+          type: object
+
+    EventType:
+      type: string
+      enum:
+        - file.changed
+        - branch.created
+        - commit.created
+        - pr.opened
+        - decision.made
+        - feedback.received
+        - milestone.reached
+
+    MonitoringInsights:
+      type: object
+      properties:
+        activity:
+          $ref: '#/components/schemas/ActivityMetrics'
+        patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/DetectedPattern'
+        predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prediction'
+        anomalies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Anomaly'
+
+    # Common Schemas
+    User:
+      type: object
+      required: [login]
+      properties:
+        login:
+          type: string
+        name:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+
+    Pagination:
+      type: object
+      required: [page, limit, total]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+        requestId:
+          type: string
+
+    ValidationError:
+      allOf:
+        - $ref: '#/components/schemas/Error'
+        - type: object
+          properties:
+            errors:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
+    RiskAssessment:
+      type: object
+      required: [level, factors]
+      properties:
+        level:
+          type: string
+          enum: [low, medium, high]
+        score:
+          type: number
+          minimum: 0
+          maximum: 1
+        factors:
+          type: array
+          items:
+            type: string
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: UNAUTHORIZED
+            message: Authentication required
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: NOT_FOUND
+            message: Resource not found
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    ConflictError:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            code: CONFLICT
+            message: Resource already exists
+
+    RateLimitError:
+      description: Rate limit exceeded
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    UnprocessableError:
+      description: Unprocessable entity
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
