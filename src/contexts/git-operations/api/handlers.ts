@@ -40,7 +40,13 @@ export class GitOperationsHandlers {
   getRepositoryStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { repoId } = req.params;
-      const { include = [] } = req.query as { include?: string[] };
+      // Safely handle include parameter - can be string or array
+      const includeParam = req.query.include;
+      const include: string[] = Array.isArray(includeParam) 
+        ? includeParam 
+        : includeParam 
+          ? [includeParam] 
+          : [];
       
       const repository = await this.repoRepository.findById(repoId);
       if (!repository) {
