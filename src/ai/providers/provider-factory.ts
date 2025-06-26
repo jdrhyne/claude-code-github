@@ -37,7 +37,7 @@ export class LLMProviderFactory {
         throw new Error(`${provider.getName()} provider is not available. Check API key configuration.`);
       }
       return true;
-    } catch (error) {
+    } catch (_error) {
       console.error(`Provider validation failed: ${error instanceof Error ? error.message : String(error)}`);
       return false;
     }

@@ -10,9 +10,7 @@ import { GitEventFactory } from './events.js';
 import { 
   ProtectedBranchError, 
   NoChangesToCommitError, 
-  BranchAlreadyExistsError,
-  BranchNotFoundError,
-  UncommittedChangesError 
+  BranchAlreadyExistsError
 } from './errors.js';
 
 export interface GitRepositoryProps {

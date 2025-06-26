@@ -9,7 +9,7 @@ interface BranchNameProps {
  * Value object representing a Git branch name
  */
 export class BranchName extends ValueObject<BranchNameProps> {
-  private static readonly INVALID_CHARS = /[^a-zA-Z0-9\-_\/]/;
+  private static readonly INVALID_CHARS = /[^a-zA-Z0-9\-_/]/;
   private static readonly MAX_LENGTH = 255;
 
   private constructor(props: BranchNameProps) {

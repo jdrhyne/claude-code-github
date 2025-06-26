@@ -57,7 +57,7 @@ export class WebSocketServer {
         socket.data.auth = authToken;
         socket.data.authenticated = true;
         next();
-      } catch (error) {
+      } catch (_error) {
         next(new Error('Authentication failed'));
       }
     });
@@ -95,7 +95,7 @@ export class WebSocketServer {
 
           socket.emit('subscribed', { events, projects });
           console.log(`[WebSocket] Client ${socket.id} subscribed to:`, { events, projects });
-        } catch (error) {
+        } catch (_error) {
           socket.emit('error', { message: 'Subscription failed' });
         }
       });
@@ -119,7 +119,7 @@ export class WebSocketServer {
 
           socket.emit('unsubscribed', { events });
           console.log(`[WebSocket] Client ${socket.id} unsubscribed from:`, { events });
-        } catch (error) {
+        } catch (_error) {
           socket.emit('error', { message: 'Unsubscribe failed' });
         }
       });

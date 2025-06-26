@@ -20,7 +20,7 @@ export const GitConstraints = {
    */
   BranchName: {
     MAX_LENGTH: 255,
-    VALID_CHARS_PATTERN: /^[a-zA-Z0-9\-_\/]+$/,
+    VALID_CHARS_PATTERN: /^[a-zA-Z0-9\-_/]+$/,
     INVALID_PATTERNS: {
       STARTS_WITH_SLASH: /^\//,
       ENDS_WITH_SLASH: /\/$/,

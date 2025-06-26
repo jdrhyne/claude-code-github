@@ -50,7 +50,7 @@ export class AnthropicProvider extends BaseLLMProvider {
         },
         model: response.model,
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof Anthropic.APIError) {
         throw new Error(`Anthropic API error: ${error.message}`);
       }

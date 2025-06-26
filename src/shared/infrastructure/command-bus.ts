@@ -3,7 +3,9 @@ import { Result } from '../domain/result.js';
 /**
  * Command interface - marker for commands
  */
-export interface Command {}
+export interface Command {
+  readonly _commandBrand?: undefined;
+}
 
 /**
  * Command handler interface
@@ -57,7 +59,7 @@ export class InMemoryCommandBus implements CommandBus {
 
     try {
       return await handler.handle(command);
-    } catch (error) {
+    } catch (_error) {
       return Result.fail(
         `Command execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );

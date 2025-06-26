@@ -44,7 +44,7 @@ export class OpenAIProvider extends BaseLLMProvider {
         } : undefined,
         model: response.model,
       };
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof OpenAI.APIError) {
         throw new Error(`OpenAI API error: ${error.message}`);
       }

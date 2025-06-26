@@ -159,7 +159,7 @@ export class DevelopmentTools {
 
       await this.setCurrentProject();
       return config;
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Initialization failed');
       throw error;
     }
@@ -315,7 +315,7 @@ export class DevelopmentTools {
         workflowRuns,
         relatedBranches
       };
-    } catch (error) {
+    } catch (_error) {
       progress.fail();
       throw error;
     }
@@ -367,7 +367,7 @@ export class DevelopmentTools {
       progress.succeed(`Created branch ${fullBranchName}`);
 
       return StatusDisplay.showBranchCreated(fullBranchName, params.message);
-    } catch (error) {
+    } catch (_error) {
       progress.fail();
       throw error;
     }
@@ -430,7 +430,7 @@ export class DevelopmentTools {
       progress.succeed('Pull request created');
 
       return StatusDisplay.showPullRequestCreated(pr.html_url, params.is_draft ?? true);
-    } catch (error) {
+    } catch (_error) {
       progress.fail();
       throw error;
     }
@@ -487,7 +487,7 @@ export class DevelopmentTools {
       }
 
       return lines.join('\n');
-    } catch (error) {
+    } catch (_error) {
       progress.fail();
       throw error;
     }
@@ -581,7 +581,7 @@ export class DevelopmentTools {
       progress.succeed('Push completed');
       return result;
 
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Push failed');
       throw error;
     }
@@ -718,7 +718,7 @@ export class DevelopmentTools {
               stdio: 'ignore',
               timeout: 60000 // 60 second timeout
             });
-          } catch (error) {
+          } catch (_error) {
             if (error instanceof Error && 'code' in error && error.code === 'ETIMEDOUT') {
               throw new Error('npm update timed out after 60 seconds');
             }
@@ -741,7 +741,7 @@ export class DevelopmentTools {
         default:
           return `❌ Unknown quick action: ${action}. Available: wip, fix, done, sync, update`;
       }
-    } catch (error) {
+    } catch (_error) {
       progress.fail();
       throw error;
     }
@@ -772,7 +772,7 @@ export class DevelopmentTools {
       await this.githubManager.updatePullRequest(owner, repo, params);
       
       progress.succeed(`Pull request #${params.pr_number} updated`);
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to update pull request');
       throw error;
     }
@@ -790,7 +790,7 @@ export class DevelopmentTools {
       
       progress.succeed('Pull request status retrieved');
       return status;
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to get pull request status');
       throw error;
     }
@@ -818,7 +818,7 @@ export class DevelopmentTools {
       
       progress.succeed('Pull request description generated');
       return description;
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to generate pull request description');
       throw error;
     }
@@ -857,7 +857,7 @@ export class DevelopmentTools {
       // Add issue reference to first commit message
       progress.succeed(`Created branch ${branchName} from issue #${issue.number}`);
       return { branch_name: branchName, issue };
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to create branch from issue');
       throw error;
     }
@@ -875,7 +875,7 @@ export class DevelopmentTools {
       
       progress.succeed(`Found ${issues.length} issues`);
       return issues;
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to list issues');
       throw error;
     }
@@ -905,7 +905,7 @@ export class DevelopmentTools {
       });
       
       progress.succeed(`Issue #${params.issue_number} updated`);
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to update issue');
       throw error;
     }
@@ -963,7 +963,7 @@ export class DevelopmentTools {
         const { execSync } = await import('child_process');
         execSync('npm install --package-lock-only', { cwd: project.path, stdio: 'ignore' });
         filesUpdated.push('package-lock.json');
-      } catch (error) {
+      } catch (_error) {
         // package-lock.json doesn't exist or npm failed, continue
       }
       
@@ -978,7 +978,7 @@ export class DevelopmentTools {
         new_version: newVersion,
         files_updated: filesUpdated
       };
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to bump version');
       throw error;
     }
@@ -1041,7 +1041,7 @@ export class DevelopmentTools {
       
       progress.succeed('Changelog generated');
       return changelogEntry;
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to generate changelog');
       throw error;
     }
@@ -1122,7 +1122,7 @@ export class DevelopmentTools {
       
       progress.succeed(`Release ${params.tag_name} created`);
       return release;
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to create release');
       throw error;
     }
@@ -1180,7 +1180,7 @@ export class DevelopmentTools {
       
       progress.succeed(release ? `Latest release: ${release.tag_name}` : 'No releases found');
       return release;
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to get latest release');
       throw error;
     }
@@ -1198,7 +1198,7 @@ export class DevelopmentTools {
       
       progress.succeed(`Found ${releases.length} releases`);
       return releases;
-    } catch (error) {
+    } catch (_error) {
       progress.fail('Failed to list releases');
       throw error;
     }

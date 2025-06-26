@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { GitRepositoryRepositoryImpl } from '../git-repository.repository.js';
 import { ConfigManager } from '../../../../config.js';
 import { GitManager } from '../../../../git.js';
-import { BranchType } from '../../domain/types.js';
 
 describe('GitRepositoryRepositoryImpl', () => {
   let repository: GitRepositoryRepositoryImpl;

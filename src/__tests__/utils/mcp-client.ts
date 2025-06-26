@@ -65,7 +65,7 @@ export class McpTestClient extends EventEmitter {
         try {
           const response: JsonRpcResponse = JSON.parse(line.trim());
           this.handleResponse(response);
-        } catch (error) {
+        } catch (_error) {
           console.error('Failed to parse response:', line, error);
         }
       }

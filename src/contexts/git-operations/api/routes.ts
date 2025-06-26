@@ -4,8 +4,7 @@ import { validateRequest } from './validation.js';
 import {
   CreateBranchSchema,
   CreateCommitSchema,
-  GetRepositoryStatusSchema,
-  CheckoutBranchSchema
+  GetRepositoryStatusSchema
 } from './validation.js';
 
 /**

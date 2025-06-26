@@ -7,7 +7,9 @@ import { Result } from '../domain/result.js';
 /**
  * Base interface for queries
  */
-export interface Query {}
+export interface Query {
+  readonly _queryBrand?: undefined;
+}
 
 /**
  * Query handler interface
@@ -58,7 +60,7 @@ export class QueryBus {
 
     try {
       return await handler.handle(query);
-    } catch (error) {
+    } catch (_error) {
       return Result.fail(
         `Query execution failed: ${error instanceof Error ? error.message : 'Unknown error'}`
       );
@@ -141,7 +143,7 @@ export function QueryHandlerMethod<TQuery extends Query, TResult>() {
       try {
         const result = await originalMethod.call(this, query);
         return result;
-      } catch (error) {
+      } catch (_error) {
         return Result.fail(
           `Query handler error: ${error instanceof Error ? error.message : 'Unknown error'}`
         );

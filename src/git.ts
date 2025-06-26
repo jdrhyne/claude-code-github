@@ -58,7 +58,7 @@ export class GitManager {
     try {
       const branches = await git.branch(['-r']);
       return branches.all.filter(b => !b.includes('HEAD'));
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -113,7 +113,7 @@ export class GitManager {
       } else {
         diff_summary = diff;
       }
-    } catch (error) {
+    } catch (_error) {
       diff_summary = 'Error generating diff';
     }
 
@@ -146,7 +146,7 @@ export class GitManager {
       const remotes = await git.getRemotes(true);
       const origin = remotes.find(r => r.name === 'origin');
       return origin?.refs?.fetch || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -156,7 +156,7 @@ export class GitManager {
     try {
       await git.status();
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -220,7 +220,7 @@ export class GitManager {
     try {
       const remotes = await git.branch(['-r']);
       return remotes.all.includes(`origin/${branchName}`);
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -230,7 +230,7 @@ export class GitManager {
     try {
       const log = await git.log([`origin/${branchName}..${branchName}`]);
       return log.total > 0;
-    } catch (error) {
+    } catch (_error) {
       // If we can't compare with origin, assume we have unpushed commits
       return true;
     }
@@ -241,7 +241,7 @@ export class GitManager {
     try {
       const files = await fs.readdir(workflowsPath);
       return files.filter(f => f.endsWith('.yml') || f.endsWith('.yaml'));
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -284,7 +284,7 @@ export class GitManager {
           deployment.reason = `Version bump from ${versionMatch[1]} to ${versionMatch[2]}`;
         }
       }
-    } catch (error) {
+    } catch (_error) {
       // Ignore if package.json doesn't exist or can't be parsed
     }
 
@@ -323,7 +323,7 @@ export class GitManager {
     try {
       const tags = await git.tags();
       return tags.all;
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -333,7 +333,7 @@ export class GitManager {
     try {
       const tags = await git.tags(['--sort=-v:refname']);
       return tags.latest || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }
@@ -367,7 +367,7 @@ export class GitManager {
         author: commit.author_name,
         date: commit.date
       }));
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -378,7 +378,7 @@ export class GitManager {
       const packageContent = await fs.readFile(packagePath, 'utf-8');
       const packageJson = JSON.parse(packageContent);
       return packageJson.version || null;
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

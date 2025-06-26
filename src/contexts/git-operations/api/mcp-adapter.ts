@@ -101,7 +101,7 @@ export class GitOperationsMcpAdapter {
           'Use dev_checkpoint_v2 to commit changes'
         ]
       };
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to get status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -130,7 +130,7 @@ export class GitOperationsMcpAdapter {
         branch: result.value.branchName,
         message: `✓ Created branch ${result.value.branchName}`
       };
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to create branch: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -159,7 +159,7 @@ export class GitOperationsMcpAdapter {
         message: `✓ Created checkpoint: ${params.message}`,
         commit_hash: result.value.hash
       };
-    } catch (error) {
+    } catch (_error) {
       throw new Error(`Failed to create checkpoint: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }

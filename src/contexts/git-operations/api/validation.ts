@@ -64,7 +64,7 @@ export function validateRequest(schema: z.ZodSchema) {
       req.params = validated.params || req.params;
       
       next();
-    } catch (error) {
+    } catch (_error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({
           code: 'VALIDATION_ERROR',

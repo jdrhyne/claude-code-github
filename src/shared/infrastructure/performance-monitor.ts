@@ -55,7 +55,7 @@ export class PerformanceMonitor {
     try {
       const result = await operation();
       return result;
-    } catch (error) {
+    } catch (_error) {
       success = false;
       throw error;
     } finally {
@@ -84,7 +84,7 @@ export class PerformanceMonitor {
     try {
       const result = operation();
       return result;
-    } catch (error) {
+    } catch (_error) {
       success = false;
       throw error;
     } finally {

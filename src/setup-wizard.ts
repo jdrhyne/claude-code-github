@@ -288,7 +288,7 @@ export class SetupWizard {
       await keytar.setPassword('claude-code-github', 'github-token', token);
       
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }

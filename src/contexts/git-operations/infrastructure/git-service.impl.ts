@@ -39,7 +39,7 @@ export class GitServiceImpl implements GitService {
     const files: FileChange[] = [];
 
     // Map Git status to domain model
-    const mapStatus = (gitStatus: string): FileChangeStatus => {
+    const _mapStatus = (gitStatus: string): FileChangeStatus => {
       switch (gitStatus) {
         case 'M': return FileChangeStatus.MODIFIED;
         case 'A': return FileChangeStatus.ADDED;
@@ -120,7 +120,7 @@ export class GitServiceImpl implements GitService {
         message: log.latest.message,
         timestamp: new Date(log.latest.date)
       };
-    } catch (error) {
+    } catch (_error) {
       return null;
     }
   }

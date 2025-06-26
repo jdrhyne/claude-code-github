@@ -62,7 +62,7 @@ describe('Edge Cases and Error Handling', () => {
       
       try {
         await client.callTool('development.status');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('not found');
       }
     });
@@ -76,7 +76,7 @@ describe('Edge Cases and Error Handling', () => {
       try {
         await client.callTool('development.status');
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('not a Git repository');
       }
     });
@@ -92,7 +92,7 @@ describe('Edge Cases and Error Handling', () => {
           message: 'test commit'
         });
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('git add failed');
       }
     });
@@ -125,7 +125,7 @@ describe('Edge Cases and Error Handling', () => {
           body: 'Test'
         });
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('API rate limit exceeded');
       }
     });
@@ -145,7 +145,7 @@ describe('Edge Cases and Error Handling', () => {
           body: 'Test'
         });
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('Repository not found');
       }
     });
@@ -165,7 +165,7 @@ describe('Edge Cases and Error Handling', () => {
           body: 'Test'
         });
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('token validation failed');
       }
     });
@@ -222,7 +222,7 @@ describe('Edge Cases and Error Handling', () => {
           message: 'test'
         });
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect(error).toBeTruthy();
       }
     });
@@ -241,7 +241,7 @@ describe('Edge Cases and Error Handling', () => {
           message: 'test commit'
         });
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('permission denied');
       }
     });
@@ -259,7 +259,7 @@ describe('Edge Cases and Error Handling', () => {
           body: 'Test'
         });
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('network unreachable');
       }
     });
@@ -276,7 +276,7 @@ describe('Edge Cases and Error Handling', () => {
           message: 'test commit'
         });
         expect.fail('Should have thrown an error');
-      } catch (error) {
+      } catch (_error) {
         expect((error as Error).message).toContain('no space left');
       }
     });
@@ -323,7 +323,7 @@ describe('Edge Cases and Error Handling', () => {
       // In a real scenario, this would be handled by the JSON-RPC layer
       try {
         await client.callTool('development.status', { malformed: undefined });
-      } catch (error) {
+      } catch (_error) {
         // Should not crash the server, just return an error
         expect(error).toBeTruthy();
       }

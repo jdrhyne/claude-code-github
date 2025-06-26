@@ -169,7 +169,7 @@ Documentation:
       await devTools.close();
       server.shutdown();
     });
-  } catch (error) {
+  } catch (_error) {
     console.error(formatError(error instanceof Error ? error : new Error(String(error))));
     process.exit(1);
   }

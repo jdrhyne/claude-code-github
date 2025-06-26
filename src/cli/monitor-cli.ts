@@ -118,7 +118,7 @@ export class MonitorCli {
         default:
           throw new Error(`Unknown monitor mode: ${config.mode}`);
       }
-    } catch (error) {
+    } catch (_error) {
       console.error(chalk.red('❌ Failed to start monitor:'), error);
       process.exit(1);
     }

@@ -71,7 +71,7 @@ export class FeedbackStore {
       if (this.cache.size > this.MAX_ENTRIES) {
         await this.trimOldEntries();
       }
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to initialize feedback store:', error);
     }
   }
@@ -335,7 +335,7 @@ export class FeedbackStore {
         ...e,
         timestamp: new Date(e.timestamp)
       }));
-    } catch (error) {
+    } catch (_error) {
       // File doesn't exist yet
       return [];
     }
@@ -352,7 +352,7 @@ export class FeedbackStore {
         JSON.stringify(entries, null, 2),
         'utf8'
       );
-    } catch (error) {
+    } catch (_error) {
       console.error('Failed to save feedback data:', error);
     }
   }

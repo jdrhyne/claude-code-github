@@ -7,7 +7,6 @@ import { EventBus } from '../../../../../shared/events/event-bus.js';
 import { GitRepository } from '../../../domain/repository.js';
 import { Changes } from '../../../domain/value-objects/changes.js';
 import { BranchType } from '../../../domain/types.js';
-import { Result } from '../../../../../shared/domain/result.js';
 
 describe('CreateBranchHandler', () => {
   let handler: CreateBranchHandler;

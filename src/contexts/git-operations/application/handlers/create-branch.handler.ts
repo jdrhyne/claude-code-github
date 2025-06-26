@@ -49,7 +49,7 @@ export class CreateBranchHandler implements CommandHandler<CreateBranchCommand, 
       await this.gitService.createBranch(repository.path, branch.name.value);
       await this.gitService.checkoutBranch(repository.path, branch.name.value);
       await this.gitService.stageAll(repository.path);
-      const commitHash = await this.gitService.commit(repository.path, command.commitMessage);
+      const _commitHash = await this.gitService.commit(repository.path, command.commitMessage);
 
       // Update repository state to reflect Git operations
       // First, commit the changes in the domain model

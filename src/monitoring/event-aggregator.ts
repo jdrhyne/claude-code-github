@@ -53,7 +53,7 @@ export class EventAggregator extends EventEmitter {
             this.addEvent(event);
           });
         }
-      } catch (error) {
+      } catch (_error) {
         console.error('Failed to initialize LLM agent:', error);
         // Continue without LLM if initialization fails
       }
@@ -427,7 +427,7 @@ export class EventAggregator extends EventEmitter {
         if (commits.length > 0 && commits[0].date) {
           lastCommitTime = new Date(commits[0].date);
         }
-      } catch (error) {
+      } catch (_error) {
         // Fallback to defaults if GitManager fails
       }
     }
