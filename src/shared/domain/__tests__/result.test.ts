@@ -102,7 +102,7 @@ describe('Result', () => {
 
     it('should return chained failure', () => {
       const result = Result.ok(5);
-      const chained = result.flatMap(x => Result.fail<number>('chained error'));
+      const chained = result.flatMap(_x => Result.fail<number>('chained error'));
       
       expect(chained.isFailure).toBe(true);
       expect(chained.error).toBe('chained error');
