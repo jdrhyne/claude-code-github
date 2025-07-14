@@ -71,7 +71,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "sqlite3": "^5.1.7",
-    "zod": "^3.23.0"
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
